@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eddie | Digital Portfolio</title>
+    <meta name="description" content="Personal portfolio of a developer focused on building digital experiences with Antigravity.">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- this is a personal portfolio website built using antigravity -->
+
+    <nav>
+        <div class="container nav-content">
+            <a href="#" class="logo">EDDIE</a>
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="#projects">Projects</a>
+                <a href="#contact">Contact</a>
+            </div>
+            <a href="#contact" class="btn btn-outline" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">Get in touch</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-bg"></div>
+        <div class="container hero-content reveal">
+            <span class="badge">Built with Antigravity AI</span>
+            <h1>Crafting Digital <br><span class="gradient-text">Experiences.</span></h1>
+            <p>I'm a developer passionate about building high-performance, aesthetically pleasing web applications using cutting-edge AI tools.</p>
+            <div class="cta-group">
+                <a href="#projects" class="btn btn-primary">View Projects</a>
+                <a href="#about" class="btn btn-outline">About Me</a>
+            </div>
+        </div>
+    </header>
+
+    <section id="about" class="container">
+        <h2 class="section-title">The Foundation</h2>
+        <div class="grid">
+            <div class="card reveal">
+                <h3>My Vision</h3>
+                <p>To merge performance with beauty, creating websites that aren't just functional, but delightful to interact with.</p>
+            </div>
+            <div class="card reveal" style="animation-delay: 0.2s;">
+                <h3>The Tech</h3>
+                <p>Utilizing modern frameworks and AI-assisted workflows like Antigravity to push the boundaries of what's possible online.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects" style="background: rgba(255,255,255,0.01);">
+        <div class="container">
+            <h2 class="section-title">Featured Work</h2>
+            <div class="grid">
+                <!-- Project 1 -->
+                <div class="card">
+                    <div style="background: var(--glass); height: 200px; border-radius: 12px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); color: var(--primary);">
+                        Project Image
+                    </div>
+                    <h3>Personal Brand Site</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">A high-end, responsive portfolio built with a focus on typography and animations.</p>
+                    <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 600;">Explore Case Study →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer style="padding: 4rem 0; border-top: 1px solid var(--glass-border); text-align: center;">
+        <div class="container">
+            <p style="color: var(--text-muted);">&copy; 2026 Eddie. Built with precision and Antigravity.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll reveal effect
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.card').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
