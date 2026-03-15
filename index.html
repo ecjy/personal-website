@@ -3,114 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eddie | Software Professional</title>
-    <meta name="description" content="Professional portfolio of Eddie, focusing on impact, precision, and digital craftsmanship.">
+    <title>Eddie | Portfolio & Experience</title>
+    <meta name="description" content="Professional portfolio and resume of Eddie, emphasizing software engineering and research excellence.">
     <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- this is a personal portfolio website built using antigravity -->
 
-    <nav id="navbar">
+    <nav>
         <div class="container nav-content">
-            <a href="#" class="logo">Eddie.</a>
+            <a href="#" style="font-weight: 700; text-decoration: none; color: var(--text-main); font-size: 1.1rem; letter-spacing: -0.02em;">Eddie.</a>
             <div class="nav-links">
-                <a href="#about">About</a>
                 <a href="#experience">Experience</a>
+                <a href="#publications">Publications</a>
+                <a href="#achievements">Achievements</a>
                 <a href="#contact">Contact</a>
             </div>
         </div>
     </nav>
 
-    <header class="hero">
-        <div class="container hero-content fade-in">
-            <span class="section-label">Software Professional</span>
-            <h1>Building solutions with <br>precision & purpose.</h1>
-            <p>Dedicated to delivering high-impact digital experiences through clean architecture and modern development practices.</p>
-            <a href="#experience" class="btn btn-dark">View My Journey</a>
+    <header>
+        <div class="container">
+            <h1 class="hero-title">Engineering logic. <br>Designing impact.</h1>
+            <p class="hero-subtitle">Software Architect focused on building scalable, reliable, and aesthetically functional digital systems.</p>
         </div>
     </header>
 
-    <main>
-        <section id="about" class="container">
-            <div class="fade-in">
-                <span class="section-label">Introduction</span>
-                <h2 class="section-title">The Focus</h2>
-                <p style="font-size: 1.25rem; max-width: 800px; color: var(--text-muted);">
-                    I specialize in bridging the gap between complex technical requirements and intuitive user experiences. My approach is rooted in minimalism, and I believe that excellence is found in the details.
-                </p>
+    <main class="container">
+        
+        <!-- Experience Section -->
+        <section id="experience">
+            <span class="section-tag">Professional Experience</span>
+            
+            <div class="resume-item">
+                <div class="item-meta">2024 — Present</div>
+                <div class="item-content">
+                    <h3>Senior Software Architect</h3>
+                    <div class="item-sub">Global Systems Group</div>
+                    <p>Spearheading the transition to agentic AI development workflows and resilient cloud infrastructures.</p>
+                    <ul>
+                        <li>Developed a proprietary automation framework using Antigravity, reducing deployment latency by 60%.</li>
+                        <li>Overhauling core data pipelines to support real-time processing for over 5 million concurrent users.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="resume-item">
+                <div class="item-meta">2022 — 2024</div>
+                <div class="item-content">
+                    <h3>Full Stack Engineer</h3>
+                    <div class="item-sub">Innovation Hub Inc.</div>
+                    <p>Focused on the intersection of high-performance backend systems and fluid, responsive user interfaces.</p>
+                    <ul>
+                        <li>Redesigned the frontend architecture using micro-frontend patterns to improve module reusability.</li>
+                        <li>Optimized SQL queries and caching strategies, resulting in a 35% improvement in page load speeds.</li>
+                    </ul>
+                </div>
             </div>
         </section>
 
-        <section id="experience" style="background-color: var(--bg-secondary);">
-            <div class="container">
-                <span class="section-label">Timeline</span>
-                <h2 class="section-title">Professional Journey</h2>
-                
-                <div class="experience-list">
-                    <!-- Item 1 -->
-                    <div class="experience-item fade-in">
-                        <div class="date">2024 &mdash; Present</div>
-                        <div class="content">
-                            <h3>Lead Developer</h3>
-                            <div class="role">Personal Projects & AI Integration</div>
-                            <p>Architecting scalable solutions using modern AI workflows like Antigravity to accelerate development cycles and improve code quality.</p>
-                        </div>
+        <!-- Publications Section -->
+        <section id="publications">
+            <span class="section-tag">Selected Publications</span>
+            
+            <div class="resume-item">
+                <div class="item-meta">2025</div>
+                <div class="item-content">
+                    <div class="list-item">
+                        <div class="list-item-title">"Efficient Scaling of Agentic Workflows in Enterprise Environments"</div>
+                        <div class="list-item-desc">Published in the <i>Journal of AI & Systems Architecture</i></div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Item 2 -->
-                    <div class="experience-item fade-in">
-                        <div class="date">2022 &mdash; 2024</div>
-                        <div class="content">
-                            <h3>Software Engineer</h3>
-                            <div class="role">Web Exploration</div>
-                            <p>Focused on building responsive, performant web applications with a strong emphasis on clean code and user-centric design.</p>
-                        </div>
+            <div class="resume-item">
+                <div class="item-meta">2024</div>
+                <div class="item-content">
+                    <div class="list-item">
+                        <div class="list-item-title">"The Role of Minimalist Design in Reducing Cognitive Load"</div>
+                        <div class="list-item-desc">Presented at the <i>International Conference on User Experience</i></div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="contact" class="container">
-            <div class="fade-in" style="text-align: center;">
-                <span class="section-label">Connect</span>
-                <h2 class="section-title">Let's discuss your next project.</h2>
-                <p style="margin-bottom: 3rem; color: var(--text-muted);">Open for collaborations and professional inquiries.</p>
-                <a href="mailto:contact@example.com" class="btn btn-dark">Get In Touch</a>
+        <!-- Achievements Section -->
+        <section id="achievements">
+            <span class="section-tag">Key Achievements</span>
+            
+            <div class="resume-item">
+                <div class="item-meta">2025</div>
+                <div class="item-content">
+                    <h3>Excellence in Engineering Award</h3>
+                    <p>Awarded for pioneering contributions to the Antigravity developer ecosystem.</p>
+                </div>
+            </div>
+
+            <div class="resume-item">
+                <div class="item-meta">2024</div>
+                <div class="item-content">
+                    <h3>AWS Certified Solutions Architect</h3>
+                    <p>Professional certification validating expertise in designing complex cloud systems.</p>
+                </div>
             </div>
         </section>
+
+        <!-- Contact Section -->
+        <section id="contact" style="text-align: center; border-bottom: none; padding: 8rem 0;">
+            <p style="margin-bottom: 2.5rem; font-size: 1.2rem; color: var(--text-muted);">Ready to collaborate on your next challenge?</p>
+            <a href="mailto:eddie@domain.com" class="btn-contact">Get In Touch</a>
+        </section>
+
     </main>
 
-    <footer style="padding: 4rem 0; border-top: 1px solid var(--border); text-align: center;">
+    <footer style="padding-bottom: 6rem; text-align: center;">
         <div class="container">
-            <p style="font-size: 0.8rem; letter-spacing: 0.05em; color: var(--text-muted);">&copy; 2026 EDDIE. ALL RIGHTS RESERVED. <br> BUILT WITH ANTIGRAVITY.</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); opacity: 0.6;">&copy; 2026 EDDIE. BUILT WITH PRECISION AND ANTIGRAVITY.</p>
         </div>
     </footer>
 
-    <script>
-        // Professional Reveal Effect
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-
-        // Navbar Scroll Styling
-        window.addEventListener('scroll', () => {
-            const nav = document.getElementById('navbar');
-            if (window.scrollY > 50) {
-                nav.classList.add('scrolled');
-            } else {
-                nav.classList.remove('scrolled');
-            }
-        });
-    </script>
 </body>
 </html>
