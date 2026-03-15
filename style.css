@@ -338,6 +338,74 @@ section {
   color: var(--accent-cyan);
 }
 
+/* ===== PUB SUMMARY TOGGLE ===== */
+.pub-summary-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.01em;
+}
+.pub-summary-toggle:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.06);
+}
+.pub-summary-toggle.open {
+  border-color: rgba(6, 182, 212, 0.3);
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.08);
+}
+.pub-summary-toggle .toggle-icon {
+  font-size: 0.85rem;
+  transition: transform 0.25s ease;
+}
+.pub-summary-toggle.open .toggle-icon {
+  transform: rotate(45deg);
+}
+.pub-summary-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.3s ease;
+  opacity: 0;
+}
+.pub-summary-body.open {
+  max-height: 200px;
+  opacity: 1;
+  padding-top: 0.75rem;
+}
+.pub-summary-inner {
+  background: rgba(6, 182, 212, 0.04);
+  border: 1px solid rgba(6, 182, 212, 0.12);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  position: relative;
+}
+.pub-summary-inner::before {
+  content: '✦ AI Summary';
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-cyan);
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
 /* ===== TAGS ===== */
 .tag {
   display: inline-block;
