@@ -1,0 +1,100 @@
+Total Performance Management: 
+
+EDDIE CHONG JUN YI
+
+Executive Summary & Overall Narrative
+
+This year, my core strategic focus was successfully managing the complex financial landscape of our research portfolio—specifically achieving rigorous grant utilization targets and securing staff continuity—while simultaneously driving operational efficiency through major data digitization initiatives. I successfully led the full deployment of a digital data entry automation workflow, which eliminated a manual FTE position, and significantly improved the speed and reliability of our data pipeline for critical assessments, ensuring high financial governance and scalable research continuity.
+
+Key Achievements & Impact
+
+A. Strategic Grant and Financial Governance for Research Continuity
+
+Grant Management and Utilization
+
+Scope & Challenge: Managed a diverse portfolio of five major research studies (STAR, INTERREACH, SINGER, SINGER EXTENSION, and IDECIDE), focusing intensely on the critical grant closure for STAR, INTERREACH, and SINGER LCG, which had an average fund utilization rate below 50% at the start of the year (Jan 2025).
+
+Action & Result: Implemented aggressive and rigorous governance strategies to rapidly deploy remaining funds for the three expiring grants. This included detailed staff planning and allocation, meticulous documentation of OOE expenses, and continuous monitoring to ensure all expenditures were within approved limits. This critical coordination successfully drove a rapid financial turnaround, increasing the average utilization rate from under 50% to above 95% (Nov 2025) within ten months, preventing the loss of significant research capital and achieving the rigorous financial governance target of >98% utilization for all expiring funds.
+
+Staff Continuity & Risk Mitigation: Through comprehensive strategic budget planning that incorporated new grant funding and potential future revenue projections (e.g., NCC services), I successfully navigated a significant funding gap impacting several staff positions. This proactive planning and resource allocation ensured the timely and successful renewal of all critical MACC staff members, preventing staff attrition and maintaining continuity across all active research studies and self-financing service lines.
+
+Strategic Process Improvement: Leveraging the operational risks identified in the late-stage utilization efforts on STAR, INTERREACH, and SINGER LCG, I developed and strategically deployed a new model for proactive, consistent utilization planning. This process is now the core management strategy for ongoing grants (SINGER EXTENSION and IDECIDE), which includes establishing quarterly financial reviews focused on OOE expenditure monitoring. This allows me to regularly discuss fund variation with project leads and strategically deploy funds to ensure consistent, long-term resource utilization and mitigate future risk of under-utilization or claim rejection.
+
+Self-Financing Account Management and Future Revenue Planning
+
+Scope & Challenge: Ensure the long-term financial sustainability and operational capacity of key research support functions, particularly the new MACC Wet Lab services and the MACC Dry Lab (NSLF) account, by establishing robust cost recovery and financial control.
+
+Action & Result (Wet Lab): Successfully established a self-financing service model for the MACC Wet Lab, setting clear charging mechanisms for collaborative projects (e.g., Dr. Helen and Dr. Mervyn). Strategically utilized the INTERREACH Center Grant as initial startup funding for essential consumables. Through rigorous revenue forecasting and close monitoring of service utilization, the Wet Lab achieved a positive operational balance of ~SGD 90,000 within the fiscal year, demonstrating successful cost recovery and establishing necessary operational reserves for service expansion.
+
+Action & Result (Dry Lab/NSLF): Rigorously managed the highly critical MACC Dry Lab (NSLF) account, which operates on long-term cost recovery. Through meticulous tracking of charges and disciplined fiscal oversight, I maintained a robust positive operational balance of SGD 590,000. This substantial reserve secures the long-term funding stability for essential dry lab infrastructure, core systems, and key technical personnel, including the Senior Research Fellow (Kwong Hsia) and critical Data Administration staff (Anqi).
+
+Future Planning: Developed a detailed 3-year financial sustainability roadmap for the primary self-financing accounts, including the Wet Lab and Dry Lab, outlining achievable revenue targets and contingency plans to scale operational capacity in alignment with projected future research study volumes.
+
+B. Digitization and Scalability: Technical Excellence & Operational Efficiency
+
+Process Improvement 1 (Data Automation & Cost Savings)
+
+Challenge: Identified a labor-intensive, manual data entry process (requiring 1 FTE) that introduced workflow bottlenecks, high labor cost, and human error risk across all assessments.
+
+Action & Result: Successfully led the full deployment of a 100% digitized workflow for assessments, including the SINGER extension and various psychometric scales. This automation eliminated the need for a dedicated data entry officer, delivering an immediate SGD50,000 annual cost saving (1 FTE). Crucially, this new digital infrastructure creates a highly scalable model that prevents the need for additional manpower investment, even as the volume of studies and service provision scales up.
+
+Technical System Contribution (Qualtrics Library)
+
+Scenario: The shift from error-prone, hardcopy administration and manual rater scoring to fully digitized data required a robust, standardized, and reusable technical asset library for neuropsychological assessments (NPAs) to support both research and NCC services.
+
+Action & Result: Designed and implemented a comprehensive Qualtrics assessment template library for core NPAs (RBANS, NTB, VDB, ADAS-COG, etc.) used within MACC. This technical asset eliminated the error-prone hardcopy administration and manual scoring steps for these assessments, replacing them with automated, in-platform data capture and scoring logic. This critical shift eliminates all future manpower required for questionnaire creation and manual scoring, enabling a scalable deployment model for future studies and NCC services. Strategic Validation Example: The library has already secured its first external utilization, with Dr. Saima's team (part of the INTERREACH grant) interested in utilizing the VDB (Vascular Dementia Battery) template. While this initial, early-stage collaboration is not revenue-generating, it serves as crucial strategic validation of the asset's quality, establishes a collaborative service model, and lays the groundwork for future cost-recovery or revenue streams from non-affiliated external partners. This standardized technical asset maintains the 100% digitized workflow, delivering consistently cleaned data within the target 5 working days of assessment completion and significantly reducing rater error and subsequent query resolution time.
+
+C. Leadership, Team Development, and Resource Optimization
+
+Rater Management Optimization
+
+Challenge: To effectively transition my personal focus to new core duties (Grant Management and high-level administrative tasks), I initiated a strategic plan to optimize the Rater Management function. My personal time commitment to rating duties (previously 0.3 FTE) needed to be delegated and reduced to 0.1 FTE or less to free up capacity for strategic work while maintaining quality control.
+
+Action & Result: Successfully implemented a structured Rater Management optimization plan:
+
+Leadership Pipeline & Certification: Developed and mentored key personnel to enhance specialized capability, directly addressing the continuity risk for high-profile external trials. This included fostering Adabel, a senior rater, into a supervisory role by Q4 2025, and successfully mentoring Shin Hui through the rigorous AHEAD trial sponsor certification process. This focused effort established a robust, resilient Rater Management capacity, securing two certified main raters (Adabel and Eddie) and two certified backup raters (Shin Hui and Katrina). This multi-layered structure ensures MACC can sustainably deliver critical NCC services for sponsored trials, including the AHEAD and BMS trials, while reducing operational risk associated with staff attrition or availability.
+
+Ownership & Accountability: By Q3 2025, I successfully implemented a new model where every rater was strategically allocated to take ownership of the neuropsychological assessment portion of a designated project, significantly improving domain expertise and project management skills. This allocation includes: Adabel (AHEAD trial and BMS trial), Shin Hui (PPTM), Amanda (SINGER Extension), and Tong Xin (data and contract related work).
+
+Efficiency Gain & Transition: These targeted development and delegation efforts successfully reduced my personal time commitment to dedicated Rater Management from 0.3 to 0.1 by Q4 2025, successfully enabling my strategic transition. I also formalized the new automated, digital workflow by publishing an internal SOP for digitization.
+
+D. Research Output and Visibility
+
+Research Management and Visibility
+
+Scope & Challenge: Improve the external visibility and tracking of institutional research output and actively mentor junior staff to increase publication cadence. Critical Context: The unexpected departure of the Neuropsychology Research Fellow created a significant leadership vacuum, directly impacting Raters' research output and jeopardizing the achievement of their individual academic KPIs.
+
+Action & Result: Delivered significant contributions to institutional research output and visibility, directly mitigating the impact of the leadership gap:
+
+Advisory and Mentorship (Mitigating Risk): Despite not being on an academic track, I stepped into a close advisory role to support affected research assistant. Specifically, I provided ongoing guidance and support to Research Assistant Christian, enabling him to successfully synthesize his research and finalize the submission of his first publication. This direct intervention ensured staff career development remained a priority and stabilized research continuity during a period of transition.
+
+Co-authorship (Exceeded Goal): Co-authored 11 distinct papers in 2025, significantly exceeding the target of 3. These contributions stemmed from providing specialized scientific input across multiple research teams, specifically focusing on neuropsychological assessment (NPA) methodology/interpretation and rigorous research data management (RDM) expertise. This clearly demonstrates the critical link between operational excellence and scientific impact.
+
+2025 Co-Authored Publications:
+
+"Associations between Cognitive Frailty and Circulating Cardiovascular Biomarkers in a Memory Clinic Cohort" (2025)
+
+"Visit-to-visit blood pressure variability, brain MRI measures, and cognition in non-demented older adults," Hypertension Research (2025)
+
+"Synergistic effect between cortical cerebral microinfarcts and brain atrophy on cognitive decline," Brain (2025)
+
+"White Matter Hyperintensities Moderate the Association Between Diabetes and Non-AD Brain Atrophy," Diabetes Care (2025)
+
+"Effect of metabolic syndrome severity on cerebral haemodynamics and cognition in community-based cohort," Atherosclerosis (2025)
+
+"Spatial Navigation as a Digital Marker for Clinically Differentiating Cognitive Impairment Severity," medRxiv (2025)
+
+"Mind the Gap: Does Brain Age Improve Alzheimer’s Disease Prediction?," bioRxiv (2025)
+
+"Adherence to Lifestyle Intervention Activities in the SINgapore GERiatric Intervention Study to Reduce Cognitive Decline and Physical Frailty (SINGER) study: A One-Year," Patient Education and Counseling (2025)
+
+"A deep‐learning retinal aging biomarker for cognitive decline and incident dementia," Alzheimer's & dementia (2025)
+
+"Spectral normative modeling of brain structure," medRxiv (2025)
+
+"U-shaped association of resting heart rate with cognitive decline," Brain Communications (2025)
+
+Visibility: Improved research output visibility by developing and publishing an improved, automated database for publications with continuous citation updates by Q1 2026 (Status: On Track).
+
+
+
