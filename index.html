@@ -3,94 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eddie | Digital Portfolio</title>
-    <meta name="description" content="Personal portfolio of a developer focused on building digital experiences with Antigravity.">
+    <title>Eddie | Software Professional</title>
+    <meta name="description" content="Professional portfolio of Eddie, focusing on impact, precision, and digital craftsmanship.">
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- this is a personal portfolio website built using antigravity -->
 
-    <nav>
+    <nav id="navbar">
         <div class="container nav-content">
-            <a href="#" class="logo">EDDIE</a>
+            <a href="#" class="logo">Eddie.</a>
             <div class="nav-links">
                 <a href="#about">About</a>
-                <a href="#projects">Projects</a>
+                <a href="#experience">Experience</a>
                 <a href="#contact">Contact</a>
             </div>
-            <a href="#contact" class="btn btn-outline" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">Get in touch</a>
         </div>
     </nav>
 
     <header class="hero">
-        <div class="hero-bg"></div>
-        <div class="container hero-content reveal">
-            <span class="badge">Built with Antigravity AI</span>
-            <h1>Crafting Digital <br><span class="gradient-text">Experiences.</span></h1>
-            <p>I'm a developer passionate about building high-performance, aesthetically pleasing web applications using cutting-edge AI tools.</p>
-            <div class="cta-group">
-                <a href="#projects" class="btn btn-primary">View Projects</a>
-                <a href="#about" class="btn btn-outline">About Me</a>
-            </div>
+        <div class="container hero-content fade-in">
+            <span class="section-label">Software Professional</span>
+            <h1>Building solutions with <br>precision & purpose.</h1>
+            <p>Dedicated to delivering high-impact digital experiences through clean architecture and modern development practices.</p>
+            <a href="#experience" class="btn btn-dark">View My Journey</a>
         </div>
     </header>
 
-    <section id="about" class="container">
-        <h2 class="section-title">The Foundation</h2>
-        <div class="grid">
-            <div class="card reveal">
-                <h3>My Vision</h3>
-                <p>To merge performance with beauty, creating websites that aren't just functional, but delightful to interact with.</p>
+    <main>
+        <section id="about" class="container">
+            <div class="fade-in">
+                <span class="section-label">Introduction</span>
+                <h2 class="section-title">The Focus</h2>
+                <p style="font-size: 1.25rem; max-width: 800px; color: var(--text-muted);">
+                    I specialize in bridging the gap between complex technical requirements and intuitive user experiences. My approach is rooted in minimalism, and I believe that excellence is found in the details.
+                </p>
             </div>
-            <div class="card reveal" style="animation-delay: 0.2s;">
-                <h3>The Tech</h3>
-                <p>Utilizing modern frameworks and AI-assisted workflows like Antigravity to push the boundaries of what's possible online.</p>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="projects" style="background: rgba(255,255,255,0.01);">
-        <div class="container">
-            <h2 class="section-title">Featured Work</h2>
-            <div class="grid">
-                <!-- Project 1 -->
-                <div class="card">
-                    <div style="background: var(--glass); height: 200px; border-radius: 12px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); color: var(--primary);">
-                        Project Image
+        <section id="experience" style="background-color: var(--bg-secondary);">
+            <div class="container">
+                <span class="section-label">Timeline</span>
+                <h2 class="section-title">Professional Journey</h2>
+                
+                <div class="experience-list">
+                    <!-- Item 1 -->
+                    <div class="experience-item fade-in">
+                        <div class="date">2024 &mdash; Present</div>
+                        <div class="content">
+                            <h3>Lead Developer</h3>
+                            <div class="role">Personal Projects & AI Integration</div>
+                            <p>Architecting scalable solutions using modern AI workflows like Antigravity to accelerate development cycles and improve code quality.</p>
+                        </div>
                     </div>
-                    <h3>Personal Brand Site</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">A high-end, responsive portfolio built with a focus on typography and animations.</p>
-                    <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 600;">Explore Case Study →</a>
+
+                    <!-- Item 2 -->
+                    <div class="experience-item fade-in">
+                        <div class="date">2022 &mdash; 2024</div>
+                        <div class="content">
+                            <h3>Software Engineer</h3>
+                            <div class="role">Web Exploration</div>
+                            <p>Focused on building responsive, performant web applications with a strong emphasis on clean code and user-centric design.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <footer style="padding: 4rem 0; border-top: 1px solid var(--glass-border); text-align: center;">
+        <section id="contact" class="container">
+            <div class="fade-in" style="text-align: center;">
+                <span class="section-label">Connect</span>
+                <h2 class="section-title">Let's discuss your next project.</h2>
+                <p style="margin-bottom: 3rem; color: var(--text-muted);">Open for collaborations and professional inquiries.</p>
+                <a href="mailto:contact@example.com" class="btn btn-dark">Get In Touch</a>
+            </div>
+        </section>
+    </main>
+
+    <footer style="padding: 4rem 0; border-top: 1px solid var(--border); text-align: center;">
         <div class="container">
-            <p style="color: var(--text-muted);">&copy; 2026 Eddie. Built with precision and Antigravity.</p>
+            <p style="font-size: 0.8rem; letter-spacing: 0.05em; color: var(--text-muted);">&copy; 2026 EDDIE. ALL RIGHTS RESERVED. <br> BUILT WITH ANTIGRAVITY.</p>
         </div>
     </footer>
 
     <script>
-        // Smooth scroll reveal effect
-        const observerOptions = {
-            threshold: 0.1
-        };
-
+        // Professional Reveal Effect
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('reveal');
+                    entry.target.classList.add('visible');
                 }
             });
-        }, observerOptions);
+        }, { threshold: 0.1 });
 
-        document.querySelectorAll('.card').forEach(el => observer.observe(el));
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Navbar Scroll Styling
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
     </script>
 </body>
 </html>
