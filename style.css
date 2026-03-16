@@ -46,6 +46,7 @@ body {
   filter: blur(120px);
   opacity: 0.12;
   animation: drift 20s ease-in-out infinite alternate;
+  transition: background 2.5s ease;
 }
 .aurora-blob-1 {
   width: 600px; height: 600px;

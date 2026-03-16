@@ -1,0 +1,32 @@
+{
+  "name": "HTML & CSS Development",
+  "image": "mcr.microsoft.com/vscode/devcontainers/base:ubuntu",
+  
+  // Configure tool-specific properties.
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "liveServer.settings.donotShowInfoMsg": true,
+        "editor.formatOnSave": true,
+        "emmet.includeLanguages": {
+          "erb": "html"
+        }
+      },
+      "extensions": [
+        "ritwickdey.LiveServer",      // Local development server with live reload
+        "formulahendry.auto-rename-tag", // Automatically rename paired HTML tags
+        "pranaygp.vscode-css-peek",    // View CSS definitions directly from HTML
+        "esbenp.prettier-vscode",     // Code formatter
+        "stylelint.vscode-stylelint"  // CSS linting
+      ]
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [5500],
+
+  // Use 'postCreateCommand' to run commands after the container is created.
+  // "postCreateCommand": "apt-get update && apt-get install -y git",
+
+  "remoteUser": "vscode"
+}
