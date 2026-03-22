@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Style Showcase</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#000; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; }
+canvas { display:block; }
+#ui {
+    position:fixed; bottom:0; left:0; right:0; z-index:10;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    padding:16px 24px 22px;
+    background:linear-gradient(transparent, rgba(0,0,0,0.88));
+    pointer-events:none;
+}
+#style-name { font-size:22px; font-weight:700; letter-spacing:0.06em; color:#fff; transition:color 0.5s; }
+#style-desc { font-size:12px; color:rgba(255,255,255,0.45); text-align:center; max-width:520px; line-height:1.6; }
+#style-btns { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; pointer-events:all; }
+.sbtn {
+    padding:7px 18px; border-radius:20px; border:1.5px solid rgba(255,255,255,0.2);
+    background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.5);
+    font-size:11px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase;
+    cursor:pointer; transition:all 0.2s;
+}
+.sbtn:hover { border-color:rgba(255,255,255,0.5); color:#fff; background:rgba(255,255,255,0.12); }
+.sbtn.active { color:#fff; }
+#back { position:fixed; top:18px; left:24px; z-index:10; color:rgba(255,255,255,0.35);
+    font-size:11px; letter-spacing:0.15em; text-decoration:none; text-transform:uppercase; }
+#back:hover { color:#fff; }
+</style>
+</head>
+<body>
+<a href="workstation.html" id="back">← Back</a>
+<div id="ui">
+    <div id="style-name">—</div>
+    <div id="style-desc">—</div>
+    <div id="style-btns"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+// ─── Renderer ─────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(44, innerWidth/innerHeight, 0.01, 200);
+camera.position.set(0, 4.5, 8);
+camera.lookAt(0, 0.5, 0);
+window.addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+
+// ─── Scene root — everything lives here so we can wipe cleanly ───────────────
+const root = new THREE.Group();
+scene.add(root);
+let sceneObjects = [];
+function clearRoot() {
+    sceneObjects.forEach(o => root.remove(o));
+    sceneObjects = [];
+}
+function addToRoot(o) { root.add(o); sceneObjects.push(o); return o; }
+
+// ─── Shared lights (rebuilt per style) ───────────────────────────────────────
+let sceneLights = [];
+function clearLights() { sceneLights.forEach(l => scene.remove(l)); sceneLights = []; }
+function addLight(l) { scene.add(l); sceneLights.push(l); return l; }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function box(w, h, d) { return new THREE.BoxGeometry(w, h, d); }
+function cyl(rt, rb, h, segs) { return new THREE.CylinderGeometry(rt, rb, h, segs || 16); }
+function plane(w, h) { return new THREE.PlaneGeometry(w, h); }
+
+// Add glowing edge lines to a mesh (wireframe-style)
+function addEdgeLines(geo, parent, color, opacity) {
+    const edges = new THREE.EdgesGeometry(geo);
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: opacity || 1 });
+    const lines = new THREE.LineSegments(edges, mat);
+    parent.add(lines);
+    return lines;
+}
+
+// Add cel-shading outline: slightly enlarged BackSide black mesh
+function addOutline(geo, parent, thickness) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    const s = 1 + (thickness || 0.06);
+    mesh.scale.set(s, s, s);
+    parent.add(mesh);
+    return mesh;
+}
+
+// ─── Toon gradient map ────────────────────────────────────────────────────────
+function makeToonGradient(numSteps) {
+    const data = new Uint8Array(numSteps * 3);
+    for (let i = 0; i < numSteps; i++) {
+        const v = Math.round((i / (numSteps - 1)) * 255);
+        data[i*3] = data[i*3+1] = data[i*3+2] = v;
+    }
+    const tex = new THREE.DataTexture(data, numSteps, 1, THREE.RGBFormat);
+    tex.minFilter = tex.magFilter = THREE.NearestFilter;
+    tex.needsUpdate = true;
+    return tex;
+}
+const toonGrad3 = makeToonGradient(3); // 3-step toon
+
+// ─── Style builders ───────────────────────────────────────────────────────────
+
+// ════════════════════════════════════════════════════════════════════════════
+// STYLE 1 — REALISTIC DARK  (PBR smooth shading, current workstation look)
+// ════════════════════════════════════════════════════════════════════════════
+function buildRealistic() {
+    clearLights();
+    addLight(new THREE.AmbientLight(0x0d0d1a, 1.4));
+    const key = addLight(new THREE.DirectionalLight(0xb0c0ff, 1.8));
+    key.position.set(-4, 7, 4); key.castShadow = true; key.shadow.mapSize.set(2048,2048);
+    const fill = new THREE.DirectionalLight(0xff40a0, 0.3);
+    fill.position.set(-3, 1, -5);
+    addLight(fill);
+    const screenGlow = addLight(new THREE.PointLight(0x8040ff, 2, 7));
+    screenGlow.position.set(-2.8, 1.5, 0.5);
+
+    scene.background = new THREE.Color(0x04040a);
+    scene.fog = new THREE.FogExp2(0x04040a, 0.038);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.9;
+
+    function mat(color, rough, metal) {
+        return new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
+    }
+    const chassis = mat(0x3d3d42, 0.28, 0.62);
+    const dark     = mat(0x111116, 0.8, 0.05);
+    const legM     = mat(0x1a1a1f, 0.25, 0.85);
+    const hingeM   = mat(0x505058, 0.25, 0.85);
+    const folCols  = [0x2c5fa8, 0x8b2020, 0x1a6b3a, 0x5a3a8c];
+
+    buildScene({ chassis, dark, legM, hingeM, folCols,
+        makeFolMat: c => mat(c, 0.4, 0.1),
+        deskTop: mat(0x1e1008, 0.75, 0.02),
+        boxMat: mat(0x1e1e28, 0.6, 0.25),
+        segsCyl: 20, segsLowPoly: 20
+    });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// STYLE 2 — LOW-POLY FACETED  (flat shading, few segments, geometric charm)
+// ════════════════════════════════════════════════════════════════════════════
+function buildLowPoly() {
+    clearLights();
+    addLight(new THREE.AmbientLight(0x1a1008, 1.2));
+    const key = addLight(new THREE.DirectionalLight(0xffd070, 2.2));
+    key.position.set(-5, 8, 3); key.castShadow = true; key.shadow.mapSize.set(2048,2048);
+    const back1 = new THREE.DirectionalLight(0xff6020, 0.8);
+    back1.position.set(4, 2, 5);
+    addLight(back1);
+    const back2 = new THREE.DirectionalLight(0x204080, 0.5);
+    back2.position.set(-3, -1, -4);
+    addLight(back2);
+
+    scene.background = new THREE.Color(0x0e0904);
+    scene.fog = new THREE.FogExp2(0x0e0904, 0.03);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+
+    function mat(color) {
+        return new THREE.MeshPhongMaterial({ color, flatShading: true, shininess: 20 });
+    }
+    const folCols = [0xd4822a, 0xc03820, 0x3a7820, 0x884490];
+
+    buildScene({ chassis: mat(0x484030), dark: mat(0x1a1408), legM: mat(0x2a2010),
+        hingeM: mat(0x605040), folCols,
+        makeFolMat: c => mat(c),
+        deskTop: mat(0x4a3015), boxMat: mat(0x2a1a10),
+        segsCyl: 6, segsLowPoly: 6
+    });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// STYLE 3 — CEL-TOON CARTOON  (MeshToonMaterial + black outlines)
+// ════════════════════════════════════════════════════════════════════════════
+function buildCelToon() {
+    clearLights();
+    addLight(new THREE.AmbientLight(0xffffff, 0.6));
+    const key = addLight(new THREE.DirectionalLight(0xffffff, 2.5));
+    key.position.set(-4, 8, 5); key.castShadow = true; key.shadow.mapSize.set(2048,2048);
+    const back = new THREE.DirectionalLight(0x80aaff, 0.6);
+    back.position.set(5, 2, -3);
+    addLight(back);
+
+    scene.background = new THREE.Color(0xf5f0e8);
+    scene.fog = new THREE.FogExp2(0xf5f0e8, 0.025);
+    renderer.toneMapping = THREE.NoToneMapping;
+    renderer.toneMappingExposure = 1;
+
+    function mat(color) {
+        return new THREE.MeshToonMaterial({ color, gradientMap: toonGrad3 });
+    }
+    const folCols = [0x4488ee, 0xee4444, 0x44aa44, 0xaa44ee];
+
+    buildScene({ chassis: mat(0x8899bb), dark: mat(0x223344), legM: mat(0x334455),
+        hingeM: mat(0x667788), folCols,
+        makeFolMat: c => mat(c),
+        deskTop: mat(0xc8a870), boxMat: mat(0x445566),
+        segsCyl: 12, segsLowPoly: 12,
+        outline: true
+    });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// STYLE 4 — WIREFRAME BLUEPRINT  (dark fill + glowing edge lines)
+// ════════════════════════════════════════════════════════════════════════════
+function buildWireframe() {
+    clearLights();
+    addLight(new THREE.AmbientLight(0x002244, 3));
+    const blue = new THREE.DirectionalLight(0x0066ff, 0.5);
+    blue.position.set(-3, 5, 3);
+    addLight(blue);
+    const glow = addLight(new THREE.PointLight(0x00aaff, 1.5, 10));
+    glow.position.set(0, 3, 0);
+
+    scene.background = new THREE.Color(0x010408);
+    scene.fog = new THREE.FogExp2(0x010408, 0.04);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
+
+    const darkFill = new THREE.MeshBasicMaterial({ color: 0x010a14, transparent: true, opacity: 0.85 });
+    const folCols  = [0x00aaff, 0x00ffcc, 0x4488ff, 0x0066cc];
+
+    buildScene({ chassis: darkFill, dark: darkFill, legM: darkFill,
+        hingeM: darkFill, folCols,
+        makeFolMat: () => darkFill.clone(),
+        deskTop: darkFill.clone(), boxMat: darkFill.clone(),
+        segsCyl: 12, segsLowPoly: 8,
+        wireframe: true, wireColor: 0x00ccff, wireFolColors: folCols
+    });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// STYLE 5 — HOLOGRAPHIC SCAN  (transparent faces + bright additive edges)
+// ════════════════════════════════════════════════════════════════════════════
+function buildHolographic() {
+    clearLights();
+    addLight(new THREE.AmbientLight(0x002233, 2));
+    const p1 = new THREE.PointLight(0x00ffcc, 1.5, 12);
+    p1.position.set(0, 4, 0);
+    addLight(p1);
+    const p2 = new THREE.PointLight(0x0066ff, 1, 10);
+    p2.position.set(-3, 2, 3);
+    addLight(p2);
+
+    scene.background = new THREE.Color(0x000608);
+    scene.fog = new THREE.FogExp2(0x000608, 0.04);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
+
+    const ghostFill = new THREE.MeshBasicMaterial({
+        color: 0x003344, transparent: true, opacity: 0.08,
+        side: THREE.DoubleSide, depthWrite: false
+    });
+    const folCols = [0x00ffcc, 0x00ccff, 0x40ffaa, 0x0088ff];
+
+    buildScene({ chassis: ghostFill, dark: ghostFill, legM: ghostFill,
+        hingeM: ghostFill, folCols,
+        makeFolMat: () => ghostFill.clone(),
+        deskTop: ghostFill.clone(), boxMat: ghostFill.clone(),
+        segsCyl: 16, segsLowPoly: 8,
+        holographic: true, holoColors: folCols
+    });
+}
+
+// ─── Shared geometry builder (receives per-style materials) ──────────────────
+function buildScene(s) {
+    clearRoot();
+
+    // Floor
+    const floor = addToRoot(new THREE.Mesh(plane(60, 60),
+        s.dark.clone ? s.dark.clone() : s.dark));
+    floor.rotation.x = -Math.PI/2;
+    floor.position.y = -2.35;
+    floor.receiveShadow = true;
+    if (s.wireframe) addEdgeLines(plane(60,60), floor, s.wireColor, 0.08);
+
+    // ── Desk ──────────────────────────────────────────────────────────────────
+    const deskGroup = addToRoot(new THREE.Group());
+    const topGeo = box(13, 0.15, 6);
+    const deskTop = new THREE.Mesh(topGeo, s.deskTop);
+    deskTop.position.y = -0.075; deskTop.receiveShadow = true;
+    deskGroup.add(deskTop);
+    if (s.outline)      addOutline(topGeo, deskTop, 0.02);
+    if (s.wireframe)    addEdgeLines(topGeo, deskTop, s.wireColor, 0.6);
+    if (s.holographic)  addEdgeLines(topGeo, deskTop, 0x00ffcc, 0.5);
+
+    const legGeo = box(0.1, 2.2, 0.1);
+    [[-5.8,-2.6],[-5.8,2.6],[5.8,-2.6],[5.8,2.6]].forEach(([lx,lz]) => {
+        const leg = new THREE.Mesh(legGeo, s.legM);
+        leg.position.set(lx, -1.25, lz); leg.castShadow = true;
+        deskGroup.add(leg);
+        if (s.wireframe)   addEdgeLines(legGeo, leg, s.wireColor, 0.7);
+        if (s.holographic) addEdgeLines(legGeo, leg, 0x00ccff, 0.6);
+    });
+    const strGeo = box(11.6, 0.06, 0.06);
+    [-2.6, 2.6].forEach(sz => {
+        const str = new THREE.Mesh(strGeo, s.legM);
+        str.position.set(0, -2.2, sz);
+        deskGroup.add(str);
+        if (s.wireframe)   addEdgeLines(strGeo, str, s.wireColor, 0.6);
+        if (s.holographic) addEdgeLines(strGeo, str, 0x00ccff, 0.5);
+    });
+
+    // ── Laptop ────────────────────────────────────────────────────────────────
+    const laptopGroup = addToRoot(new THREE.Group());
+    laptopGroup.position.set(-2.8, 0, 0.4);
+    const W=3.0, D=2.05, BH=0.14, LH=0.085;
+
+    function addMesh(geo, mat, pos, parent, castShadow) {
+        const m = new THREE.Mesh(geo, mat);
+        if (pos) m.position.set(...pos);
+        if (castShadow) m.castShadow = true;
+        parent.add(m);
+        if (s.outline)      addOutline(geo, m, 0.04);
+        if (s.wireframe)    addEdgeLines(geo, m, s.wireColor, 0.7);
+        if (s.holographic)  addEdgeLines(geo, m, 0x00ffcc, 0.7);
+        return m;
+    }
+
+    addMesh(box(W, BH, D), s.chassis, [0, BH/2, 0], laptopGroup, true);
+    addMesh(box(W-0.15, D-0.25, 0.01), s.dark, [0, BH+0.001, 0.06], laptopGroup);
+
+    // Hinge
+    const hingeGeo = cyl(0.06, 0.06, 0.28, s.segsCyl);
+    [-0.88, 0.88].forEach(hx => {
+        const hm = new THREE.Mesh(hingeGeo, s.hingeM);
+        hm.rotation.z = Math.PI/2; hm.position.set(hx, BH+0.01, -D/2);
+        laptopGroup.add(hm);
+        if (s.wireframe)   addEdgeLines(hingeGeo, hm, s.wireColor, 0.8);
+        if (s.holographic) addEdgeLines(hingeGeo, hm, 0x00ffcc, 0.8);
+    });
+
+    // Lid
+    const lidPivot = new THREE.Group();
+    lidPivot.position.set(0, BH, -D/2);
+    laptopGroup.add(lidPivot);
+    const lidGeo = box(W, LH, D);
+    const lid = new THREE.Mesh(lidGeo, s.chassis);
+    lid.position.set(0, LH/2, D/2); lid.castShadow = true;
+    lidPivot.add(lid);
+    if (s.outline)      addOutline(lidGeo, lid, 0.03);
+    if (s.wireframe)    addEdgeLines(lidGeo, lid, s.wireColor, 0.7);
+    if (s.holographic)  addEdgeLines(lidGeo, lid, 0x00ffcc, 0.7);
+
+    // Screen
+    const scrColor = s.holographic ? 0x003344 : (s.wireframe ? 0x010a14 : 0x0a0814);
+    const scrMat = s.outline
+        ? new THREE.MeshToonMaterial({ color: 0x223366, gradientMap: toonGrad3 })
+        : new THREE.MeshBasicMaterial({ color: scrColor, transparent: s.holographic, opacity: s.holographic ? 0.12 : 1 });
+    const scrGeo = box(W-0.18, LH*0.5, D-0.22);
+    const scr = new THREE.Mesh(scrGeo, scrMat);
+    scr.position.set(0, -LH*0.25, D/2);
+    lidPivot.add(scr);
+    if (s.wireframe)   addEdgeLines(scrGeo, scr, 0x00aaff, 1);
+    if (s.holographic) addEdgeLines(scrGeo, scr, 0x00ffee, 0.9);
+
+    lidPivot.rotation.x = -1.28;
+
+    // ── Folder box ────────────────────────────────────────────────────────────
+    const boxGroup = addToRoot(new THREE.Group());
+    boxGroup.position.set(3.2, 0, -0.5);
+    const BW=2.6, BD=1.3, BOXH=1.0, BT=0.05;
+
+    function addBoxFace(geo, pos, parent) {
+        const m = new THREE.Mesh(geo, s.boxMat);
+        if (pos) m.position.set(...pos);
+        parent.add(m);
+        if (s.outline)      addOutline(geo, m, 0.04);
+        if (s.wireframe)    addEdgeLines(geo, m, s.wireColor, 0.6);
+        if (s.holographic)  addEdgeLines(geo, m, 0x00aaff, 0.5);
+        return m;
+    }
+    addBoxFace(box(BW,BT,BD), [0,BT/2,0], boxGroup);
+    addBoxFace(box(BW,BOXH,BT), [0,BOXH/2,BD/2], boxGroup);
+    addBoxFace(box(BW,BOXH,BT), [0,BOXH/2,-BD/2], boxGroup);
+    addBoxFace(box(BT,BOXH,BD), [-BW/2,BOXH/2,0], boxGroup);
+    addBoxFace(box(BT,BOXH,BD), [BW/2,BOXH/2,0], boxGroup);
+
+    // Folders in box
+    s.folCols.forEach((col, i) => {
+        const fg = new THREE.Group();
+        fg.position.set(-0.9 + i*0.6, BOXH - 0.05, 0);
+        fg.rotation.y = [-0.08,0.04,-0.03,0.06][i];
+
+        const folMat = s.makeFolMat(col);
+        const covGeo = box(0.56, 1.1, 0.045);
+        const cover = new THREE.Mesh(covGeo, folMat);
+        cover.position.y = 0.5; fg.add(cover);
+
+        // Spine
+        const sc = new THREE.Color(col);
+        sc.r *= 0.65; sc.g *= 0.65; sc.b *= 0.65;
+        const spineMat = s.wireframe || s.holographic ? folMat : new THREE.MeshPhongMaterial({ color: sc, flatShading: !!s.outline });
+        const spineGeo = box(0.06, 1.1, 0.048);
+        const spine = new THREE.Mesh(spineGeo, spineMat);
+        spine.position.set(-0.25, 0.5, 0); fg.add(spine);
+
+        // Tab
+        const tc = new THREE.Color(col);
+        tc.r = Math.min(1, tc.r*1.4); tc.g = Math.min(1, tc.g*1.4); tc.b = Math.min(1, tc.b*1.4);
+        const tabMat = s.wireframe || s.holographic ? folMat : new THREE.MeshPhongMaterial({ color: tc });
+        const tabGeo = box(0.18, 0.08, 0.05);
+        const tab = new THREE.Mesh(tabGeo, tabMat);
+        tab.position.set(0.1, 1.1, 0); fg.add(tab);
+
+        if (s.outline) { addOutline(covGeo, cover, 0.06); addOutline(tabGeo, tab, 0.06); }
+        if (s.wireframe) {
+            const wc = s.wireFolColors ? s.wireFolColors[i] : s.wireColor;
+            addEdgeLines(covGeo, cover, wc, 0.9);
+            addEdgeLines(tabGeo, tab, wc, 0.9);
+        }
+        if (s.holographic) {
+            const hc = s.holoColors ? s.holoColors[i] : 0x00ffcc;
+            addEdgeLines(covGeo, cover, hc, 0.9);
+            addEdgeLines(tabGeo, tab, hc, 0.9);
+        }
+        boxGroup.add(fg);
+    });
+
+    // ── Pen holder ────────────────────────────────────────────────────────────
+    const penGroup = addToRoot(new THREE.Group());
+    penGroup.position.set(-1.4, 0, -1.5);
+    const penBodyGeo = cyl(0.18, 0.16, 0.55, s.segsCyl);
+    const penBody = new THREE.Mesh(penBodyGeo, s.hingeM);
+    penBody.position.y = 0.275; penGroup.add(penBody);
+    if (s.wireframe)   addEdgeLines(penBodyGeo, penBody, s.wireColor, 0.7);
+    if (s.holographic) addEdgeLines(penBodyGeo, penBody, 0x00ccff, 0.7);
+    if (s.outline)     addOutline(penBodyGeo, penBody, 0.05);
+}
+
+// ─── Style catalogue ──────────────────────────────────────────────────────────
+const STYLES = [
+    {
+        id:'realistic', name:'Realistic PBR',
+        color:'#7090ff',
+        desc:'Physically-based rendering — metalness, roughness, soft shadow maps. The "baseline" workstation look.',
+        build: buildRealistic
+    },
+    {
+        id:'lowpoly', name:'Low-Poly Faceted',
+        color:'#e8a040',
+        desc:'Flat shading with few polygon segments — every face is a distinct visible facet. Warm directional light accentuates the geometry.',
+        build: buildLowPoly
+    },
+    {
+        id:'toon', name:'Cel-Toon Cartoon',
+        color:'#44ee88',
+        desc:'Three.js MeshToonMaterial with a 3-step gradient map + bold black outlines drawn via back-face scaling.',
+        build: buildCelToon
+    },
+    {
+        id:'wireframe', name:'Wireframe Blueprint',
+        color:'#00ccff',
+        desc:'Nearly-black fills behind glowing cyan EdgesGeometry lines. Technical CAD / blueprint aesthetic.',
+        build: buildWireframe
+    },
+    {
+        id:'holo', name:'Holographic Scan',
+        color:'#00ffcc',
+        desc:'Ghost-transparent faces (opacity 0.08) + additive-blended bright edge lines. Sci-fi 3D-scan / AR display look.',
+        build: buildHolographic
+    }
+];
+
+// ─── Button build ─────────────────────────────────────────────────────────────
+const btnContainer = document.getElementById('style-btns');
+STYLES.forEach((st, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'sbtn';
+    btn.textContent = st.name;
+    btn.style.color = st.color;
+    btn.style.borderColor = st.color;
+    btn.addEventListener('click', () => applyStyle(i));
+    btnContainer.appendChild(btn);
+});
+
+function applyStyle(idx) {
+    const st = STYLES[idx];
+    st.build();
+    document.getElementById('style-name').textContent = st.name;
+    document.getElementById('style-name').style.color = st.color;
+    document.getElementById('style-desc').textContent = st.desc;
+    document.querySelectorAll('.sbtn').forEach((b,i) => b.classList.toggle('active', i===idx));
+}
+
+// ─── Animate ──────────────────────────────────────────────────────────────────
+let t = 0;
+function animate() {
+    requestAnimationFrame(animate);
+    t += 0.007;
+    camera.position.x = Math.sin(t * 0.2) * 2;
+    camera.position.z = 8 + Math.cos(t * 0.15) * 0.8;
+    camera.position.y = 4.5 + Math.sin(t * 0.1) * 0.4;
+    camera.lookAt(0, 0.5, 0);
+    renderer.render(scene, camera);
+}
+
+// ─── Error overlay ────────────────────────────────────────────────────────────
+function showError(msg) {
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);color:#f55;font:13px monospace;padding:40px;z-index:999;white-space:pre-wrap;overflow:auto;';
+    d.textContent = 'ERROR:\n\n' + msg;
+    document.body.appendChild(d);
+}
+window.onerror = (msg, src, line, col, err) => { showError((err ? err.stack : msg)); return true; };
+
+try { applyStyle(0); } catch(e) { showError(e.stack || e.message); }
+animate();
+</script>
+</body>
+</html>

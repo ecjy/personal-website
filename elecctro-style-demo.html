@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elecctro Style — EV Charger</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { overflow: hidden; background: #edeae4; font-family: system-ui, -apple-system, sans-serif; }
+  canvas { display: block; }
+  #label {
+    position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+    font: 800 18px/1 'Inter', system-ui, sans-serif;
+    letter-spacing: 0.22em; text-transform: uppercase; color: #2d2a3e;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  #subtitle {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    font: 400 13px/1 system-ui, sans-serif; color: #999; letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+<div id="label">EV CHARGER</div>
+<div id="subtitle">Elecctro-style 3D replica — Three.js</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment }  from 'three/addons/environments/RoomEnvironment.js';
+
+// ─── Renderer ────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+document.body.appendChild(renderer.domElement);
+
+// ─── Scene ───────────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xedeae4);   // warm cream like elecctro
+
+// ─── IBL Environment (soft matte reflections) ───────────────────────────────
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+// ─── Isometric-style Camera ─────────────────────────────────────────────────
+// Using a perspective camera with narrow FOV pushed far back = near-isometric
+const camera = new THREE.PerspectiveCamera(18, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(12, 10, 12);
+camera.lookAt(0, 1.8, 0);
+
+// ─── Helper: Rounded Box ────────────────────────────────────────────────────
+function roundedBox(w, h, d, r, s) {
+    const shape = new THREE.Shape();
+    const hw = w/2, hd = d/2;
+    shape.moveTo(-hw + r, -hd);
+    shape.lineTo( hw - r, -hd);
+    shape.quadraticCurveTo( hw, -hd, hw, -hd + r);
+    shape.lineTo( hw,  hd - r);
+    shape.quadraticCurveTo( hw,  hd,  hw - r, hd);
+    shape.lineTo(-hw + r,  hd);
+    shape.quadraticCurveTo(-hw,  hd, -hw,  hd - r);
+    shape.lineTo(-hw, -hd + r);
+    shape.quadraticCurveTo(-hw, -hd, -hw + r, -hd);
+
+    const extrudeSettings = { depth: h, bevelEnabled: true, bevelThickness: r * 0.4, bevelSize: r * 0.4, bevelSegments: s || 4 };
+    const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    geo.rotateX(-Math.PI / 2);
+    geo.translate(0, h / 2, 0);
+    return geo;
+}
+
+// ─── Elecctro palette ────────────────────────────────────────────────────────
+const C = {
+    body:     0xe8e4de,   // warm light grey
+    bodyDark: 0xd4d0c8,   // slightly darker panel
+    accent:   0xf0c131,   // elecctro yellow/gold
+    accentDk: 0xd9a820,   // darker gold
+    dark:     0x2d2a3e,   // charcoal/navy
+    screen:   0x1e3a28,   // dark green screen tint
+    screenLt: 0x44e878,   // green LED/text
+    cable:    0x282428,   // near black for cable
+    white:    0xffffff,
+    ground:   0xe2dfd8,   // ground shadow plane
+};
+
+// ─── Materials (soft, matte, elecctro-style) ─────────────────────────────────
+const bodyMat = new THREE.MeshStandardMaterial({
+    color: C.body, roughness: 0.82, metalness: 0.02
+});
+const bodyDarkMat = new THREE.MeshStandardMaterial({
+    color: C.bodyDark, roughness: 0.85, metalness: 0.02
+});
+const accentMat = new THREE.MeshStandardMaterial({
+    color: C.accent, roughness: 0.55, metalness: 0.08
+});
+const accentDkMat = new THREE.MeshStandardMaterial({
+    color: C.accentDk, roughness: 0.58, metalness: 0.1
+});
+const darkMat = new THREE.MeshStandardMaterial({
+    color: C.dark, roughness: 0.78, metalness: 0.05
+});
+const screenMat = new THREE.MeshStandardMaterial({
+    color: C.screen, roughness: 0.30, metalness: 0.0,
+    emissive: new THREE.Color(C.screenLt), emissiveIntensity: 0.12
+});
+const cableMat = new THREE.MeshStandardMaterial({
+    color: C.cable, roughness: 0.70, metalness: 0.05
+});
+const whiteMat = new THREE.MeshStandardMaterial({
+    color: C.white, roughness: 0.80, metalness: 0.0
+});
+
+// ─── Build EV Charger ────────────────────────────────────────────────────────
+const charger = new THREE.Group();
+scene.add(charger);
+
+// Main body — tall rounded pillar
+const bodyGeo = roundedBox(1.4, 4.2, 0.7, 0.12, 5);
+const body = new THREE.Mesh(bodyGeo, bodyMat);
+body.position.y = 0;
+body.castShadow = true;
+body.receiveShadow = true;
+charger.add(body);
+
+// Base section — slightly wider, darker
+const baseGeo = roundedBox(1.6, 0.5, 0.8, 0.08, 4);
+const base = new THREE.Mesh(baseGeo, bodyDarkMat);
+base.position.y = 0;
+base.castShadow = true;
+base.receiveShadow = true;
+charger.add(base);
+
+// Front panel (inset darker area)
+const panelGeo = new THREE.BoxGeometry(1.1, 2.4, 0.02);
+const panel = new THREE.Mesh(panelGeo, bodyDarkMat);
+panel.position.set(0, 2.3, 0.36);
+charger.add(panel);
+
+// Screen (small display on upper area)
+const screenGeo = new THREE.BoxGeometry(0.8, 0.45, 0.03);
+const screen = new THREE.Mesh(screenGeo, screenMat);
+screen.position.set(0, 3.5, 0.37);
+charger.add(screen);
+
+// Screen content — green battery indicator (canvas texture)
+(function addScreenContent() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 128;
+    const ctx = c.getContext('2d');
+    
+    // Dark green background
+    ctx.fillStyle = '#1a3326';
+    ctx.fillRect(0, 0, 256, 128);
+    
+    // Battery outline
+    ctx.strokeStyle = '#44e878';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(40, 35, 140, 58);
+    // Battery tip
+    ctx.fillStyle = '#44e878';
+    ctx.fillRect(180, 50, 15, 28);
+    // Battery fill bars
+    for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = '#44e878';
+        ctx.fillRect(50 + i * 40, 45, 28, 38);
+    }
+    // "100%" text
+    ctx.fillStyle = '#44e878';
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('100%', 240, 80);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 8;
+    screen.material = new THREE.MeshStandardMaterial({
+        map: tex, roughness: 0.30, metalness: 0.0,
+        emissive: new THREE.Color(0x44e878), emissiveIntensity: 0.15
+    });
+})();
+
+// Gold accent stripe below screen
+const stripGeo = new THREE.BoxGeometry(0.9, 0.08, 0.04);
+const strip = new THREE.Mesh(stripGeo, accentMat);
+strip.position.set(0, 3.2, 0.37);
+charger.add(strip);
+
+// Connector port (circular dark port on front)
+const portGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.06, 24);
+const port = new THREE.Mesh(portGeo, darkMat);
+port.rotation.x = Math.PI / 2;
+port.position.set(0, 1.5, 0.38);
+charger.add(port);
+
+// Port inner ring (gold)
+const portRingGeo = new THREE.TorusGeometry(0.12, 0.025, 12, 32);
+const portRing = new THREE.Mesh(portRingGeo, accentMat);
+portRing.position.set(0, 1.5, 0.40);
+charger.add(portRing);
+
+// Small indicator LEDs (dots below screen)
+[-0.15, 0, 0.15].forEach((x, i) => {
+    const dotGeo = new THREE.SphereGeometry(0.03, 12, 12);
+    const dotMat = new THREE.MeshStandardMaterial({
+        color: i < 2 ? C.screenLt : C.accent,
+        emissive: new THREE.Color(i < 2 ? C.screenLt : C.accent),
+        emissiveIntensity: 0.5,
+        roughness: 0.3
+    });
+    const dot = new THREE.Mesh(dotGeo, dotMat);
+    dot.position.set(x, 3.02, 0.38);
+    charger.add(dot);
+});
+
+// ─── Cable (hanging from side) ───────────────────────────────────────────────
+const cablePath = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.6, 2.8, 0.0),
+    new THREE.Vector3(-1.0, 2.3, 0.3),
+    new THREE.Vector3(-1.2, 1.6, 0.5),
+    new THREE.Vector3(-1.0, 0.9, 0.6),
+    new THREE.Vector3(-0.7, 0.3, 0.4),
+    new THREE.Vector3(-0.5, 0.05, 0.2),
+]);
+const cableTubeGeo = new THREE.TubeGeometry(cablePath, 32, 0.035, 12, false);
+const cable = new THREE.Mesh(cableTubeGeo, cableMat);
+cable.castShadow = true;
+charger.add(cable);
+
+// Cable connector plug (at end of cable)
+const plugGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.25, 16);
+const plug = new THREE.Mesh(plugGeo, darkMat);
+plug.position.set(-0.5, 0.12, 0.2);
+plug.rotation.z = 0.2;
+plug.castShadow = true;
+charger.add(plug);
+
+// Plug handle (gold accent)
+const plugHandleGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.06, 16);
+const plugHandle = new THREE.Mesh(plugHandleGeo, accentMat);
+plugHandle.position.set(-0.5, 0.28, 0.2);
+plugHandle.rotation.z = 0.2;
+charger.add(plugHandle);
+
+// ─── Top cap (rounded top of the charger) ────────────────────────────────────
+const topCapGeo = roundedBox(1.44, 0.15, 0.72, 0.06, 4);
+const topCap = new THREE.Mesh(topCapGeo, bodyDarkMat);
+topCap.position.y = 4.2;
+topCap.castShadow = true;
+charger.add(topCap);
+
+// Gold elecctro logo bar on top
+const logoGeo = new THREE.BoxGeometry(0.5, 0.04, 0.3);
+const logo = new THREE.Mesh(logoGeo, accentMat);
+logo.position.set(0, 4.38, 0);
+charger.add(logo);
+
+// ─── Ground / Shadow plane ───────────────────────────────────────────────────
+// Soft warm glow under the charger
+const groundGeo = new THREE.PlaneGeometry(12, 12);
+const groundMat = new THREE.ShadowMaterial({ opacity: 0.12 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.01;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Warm gold glow circle on ground (like elecctro's signature accent shadow)
+const glowCanvas = document.createElement('canvas');
+glowCanvas.width = 512; glowCanvas.height = 512;
+const gCtx = glowCanvas.getContext('2d');
+const grad = gCtx.createRadialGradient(256, 256, 0, 256, 256, 256);
+grad.addColorStop(0, 'rgba(240, 193, 49, 0.18)');
+grad.addColorStop(0.4, 'rgba(240, 193, 49, 0.08)');
+grad.addColorStop(1, 'rgba(240, 193, 49, 0.0)');
+gCtx.fillStyle = grad;
+gCtx.fillRect(0, 0, 512, 512);
+const glowTex = new THREE.CanvasTexture(glowCanvas);
+const glowPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(5, 5),
+    new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false })
+);
+glowPlane.rotation.x = -Math.PI / 2;
+glowPlane.position.y = 0.01;
+scene.add(glowPlane);
+
+// ─── Scattered gold coins (elecctro's signature) ────────────────────────────
+function makeCoin(x, z, scale) {
+    const coinGeo = new THREE.CylinderGeometry(0.18 * scale, 0.18 * scale, 0.04 * scale, 24);
+    const coin = new THREE.Mesh(coinGeo, accentDkMat);
+    coin.position.set(x, 0.02 * scale, z);
+    coin.rotation.x = Math.random() * 0.1;
+    coin.rotation.z = Math.random() * 0.3 - 0.15;
+    coin.castShadow = true;
+    scene.add(coin);
+}
+makeCoin(2.0, 1.2, 1.0);
+makeCoin(2.3, 0.8, 0.8);
+makeCoin(-1.8, -1.5, 0.9);
+
+// ─── Small credit card-like shape (gold card) ───────────────────────────────
+const cardGeo = new THREE.BoxGeometry(0.6, 0.02, 0.38);
+const card = new THREE.Mesh(cardGeo, accentMat);
+card.position.set(2.0, 0.01, -0.5);
+card.rotation.y = 0.4;
+card.castShadow = true;
+scene.add(card);
+
+// Card chip detail
+const chipGeo = new THREE.BoxGeometry(0.1, 0.025, 0.08);
+const chip = new THREE.Mesh(chipGeo, accentDkMat);
+chip.position.set(1.88, 0.02, -0.52);
+chip.rotation.y = 0.4;
+scene.add(chip);
+
+// ─── Lighting (soft, warm, matching elecctro) ────────────────────────────────
+// Hemisphere: warm sky → warm ground
+scene.add(new THREE.HemisphereLight(0xfff8ee, 0xe0d8c8, 0.6));
+
+// Key light — warm, from upper right, soft shadows
+const keyLight = new THREE.DirectionalLight(0xfff8ee, 1.2);
+keyLight.position.set(6, 12, 6);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.camera.near = 0.5;
+keyLight.shadow.camera.far = 40;
+keyLight.shadow.camera.left = keyLight.shadow.camera.bottom = -8;
+keyLight.shadow.camera.right = keyLight.shadow.camera.top = 8;
+keyLight.shadow.bias = -0.0003;
+keyLight.shadow.radius = 4;    // soft shadow blur
+scene.add(keyLight);
+
+// Fill light — subtle cool fill from left
+const fillLight = new THREE.DirectionalLight(0xd8e0f0, 0.35);
+fillLight.position.set(-5, 8, 3);
+scene.add(fillLight);
+
+// Rim light — very subtle, from behind
+const rimLight = new THREE.DirectionalLight(0xffeedd, 0.2);
+rimLight.position.set(0, 4, -8);
+scene.add(rimLight);
+
+// ─── Slow turntable rotation ─────────────────────────────────────────────────
+function animate() {
+    requestAnimationFrame(animate);
+    charger.rotation.y += 0.003;
+    renderer.render(scene, camera);
+}
+animate();
+
+// ─── Resize ──────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

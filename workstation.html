@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROG Zephyrus G14 — Workstation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #050508; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; }
+        canvas { display: block; }
+
+        .hud {
+            position: fixed; inset: 0; pointer-events: none;
+            display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center;
+            padding: 28px 32px; z-index: 1;
+        }
+        .hud-title {
+            color: #cc0000;
+            font-size: 12px;
+            letter-spacing: 0.55em;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: 0 0 18px rgba(204,0,0,0.7), 0 0 40px rgba(204,0,0,0.3);
+        }
+        .hud-bottom {
+            display: flex; flex-direction: column; align-items: center; gap: 7px;
+        }
+        .hud-status {
+            font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+            font-weight: 600; transition: color 0.5s, text-shadow 0.5s;
+            color: rgba(255,200,80,0.8);
+        }
+        .hud-status.open { color: #7fd4a0; text-shadow: 0 0 12px rgba(127,212,160,0.6); }
+        .hud-status.booting { color: #5bc4ff; text-shadow: 0 0 12px rgba(91,196,255,0.7); }
+        .hud-hint {
+            color: rgba(255,255,255,0.3); font-size: 11px; letter-spacing: 0.15em;
+        }
+
+        #folder-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #overlay-close {
+            position: absolute;
+            top: 20px;
+            right: 28px;
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-size: 22px;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #folder-iframe {
+            width: 90vw;
+            height: 90vh;
+            border: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="hud">
+    <div class="hud-title">ROG ZEPHYRUS G14</div>
+    <div class="hud-bottom">
+        <div class="hud-status" id="status">● SLEEP</div>
+        <div class="hud-hint" id="hint">Click to open</div>
+    </div>
+</div>
+
+<div id="folder-overlay">
+  <button id="overlay-close" type="button">×</button>
+  <iframe id="folder-iframe" src="" title="Publication folder viewer" allowfullscreen></iframe>
+</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment }  from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer }   from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }       from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass }  from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass }       from 'three/addons/postprocessing/OutputPass.js';
+// ─── Constants ────────────────────────────────────────────────────────────────
+const W      = 3.0;
+const D      = 2.05;
+const BASE_H = 0.14;
+const LID_H  = 0.085;
+
+// ─── Scene setup ─────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.72;
+document.body.appendChild(renderer.domElement);
+
+const scene  = new THREE.Scene();
+scene.background = new THREE.Color(0x04040a);
+scene.fog = new THREE.FogExp2(0x04040a, 0.06);
+
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.01, 100);
+camera.position.set(0, 5, 7);
+camera.lookAt(0, 0, 0);
+
+// ─── IBL Environment (realistic reflections on all PBR materials) ─────────────
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+// ─── Post-processing pipeline ─────────────────────────────────────────────────
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight), 0.18, 0.38, 0.88);
+composer.addPass(bloomPass);
+composer.addPass(new OutputPass());
+
+// ─── Resize ──────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let isOpen      = false;
+let isAnimating = false;
+let lidAngle    = 0;          // current lid rotation.x
+const LID_OPEN  = -1.745;    // ~100 degrees
+let bootPhase   = 0;         // 0=off 1=booting 2=desktop
+let bootTimer   = 0;
+let clock       = new THREE.Clock();
+let time        = 0;
+let bobActive   = true;
+
+// camera lerp targets
+let camTarget  = new THREE.Vector3(0, 5, 7);
+let camLookAt  = new THREE.Vector3(0, 0, 0);
+let camLookCur = new THREE.Vector3(0, 0, 0);
+
+// ─── Materials helper ────────────────────────────────────────────────────────
+const chassisMat = new THREE.MeshPhysicalMaterial({
+    color: 0x3d3d42, roughness: 0.32, metalness: 0.65,
+    clearcoat: 0.08, clearcoatRoughness: 0.55
+});
+
+// ─── Desk ────────────────────────────────────────────────────────────────────
+(function buildDesk() {
+    // Wood canvas texture
+    const woodCanvas = document.createElement('canvas');
+    woodCanvas.width = 512; woodCanvas.height = 512;
+    const wc = woodCanvas.getContext('2d');
+
+    // Base wood tone
+    wc.fillStyle = '#3b2510';
+    wc.fillRect(0, 0, 512, 512);
+
+    // Grain lines
+    for (let i = 0; i < 60; i++) {
+        const y = (i / 60) * 512;
+        const alpha = 0.04 + Math.random() * 0.09;
+        wc.beginPath();
+        wc.moveTo(0, y);
+        // wavy grain
+        for (let x = 0; x <= 512; x += 32) {
+            wc.lineTo(x, y + (Math.random() - 0.5) * 8);
+        }
+        wc.strokeStyle = `rgba(${Math.random() > 0.5 ? '80,45,10' : '20,10,4'},${alpha})`;
+        wc.lineWidth = 1 + Math.random() * 2;
+        wc.stroke();
+    }
+
+    // Subtle knot
+    const kx = 180, ky = 220;
+    const kg = wc.createRadialGradient(kx, ky, 2, kx, ky, 28);
+    kg.addColorStop(0, 'rgba(15,8,3,0.6)');
+    kg.addColorStop(0.6, 'rgba(40,20,8,0.3)');
+    kg.addColorStop(1, 'rgba(40,20,8,0)');
+    wc.fillStyle = kg;
+    wc.beginPath(); wc.ellipse(kx, ky, 28, 18, 0.3, 0, Math.PI * 2); wc.fill();
+
+    // Light sheen
+    const sheen = wc.createLinearGradient(0, 0, 512, 512);
+    sheen.addColorStop(0, 'rgba(255,220,160,0.10)');
+    sheen.addColorStop(0.5, 'rgba(255,220,160,0.04)');
+    sheen.addColorStop(1, 'rgba(255,220,160,0.08)');
+    wc.fillStyle = sheen;
+    wc.fillRect(0, 0, 512, 512);
+
+    const woodTex = new THREE.CanvasTexture(woodCanvas);
+    woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping;
+    woodTex.repeat.set(2, 1);
+
+    // Desk top surface
+    const deskTop = new THREE.Mesh(
+        new THREE.BoxGeometry(13, 0.15, 6),
+        new THREE.MeshPhysicalMaterial({ map: woodTex, roughness: 0.80, metalness: 0.02, clearcoat: 0.06, clearcoatRoughness: 0.70 })
+    );
+    deskTop.position.set(0, -0.075, 0);
+    deskTop.receiveShadow = true;
+    scene.add(deskTop);
+
+    // 4 slim metal legs
+    const legMat = new THREE.MeshPhysicalMaterial({ color: 0x1a1a1f, roughness: 0.28, metalness: 0.88, clearcoat: 0.12, clearcoatRoughness: 0.35 });
+    [[-5.8, -2.6], [-5.8, 2.6], [5.8, -2.6], [5.8, 2.6]].forEach(([lx, lz]) => {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.2, 0.1), legMat);
+        leg.position.set(lx, -1.25, lz);
+        leg.castShadow = true;
+        scene.add(leg);
+    });
+
+    // Cross-bar stretchers
+    const stretch = new THREE.Mesh(new THREE.BoxGeometry(11.6, 0.06, 0.06), legMat);
+    stretch.position.set(0, -2.2, -2.6);
+    scene.add(stretch);
+    const stretch2 = stretch.clone();
+    stretch2.position.z = 2.6;
+    scene.add(stretch2);
+
+    // Floor plane (dark)
+    const floorCanvas = document.createElement('canvas');
+    floorCanvas.width = 512; floorCanvas.height = 512;
+    const fc = floorCanvas.getContext('2d');
+    fc.fillStyle = '#06060c';
+    fc.fillRect(0, 0, 512, 512);
+    fc.strokeStyle = 'rgba(40,40,65,0.18)';
+    fc.lineWidth = 1;
+    for (let i = 0; i <= 16; i++) {
+        const p = i * 32;
+        fc.beginPath(); fc.moveTo(p, 0); fc.lineTo(p, 512); fc.stroke();
+        fc.beginPath(); fc.moveTo(0, p); fc.lineTo(512, p); fc.stroke();
+    }
+    const floorTex = new THREE.CanvasTexture(floorCanvas);
+    floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
+    floorTex.repeat.set(6, 6);
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(40, 40),
+        new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.95, metalness: 0.02 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -2.36;
+    floor.receiveShadow = true;
+    scene.add(floor);
+})();
+
+// ─── AniMe Matrix canvas (animated) ──────────────────────────────────────────
+const animeCanvas = document.createElement('canvas');
+animeCanvas.width  = 1024;
+animeCanvas.height = 512;
+const animeCtx = animeCanvas.getContext('2d');
+const animeTex  = new THREE.CanvasTexture(animeCanvas);
+
+function drawAnimeMatrix(t) {
+    const ctx = animeCtx;
+    ctx.fillStyle = '#1a1a20';
+    ctx.fillRect(0, 0, 1024, 512);
+
+    const cols = 60, rows = 26;
+    const dx = 1024 / cols, dy = 512 / rows;
+    const r  = 3.2;
+
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const cx = (col + 0.5) * dx;
+            const cy = (row + 0.5) * dy;
+
+            // wave ripple
+            const dist = Math.sqrt(Math.pow(col - cols/2, 2) + Math.pow(row - rows/2, 2));
+            const wave = Math.sin(dist * 0.45 - t * 2.2) * 0.5 + 0.5;
+
+            // brightness modulation
+            const brightness = 0.15 + wave * 0.85;
+
+            // hue cycle: blue/purple/cyan
+            const hue = 200 + wave * 60 + Math.sin(t * 0.7 + col * 0.1) * 30;
+            const sat = 70 + wave * 30;
+            const lig = Math.round(brightness * 70);
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${hue},${sat}%,${lig}%,${0.5 + brightness * 0.5})`;
+            ctx.fill();
+        }
+    }
+}
+
+// ─── Keyboard canvas ─────────────────────────────────────────────────────────
+function buildKeyboardCanvas() {
+    const CW = 1024, CH = 640;
+    const kc = document.createElement('canvas');
+    kc.width = CW; kc.height = CH;
+    const ctx = kc.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#0f0f15';
+    ctx.fillRect(0, 0, CW, CH);
+
+    // Brand label (avoid ctx.letterSpacing — not a standard canvas API)
+    ctx.fillStyle = '#cc0000';
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('ROG', 32, 22);
+    ctx.fillStyle = 'rgba(170,170,195,0.5)';
+    ctx.font = '11px Arial';
+    ctx.fillText('ZEPHYRUS  G14', 72, 22);
+
+    // Rounded-rect path helper (avoids ctx.roundRect browser compat issues)
+    function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y,     x + w, y + r,     r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h);
+        ctx.arcTo(x,     y + h, x,     y + h - r, r);
+        ctx.lineTo(x, y + r);
+        ctx.arcTo(x,     y,     x + r, y,          r);
+        ctx.closePath();
+    }
+
+    const wasd = new Set(['W','A','S','D']);
+    const u = 60, kh = 42, g = 6, ml = 28;
+
+    function drawKey(x, y, w, h, label) {
+        const accent = wasd.has(label);
+        roundRect(x, y, w, h, 5);
+        ctx.fillStyle = accent ? '#231c38' : '#181820';
+        ctx.fill();
+        ctx.strokeStyle = accent ? '#6644bb' : '#2a2a35';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // Top-face depth gradient
+        roundRect(x + 1, y + 1, w - 2, h - 5, 4);
+        const tg = ctx.createLinearGradient(x, y, x, y + h);
+        tg.addColorStop(0, 'rgba(255,255,255,0.07)');
+        tg.addColorStop(1, 'rgba(0,0,0,0.12)');
+        ctx.fillStyle = tg;
+        ctx.fill();
+        // Bottom backlight strip
+        ctx.fillStyle = accent ? 'rgba(130,80,255,0.75)' : 'rgba(60,100,255,0.32)';
+        ctx.fillRect(x + 4, y + h - 3, w - 8, 2);
+        // Label
+        if (label && label !== ' ') {
+            ctx.fillStyle = accent ? '#c0a0ff' : 'rgba(205,205,225,0.82)';
+            ctx.font = `${h >= 38 ? 11 : 9}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, x + w / 2, y + h / 2);
+        }
+    }
+
+    // Fn / top row — slim, with visual gaps between groups
+    const fnY = 32, fnH = 24;
+    const fnSlots = [
+        ['Esc',68],[null,8],
+        ['F1',50],['F2',50],['F3',50],['F4',50],[null,14],
+        ['F5',50],['F6',50],['F7',50],['F8',50],[null,14],
+        ['F9',50],['F10',50],['F11',50],['F12',50],
+        [null,8],['Del',68]
+    ];
+    let fx = ml;
+    fnSlots.forEach(([lbl, w]) => {
+        if (lbl) drawKey(fx, fnY, w, fnH, lbl);
+        fx += w + (lbl ? g : 0);
+    });
+
+    // Main rows — keys sized so each row fills ~968 px
+    const r1y = fnY + fnH + 10;
+    const rowDefs = [
+        [['`',u],['1',u],['2',u],['3',u],['4',u],['5',u],['6',u],['7',u],['8',u],['9',u],['0',u],['-',u],['=',u],['⌫',92]],
+        [['Tab',88],['Q',u],['W',u],['E',u],['R',u],['T',u],['Y',u],['U',u],['I',u],['O',u],['P',u],['[',u],[']',u],['\\',78]],
+        [['Caps',100],['A',u],['S',u],['D',u],['F',u],['G',u],['H',u],['J',u],['K',u],['L',u],[';',u],["'",u],['Enter',102]],
+        [['⇧',124],['Z',u],['X',u],['C',u],['V',u],['B',u],['N',u],['M',u],[',',u],['.',u],['/',u],['⇧',124]],
+        [['Ctrl',76],['Fn',62],['⊞',62],['Alt',70],[' ',258],['Alt',70],['Ctrl',76],['←',50],['↕',50],['→',50]],
+    ];
+    rowDefs.forEach((row, ri) => {
+        const ry = r1y + ri * (kh + g);
+        let x = ml;
+        row.forEach(([lbl, w]) => { drawKey(x, ry, w, kh, lbl); x += w + g; });
+    });
+
+    // Trackpad
+    const tpW = 290, tpH = 96, tpX = (CW - tpW) / 2, tpY = r1y + 5 * (kh + g) + 14;
+    roundRect(tpX, tpY, tpW, tpH, 10);
+    ctx.fillStyle = '#141419'; ctx.fill();
+    ctx.strokeStyle = '#252530'; ctx.lineWidth = 1.5; ctx.stroke();
+    roundRect(tpX + 1, tpY + 1, tpW - 2, tpH / 2, 9);
+    const tpg = ctx.createLinearGradient(tpX, tpY, tpX, tpY + tpH);
+    tpg.addColorStop(0, 'rgba(255,255,255,0.05)');
+    tpg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = tpg; ctx.fill();
+
+    return kc;
+}
+
+// ─── Screen canvas (ROG wallpaper) ───────────────────────────────────────────
+const screenCanvas = document.createElement('canvas');
+screenCanvas.width  = 1600;
+screenCanvas.height = 1000;
+const screenCtx = screenCanvas.getContext('2d');
+const screenTex  = new THREE.CanvasTexture(screenCanvas);
+
+function drawScreenBoot(phase, alpha) {
+    const ctx = screenCtx;
+    const W = 1600, H = 1000;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, H);
+
+    if (phase === 1) {
+        // Boot: ROG eye
+        ctx.globalAlpha = alpha;
+
+        // dark radial bg
+        const bg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 600);
+        bg.addColorStop(0, '#0a0018');
+        bg.addColorStop(1, '#000000');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // ROG eye glyph — geometric eye shape
+        const cx = W/2, cy = H/2;
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        // outer glow ring
+        const eyeGlow = ctx.createRadialGradient(0, 0, 60, 0, 0, 180);
+        eyeGlow.addColorStop(0, 'rgba(180,60,255,0.35)');
+        eyeGlow.addColorStop(1, 'rgba(180,60,255,0)');
+        ctx.fillStyle = eyeGlow;
+        ctx.beginPath(); ctx.arc(0, 0, 180, 0, Math.PI*2); ctx.fill();
+
+        // eye outline
+        ctx.beginPath();
+        ctx.moveTo(-130, 0);
+        ctx.quadraticCurveTo(0, -90, 130, 0);
+        ctx.quadraticCurveTo(0,  90, -130, 0);
+        ctx.strokeStyle = 'rgba(200,100,255,0.9)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // iris
+        const iris = ctx.createRadialGradient(0, 0, 0, 0, 0, 55);
+        iris.addColorStop(0, '#ffffff');
+        iris.addColorStop(0.3, '#c060ff');
+        iris.addColorStop(1, '#6020cc');
+        ctx.beginPath(); ctx.arc(0, 0, 55, 0, Math.PI*2);
+        ctx.fillStyle = iris; ctx.fill();
+
+        // pupil
+        ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI*2);
+        ctx.fillStyle = '#000010'; ctx.fill();
+
+        // ROG text
+        ctx.restore();
+        ctx.fillStyle = `rgba(200,80,255,${alpha})`;
+        ctx.font = 'bold 48px "Segoe UI", sans-serif';
+        ctx.letterSpacing = '14px';
+        ctx.textAlign = 'center';
+        ctx.fillText('ROG', cx, cy + 140);
+        ctx.font = '18px "Segoe UI", sans-serif';
+        ctx.letterSpacing = '8px';
+        ctx.fillStyle = `rgba(160,120,255,${alpha * 0.7})`;
+        ctx.fillText('REPUBLIC OF GAMERS', cx, cy + 175);
+        ctx.globalAlpha = 1;
+    } else if (phase === 2) {
+        // Desktop wallpaper
+        ctx.globalAlpha = alpha;
+        drawWallpaper(ctx, W, H);
+        ctx.globalAlpha = 1;
+    }
+    screenTex.needsUpdate = true;
+}
+
+function drawWallpaper(ctx, W, H) {
+    // Purple-pink bottom-left → cyan-blue top-right gradient
+    const grad = ctx.createLinearGradient(0, H, W, 0);
+    grad.addColorStop(0.0,  '#2d0050');
+    grad.addColorStop(0.25, '#6d0080');
+    grad.addColorStop(0.5,  '#3a1090');
+    grad.addColorStop(0.75, '#0050c8');
+    grad.addColorStop(1.0,  '#00c8d4');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle nebula cloud layers
+    const nb1 = ctx.createRadialGradient(W*0.25, H*0.7, 0, W*0.25, H*0.7, W*0.5);
+    nb1.addColorStop(0, 'rgba(160,40,220,0.45)');
+    nb1.addColorStop(1, 'rgba(160,40,220,0)');
+    ctx.fillStyle = nb1; ctx.fillRect(0, 0, W, H);
+
+    const nb2 = ctx.createRadialGradient(W*0.75, H*0.3, 0, W*0.75, H*0.3, W*0.45);
+    nb2.addColorStop(0, 'rgba(0,200,255,0.3)');
+    nb2.addColorStop(1, 'rgba(0,200,255,0)');
+    ctx.fillStyle = nb2; ctx.fillRect(0, 0, W, H);
+
+    // ROG crystalline logo
+    drawROGCrystalLogo(ctx, W/2, H/2 - 20, 200);
+
+    // thin bezel-like border
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, W-6, H-6);
+
+    // Taskbar strip at bottom
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, H - 40, W, 40);
+
+    // Clock text
+    const now = new Date();
+    const hh  = String(now.getHours()).padStart(2,'0');
+    const mm  = String(now.getMinutes()).padStart(2,'0');
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = '18px "Segoe UI", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${hh}:${mm}`, W - 20, H - 13);
+    ctx.textAlign = 'left';
+}
+
+function drawROGCrystalLogo(ctx, cx, cy, size) {
+    const s = size;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Outer glow
+    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 1.2);
+    glow.addColorStop(0,   'rgba(120,80,255,0.45)');
+    glow.addColorStop(0.5, 'rgba(80,160,255,0.2)');
+    glow.addColorStop(1,   'rgba(0,200,255,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(0, 0, s * 1.2, 0, Math.PI * 2); ctx.fill();
+
+    // 6 outer facets (hexagonal prism petals)
+    const facetColors = [
+        'rgba(100,60,255,0.85)',
+        'rgba(180,60,255,0.75)',
+        'rgba(60,120,255,0.85)',
+        'rgba(0,180,255,0.75)',
+        'rgba(120,60,200,0.85)',
+        'rgba(60,200,220,0.75)',
+    ];
+
+    for (let i = 0; i < 6; i++) {
+        const a0 = (i / 6) * Math.PI * 2 - Math.PI / 6;
+        const a1 = ((i + 1) / 6) * Math.PI * 2 - Math.PI / 6;
+        const amid = (a0 + a1) / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a0) * s * 0.96, Math.sin(a0) * s * 0.96);
+
+        // Curved outer edge with a midpoint
+        ctx.lineTo(Math.cos(amid) * s, Math.sin(amid) * s);
+        ctx.lineTo(Math.cos(a1) * s * 0.96, Math.sin(a1) * s * 0.96);
+        ctx.closePath();
+
+        ctx.fillStyle = facetColors[i];
+        ctx.fill();
+
+        // Edge highlight
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Glassy inner gradient overlay
+        const fg = ctx.createLinearGradient(
+            Math.cos(amid) * s * 0.2, Math.sin(amid) * s * 0.2,
+            Math.cos(amid) * s * 0.85, Math.sin(amid) * s * 0.85
+        );
+        fg.addColorStop(0, 'rgba(255,255,255,0.28)');
+        fg.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a0) * s * 0.96, Math.sin(a0) * s * 0.96);
+        ctx.lineTo(Math.cos(amid) * s, Math.sin(amid) * s);
+        ctx.lineTo(Math.cos(a1) * s * 0.96, Math.sin(a1) * s * 0.96);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // Inner hexagon
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
+        const r = s * 0.38;
+        if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        else         ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    const innerG = ctx.createRadialGradient(0, -s*0.08, 0, 0, 0, s*0.4);
+    innerG.addColorStop(0, '#ffffff');
+    innerG.addColorStop(0.4, '#d0c0ff');
+    innerG.addColorStop(1, 'rgba(100,60,255,0.6)');
+    ctx.fillStyle = innerG;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Central bright star
+    const star = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.18);
+    star.addColorStop(0, 'rgba(255,255,255,1)');
+    star.addColorStop(0.5, 'rgba(220,200,255,0.7)');
+    star.addColorStop(1, 'rgba(220,200,255,0)');
+    ctx.fillStyle = star;
+    ctx.beginPath(); ctx.arc(0, 0, s * 0.18, 0, Math.PI * 2); ctx.fill();
+
+    ctx.restore();
+}
+
+// ─── Build laptop group ───────────────────────────────────────────────────────
+const laptopGroup = new THREE.Group();
+scene.add(laptopGroup);
+laptopGroup.position.set(-2.8, 0, 0.4);
+
+// Base chassis
+const baseGeo = new THREE.BoxGeometry(W, BASE_H, D);
+const baseMesh = new THREE.Mesh(baseGeo, chassisMat);
+baseMesh.position.set(0, BASE_H / 2, 0);
+baseMesh.castShadow = true;
+baseMesh.receiveShadow = true;
+laptopGroup.add(baseMesh);
+
+// Base bottom (slightly darker bottom plate)
+const bottomMat = new THREE.MeshStandardMaterial({ color: 0x2e2e33, roughness: 0.5, metalness: 0.4 });
+const bottomMesh = new THREE.Mesh(new THREE.BoxGeometry(W - 0.02, 0.012, D - 0.02), bottomMat);
+bottomMesh.position.set(0, 0.006, 0);
+laptopGroup.add(bottomMesh);
+
+// Rubber feet
+const footMat = new THREE.MeshStandardMaterial({ color: 0x111112, roughness: 0.95, metalness: 0 });
+[[-1.3, -0.84], [-1.3, 0.84], [1.3, -0.84], [1.3, 0.84]].forEach(([fx, fz]) => {
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.02, 12), footMat);
+    foot.position.set(fx, 0.01, fz);
+    laptopGroup.add(foot);
+});
+
+// ── Hinge assembly ───────────────────────────────────────────────────────────
+const hingeMat = new THREE.MeshPhysicalMaterial({ color: 0x505058, roughness: 0.22, metalness: 0.88, clearcoat: 0.10, clearcoatRoughness: 0.30 });
+// Two hinge caps + thin connecting bar spanning width
+[-0.88, 0.88].forEach(hx => {
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.28, 20), hingeMat);
+    cap.rotation.z = Math.PI / 2;
+    cap.position.set(hx, BASE_H + 0.01, -D / 2);
+    laptopGroup.add(cap);
+});
+const hingeBar = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, W * 0.6, 12), hingeMat);
+hingeBar.rotation.z = Math.PI / 2;
+hingeBar.position.set(0, BASE_H + 0.008, -D / 2);
+laptopGroup.add(hingeBar);
+
+// ── Chamfer edge strips (simulate rounded corners on base top rim) ────────────
+const chamferMat = new THREE.MeshStandardMaterial({ color: 0x484850, roughness: 0.22, metalness: 0.75 });
+const CH = 0.018, CT = 0.012;
+// Front edge
+const cfFront = new THREE.Mesh(new THREE.BoxGeometry(W, CT, CH), chamferMat);
+cfFront.position.set(0, BASE_H - CT / 2, D / 2 - CH / 2);
+cfFront.rotation.x = Math.PI / 4;
+laptopGroup.add(cfFront);
+// Left edge
+const cfLeft = new THREE.Mesh(new THREE.BoxGeometry(CH, CT, D), chamferMat);
+cfLeft.position.set(-W / 2 + CH / 2, BASE_H - CT / 2, 0);
+cfLeft.rotation.z = -Math.PI / 4;
+laptopGroup.add(cfLeft);
+// Right edge
+const cfRight = cfLeft.clone();
+cfRight.position.set(W / 2 - CH / 2, BASE_H - CT / 2, 0);
+cfRight.rotation.z = Math.PI / 4;
+laptopGroup.add(cfRight);
+
+// ── Speaker grilles on left & right sides ────────────────────────────────────
+(function buildSpeakerGrilles() {
+    const gc = document.createElement('canvas');
+    gc.width = 256; gc.height = 64;
+    const gx = gc.getContext('2d');
+    gx.fillStyle = '#2a2a30';
+    gx.fillRect(0, 0, 256, 64);
+    for (let xi = 6; xi < 250; xi += 7) {
+        for (let yi = 6; yi < 58; yi += 7) {
+            gx.beginPath();
+            gx.arc(xi, yi, 1.6, 0, Math.PI * 2);
+            gx.fillStyle = '#111116';
+            gx.fill();
+        }
+    }
+    const gt = new THREE.CanvasTexture(gc);
+    const gm = new THREE.MeshStandardMaterial({ map: gt, roughness: 0.8, metalness: 0.1 });
+    const gw = 0.55, gh = BASE_H * 0.55;
+    [-1, 1].forEach(side => {
+        const grille = new THREE.Mesh(new THREE.PlaneGeometry(gw, gh), gm);
+        grille.rotation.y = side * Math.PI / 2;
+        grille.position.set(side * (W / 2 + 0.001), BASE_H * 0.6, D * 0.1);
+        laptopGroup.add(grille);
+    });
+})();
+
+// ── Port details on right side (USB-A, USB-C, audio) ─────────────────────────
+const portMat = new THREE.MeshStandardMaterial({ color: 0x202025, roughness: 0.5, metalness: 0.3 });
+[[0.6, 0.016, 0.007], [0.42, 0.012, 0.006], [0.25, 0.01, 0.01]].forEach(([pz, pw, ph]) => {
+    const port = new THREE.Mesh(new THREE.BoxGeometry(pw, ph, 0.002), portMat);
+    port.rotation.y = Math.PI / 2;
+    port.position.set(W / 2 + 0.002, BASE_H * 0.45, -D / 2 + pz);
+    laptopGroup.add(port);
+});
+
+// Keyboard area (recessed panel)
+const kbCanvas = buildKeyboardCanvas();
+const kbTex    = new THREE.CanvasTexture(kbCanvas);
+const kbMat    = new THREE.MeshStandardMaterial({ map: kbTex, roughness: 0.85, metalness: 0.1 });
+const kbPlane  = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.15, D - 0.25), kbMat);
+kbPlane.rotation.x = -Math.PI / 2;
+kbPlane.position.set(0, BASE_H + 0.001, 0.06);
+laptopGroup.add(kbPlane);
+
+// ── Vent strip along back of base (near hinge) ───────────────────────────────
+(function buildVentStrip() {
+    const vc = document.createElement('canvas');
+    vc.width = 512; vc.height = 32;
+    const vx = vc.getContext('2d');
+    vx.fillStyle = '#1a1a20';
+    vx.fillRect(0, 0, 512, 32);
+    for (let xi = 8; xi < 504; xi += 12) {
+        vx.beginPath(); vx.roundRect(xi, 6, 6, 20, 2);
+        vx.fillStyle = '#0a0a0e'; vx.fill();
+    }
+    const vt = new THREE.CanvasTexture(vc);
+    const vm = new THREE.MeshStandardMaterial({ map: vt, roughness: 0.7 });
+    const ventMesh = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.3, 0.12), vm);
+    ventMesh.rotation.x = -Math.PI / 2;
+    ventMesh.position.set(0, BASE_H + 0.001, -D / 2 + 0.07);
+    laptopGroup.add(ventMesh);
+})();
+
+// Lid pivot at back edge
+const lidPivot = new THREE.Group();
+lidPivot.position.set(0, BASE_H, -D / 2);
+laptopGroup.add(lidPivot);
+
+// Lid chassis mesh (relative to pivot)
+const lidGeo  = new THREE.BoxGeometry(W, LID_H, D);
+const lidMesh = new THREE.Mesh(lidGeo, chassisMat);
+lidMesh.position.set(0, LID_H / 2, D / 2);
+lidMesh.castShadow = true;
+lidPivot.add(lidMesh);
+
+// AniMe Matrix on lid back face
+const animeMatMesh = new THREE.MeshStandardMaterial({
+    map: animeTex, roughness: 0.25, metalness: 0.3, emissiveMap: animeTex, emissive: new THREE.Color(1,1,1), emissiveIntensity: 0.55
+});
+const animePanel = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.1, D - 0.08), animeMatMesh);
+animePanel.rotation.x = -Math.PI / 2;
+animePanel.position.set(0, LID_H + 0.001, D / 2);
+lidPivot.add(animePanel);
+
+// Screen inner face
+const screenMat = new THREE.MeshPhysicalMaterial({
+    map: screenTex,
+    roughness: 0.06,
+    metalness: 0.0,
+    emissiveMap: screenTex,
+    emissive: new THREE.Color(1, 1, 1),
+    emissiveIntensity: 0,
+    clearcoat: 0.25,
+    clearcoatRoughness: 0.15
+});
+const screenPlane = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.18, D - 0.22), screenMat);
+screenPlane.rotation.x = Math.PI / 2;
+screenPlane.position.set(0, -0.002, D / 2 + 0.04);
+lidPivot.add(screenPlane);
+
+// Thin bezel frame around screen (dark)
+const bezelMat = new THREE.MeshPhysicalMaterial({ color: 0x111114, roughness: 0.55, metalness: 0.25, clearcoat: 0.04, clearcoatRoughness: 0.60 });
+const bezelMesh = new THREE.Mesh(new THREE.BoxGeometry(W - 0.04, 0.01, D - 0.04), bezelMat);
+bezelMesh.position.set(0, -0.001, D / 2);
+lidPivot.add(bezelMesh);
+
+// ROG eye logo on lid back — canvas-drawn ring + eye shape
+(function buildROGLidLogo() {
+    const lc = document.createElement('canvas');
+    lc.width = 256; lc.height = 256;
+    const lx = lc.getContext('2d');
+    lx.clearRect(0, 0, 256, 256);
+
+    const cx = 128, cy = 128;
+    // Outer ring
+    lx.beginPath(); lx.arc(cx, cy, 88, 0, Math.PI * 2);
+    lx.strokeStyle = 'rgba(210,210,220,0.9)'; lx.lineWidth = 6; lx.stroke();
+    // Eye outline
+    lx.beginPath();
+    lx.moveTo(cx - 62, cy);
+    lx.quadraticCurveTo(cx, cy - 44, cx + 62, cy);
+    lx.quadraticCurveTo(cx, cy + 44, cx - 62, cy);
+    lx.strokeStyle = 'rgba(200,200,215,0.85)'; lx.lineWidth = 4; lx.stroke();
+    // Iris circle
+    lx.beginPath(); lx.arc(cx, cy, 22, 0, Math.PI * 2);
+    lx.fillStyle = 'rgba(210,210,225,0.88)'; lx.fill();
+    // Pupil
+    lx.beginPath(); lx.arc(cx, cy, 9, 0, Math.PI * 2);
+    lx.fillStyle = 'rgba(40,40,50,0.9)'; lx.fill();
+
+    const lt = new THREE.CanvasTexture(lc);
+    lt.minFilter = THREE.LinearFilter;
+    const lm = new THREE.MeshPhysicalMaterial({
+        map: lt, transparent: true, roughness: 0.15, metalness: 0.82,
+        alphaTest: 0.05, clearcoat: 0.2, clearcoatRoughness: 0.25
+    });
+    const logoMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.52), lm);
+    logoMesh.rotation.x = -Math.PI / 2;
+    logoMesh.position.set(0, LID_H + 0.002, D / 2 - 0.1);
+    lidPivot.add(logoMesh);
+})();
+
+// ─── Lighting ─────────────────────────────────────────────────────────────────
+// Hemisphere provides soft ambient fill (sky blue → warm ground)
+scene.add(new THREE.HemisphereLight(0x2a3d6a, 0x181018, 0.45));
+
+// Key light (warm-white, from upper-right front)
+const keyLight = new THREE.DirectionalLight(0xfff8ee, 0.85);
+keyLight.position.set(1, 14, 5);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.camera.near = 0.5;
+keyLight.shadow.camera.far  = 30;
+keyLight.shadow.camera.left = keyLight.shadow.camera.bottom = -8;
+keyLight.shadow.camera.right = keyLight.shadow.camera.top  = 8;
+keyLight.shadow.bias = -0.0003;
+scene.add(keyLight);
+
+// Fill light (cool blue, left side)
+const fillLight = new THREE.DirectionalLight(0x8899cc, 0.32);
+fillLight.position.set(-5, 10, 3);
+scene.add(fillLight);
+
+// Rim light (warm, behind — subtle accent)
+const rimLight = new THREE.DirectionalLight(0xffaa80, 0.20);
+rimLight.position.set(1, 3, -7);
+scene.add(rimLight);
+
+// Screen glow point light
+const screenLight = new THREE.PointLight(0x8040ff, 0, 6);
+screenLight.position.set(-2.8, 1.5, 0.5);
+scene.add(screenLight);
+
+// Secondary cyan screen glow
+const screenLight2 = new THREE.PointLight(0x00d4ff, 0, 5);
+screenLight2.position.set(-2.3, 1.2, 0.8);
+scene.add(screenLight2);
+
+// ─── Pen holder ───────────────────────────────────────────────────────────────
+(function buildPenHolder() {
+    const penMat = new THREE.MeshStandardMaterial({ color: 0x18181e, roughness: 0.45, metalness: 0.55 });
+    // Outer cylinder
+    const outer = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.16, 0.6, 16), penMat);
+    outer.position.set(-1.8, 0.3, 0.55);
+    outer.castShadow = true;
+    scene.add(outer);
+    // Inner hollow (darker, recessed)
+    const innerMat = new THREE.MeshStandardMaterial({ color: 0x0e0e14, roughness: 0.9, metalness: 0.1 });
+    const inner = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.13, 0.55, 16), innerMat);
+    inner.position.set(-1.8, 0.325, 0.55);
+    scene.add(inner);
+    // A couple of pen sticks
+    const penStickMat = new THREE.MeshStandardMaterial({ color: 0x2244aa, roughness: 0.5, metalness: 0.2 });
+    const penStickMat2 = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4, metalness: 0.5 });
+    [-0.04, 0.05].forEach((offset, i) => {
+        const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.016, 0.85, 8), i === 0 ? penStickMat : penStickMat2);
+        stick.position.set(-1.8 + offset, 0.525, 0.55 + offset * 0.5);
+        stick.rotation.z = offset * 2;
+        scene.add(stick);
+    });
+})();
+
+// ─── Notepad ──────────────────────────────────────────────────────────────────
+(function buildNotepad() {
+    // Paper stack base (cream color)
+    const padMat = new THREE.MeshStandardMaterial({ color: 0xf0ead8, roughness: 0.88, metalness: 0.0 });
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.025, 0.85), padMat);
+    pad.position.set(2.0, 0.013, 0.55);
+    pad.receiveShadow = true;
+    scene.add(pad);
+
+    // Lines on top face
+    const lineCanvas = document.createElement('canvas');
+    lineCanvas.width = 256; lineCanvas.height = 192;
+    const lc = lineCanvas.getContext('2d');
+    lc.fillStyle = '#f0ead8';
+    lc.fillRect(0, 0, 256, 192);
+    lc.strokeStyle = 'rgba(140,160,200,0.45)';
+    lc.lineWidth = 1;
+    for (let y = 22; y < 192; y += 18) {
+        lc.beginPath(); lc.moveTo(10, y); lc.lineTo(246, y); lc.stroke();
+    }
+    // Red margin line
+    lc.strokeStyle = 'rgba(200,80,80,0.35)';
+    lc.lineWidth = 1.5;
+    lc.beginPath(); lc.moveTo(32, 0); lc.lineTo(32, 192); lc.stroke();
+
+    const lineTex = new THREE.CanvasTexture(lineCanvas);
+    const topFace = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.85),
+        new THREE.MeshStandardMaterial({ map: lineTex, roughness: 0.85, metalness: 0.0 }));
+    topFace.rotation.x = -Math.PI / 2;
+    topFace.position.set(2.0, 0.027, 0.55);
+    scene.add(topFace);
+})();
+
+// ─── Folder organizer box ─────────────────────────────────────────────────────
+const BOX_W = 2.6, BOX_D = 1.3, BOX_H = 1.0, BOX_T = 0.05;
+const boxGroup = new THREE.Group();
+boxGroup.position.set(3.2, 0, -0.5);
+scene.add(boxGroup);
+
+const boxMat = new THREE.MeshStandardMaterial({ color: 0x1e1e28, roughness: 0.6, metalness: 0.25 });
+// Bottom
+const boxBottom = new THREE.Mesh(new THREE.BoxGeometry(BOX_W, BOX_T, BOX_D), boxMat);
+boxBottom.position.set(0, BOX_T / 2, 0);
+boxGroup.add(boxBottom);
+// Front
+const boxFront = new THREE.Mesh(new THREE.BoxGeometry(BOX_W, BOX_H, BOX_T), boxMat);
+boxFront.position.set(0, BOX_H / 2, BOX_D / 2);
+boxGroup.add(boxFront);
+// Back
+const boxBack = boxFront.clone();
+boxBack.position.z = -BOX_D / 2;
+boxGroup.add(boxBack);
+// Left
+const boxLeft = new THREE.Mesh(new THREE.BoxGeometry(BOX_T, BOX_H, BOX_D), boxMat);
+boxLeft.position.set(-BOX_W / 2, BOX_H / 2, 0);
+boxGroup.add(boxLeft);
+// Right
+const boxRight = boxLeft.clone();
+boxRight.position.x = BOX_W / 2;
+boxGroup.add(boxRight);
+
+// ─── Publication Folders ──────────────────────────────────────────────────────
+const folderMeshes  = [];
+const folderGroups  = [];
+const folderRestY   = [];
+
+const folderData = [
+    { color: 0x2c5fa8, label: '2026', x: -0.9, angle: -0.08 },
+    { color: 0x8b2020, label: '2025', x: -0.3, angle:  0.04 },
+    { color: 0x1a6b3a, label: '2024', x:  0.3, angle: -0.03 },
+    { color: 0x5a3a8c, label: '2023', x:  0.9, angle:  0.06 },
+];
+
+folderData.forEach((fd, i) => {
+    const fg = new THREE.Group();
+    const baseY = 0.05;
+    fg.position.set(3.2 + fd.x, baseY, -0.5);
+    fg.rotation.y = fd.angle;
+    folderRestY.push(baseY);
+
+    // Cover (full folder body)
+    const coverColor = fd.color;
+    const coverMat = new THREE.MeshStandardMaterial({ color: coverColor, roughness: 0.4, metalness: 0.1 });
+    const coverMesh = new THREE.Mesh(new THREE.BoxGeometry(0.56, 1.1, 0.045), coverMat);
+    const coverY = BOX_H + 0.5 + 0.05;  // half of 1.1 height above folder base, sticking above box
+    coverMesh.position.set(0, coverY, 0);
+    fg.add(coverMesh);
+    folderMeshes.push(coverMesh);
+
+    // Spine strip (darker shade on left edge)
+    const spineColor = new THREE.Color(coverColor);
+    spineColor.multiplyScalar(0.65);
+    const spineMat = new THREE.MeshStandardMaterial({ color: spineColor, roughness: 0.5, metalness: 0.05 });
+    const spineMesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.1, 0.047), spineMat);
+    spineMesh.position.set(-0.25, coverY, 0);
+    fg.add(spineMesh);
+    folderMeshes.push(spineMesh);
+
+    // Tab at top-right
+    const tabColor = new THREE.Color(coverColor);
+    tabColor.lerp(new THREE.Color(0xffffff), 0.3);
+    const tabMat = new THREE.MeshStandardMaterial({ color: tabColor, roughness: 0.35, metalness: 0.1 });
+    const tabMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.046), tabMat);
+    tabMesh.position.set(0.16, coverY + 0.55, 0);
+    fg.add(tabMesh);
+    folderMeshes.push(tabMesh);
+
+    // Tab label (canvas texture on a tiny plane)
+    const tabCanvas = document.createElement('canvas');
+    tabCanvas.width = 128; tabCanvas.height = 48;
+    const tc = tabCanvas.getContext('2d');
+    const baseRGB = new THREE.Color(coverColor);
+    const tr = Math.round(baseRGB.r * 180 + 60);
+    const tg2 = Math.round(baseRGB.g * 180 + 60);
+    const tb = Math.round(baseRGB.b * 180 + 60);
+    tc.fillStyle = `rgb(${tr},${tg2},${tb})`;
+    tc.fillRect(0, 0, 128, 48);
+    tc.fillStyle = '#ffffff';
+    tc.font = 'bold 22px Arial';
+    tc.textAlign = 'center';
+    tc.textBaseline = 'middle';
+    tc.fillText(fd.label, 64, 24);
+    const tabTex = new THREE.CanvasTexture(tabCanvas);
+    const labelPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.17, 0.065),
+        new THREE.MeshStandardMaterial({ map: tabTex, roughness: 0.4, metalness: 0.0, transparent: false })
+    );
+    labelPlane.position.set(0.16, coverY + 0.55, 0.024);
+    fg.add(labelPlane);
+
+    scene.add(fg);
+    folderGroups.push(fg);
+});
+
+// ─── Folder hover/click state ─────────────────────────────────────────────────
+let hoveredFolderIdx  = -1;
+let activeFolder      = null;
+
+function openFolderOverlay(folderGroup, idx) {
+    if (activeFolder) return;
+    activeFolder = { group: folderGroup, restY: folderGroup.position.y, idx: idx };
+    const startY = folderGroup.position.y;
+    let frames = 0;
+    function riseAnim() {
+        frames++;
+        const t = Math.min(frames / 30, 1);
+        const ez = 1 - Math.pow(1 - t, 3);
+        folderGroup.position.y = startY + ez * 0.4;
+        if (t < 1) {
+            requestAnimationFrame(riseAnim);
+        } else {
+            const overlay = document.getElementById('folder-overlay');
+            overlay.style.pointerEvents = 'all';
+            overlay.style.opacity = '1';
+            document.getElementById('folder-iframe').src = 'folder-demo.html';
+        }
+    }
+    requestAnimationFrame(riseAnim);
+}
+
+document.getElementById('overlay-close').addEventListener('click', () => {
+    const overlay = document.getElementById('folder-overlay');
+    overlay.style.opacity = '0';
+    overlay.style.pointerEvents = 'none';
+    setTimeout(() => { document.getElementById('folder-iframe').src = ''; }, 400);
+    if (activeFolder) {
+        const startY  = activeFolder.group.position.y;
+        const restY   = activeFolder.restY;
+        const capturedGroup = activeFolder.group;
+        activeFolder  = null;
+        let frames    = 0;
+        function dropAnim() {
+            frames++;
+            const t = Math.min(frames / 25, 1);
+            capturedGroup.position.y = startY + (restY - startY) * (1 - Math.pow(1 - t, 2));
+            if (t < 1) requestAnimationFrame(dropAnim);
+        }
+        requestAnimationFrame(dropAnim);
+    }
+});
+
+// ─── Raycaster for click ──────────────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const mouse     = new THREE.Vector2();
+
+function onClick(e) {
+    if (isAnimating) return;
+    mouse.x = (e.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    // Check folder clicks first
+    if (!activeFolder) {
+        const fHits = raycaster.intersectObjects(folderMeshes, true);
+        if (fHits.length > 0) {
+            // Find which folderGroup was hit
+            for (let fi = 0; fi < folderGroups.length; fi++) {
+                if (folderGroups[fi].children.indexOf(fHits[0].object) !== -1) {
+                    openFolderOverlay(folderGroups[fi], fi);
+                    return;
+                }
+            }
+        }
+    }
+
+    const hits = raycaster.intersectObjects([baseMesh, lidMesh, kbPlane, animePanel], true);
+    if (hits.length > 0) {
+        if (!isOpen) openLaptop();
+        else         closeLaptop();
+    }
+}
+window.addEventListener('click', onClick);
+
+window.addEventListener('mousemove', e => {
+    mouse.x = (e.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    // Folder hover — lift slightly and show pointer
+    const fHits = !activeFolder ? raycaster.intersectObjects(folderMeshes, true) : [];
+    let newHoveredIdx = -1;
+    if (fHits.length > 0) {
+        for (let fi = 0; fi < folderGroups.length; fi++) {
+            if (folderGroups[fi].children.indexOf(fHits[0].object) !== -1) {
+                newHoveredIdx = fi;
+                break;
+            }
+        }
+    }
+
+    // Update folder lift states
+    folderGroups.forEach((fg, fi) => {
+        if (activeFolder && activeFolder.group === fg) return; // skip if animating open
+        const rest = folderRestY[fi];
+        const target = (fi === newHoveredIdx) ? rest + 0.15 : rest;
+        fg.position.y += (target - fg.position.y) * 0.18;
+    });
+
+    if (newHoveredIdx !== -1) {
+        renderer.domElement.style.cursor = 'pointer';
+        return;
+    }
+    hoveredFolderIdx = newHoveredIdx;
+
+    if (isAnimating) { renderer.domElement.style.cursor = 'default'; return; }
+    const hits = raycaster.intersectObjects([baseMesh, lidMesh, kbPlane, animePanel], true);
+    renderer.domElement.style.cursor = hits.length > 0 ? 'pointer' : 'default';
+});
+
+// ─── Laptop open / close sequences ───────────────────────────────────────────
+function openLaptop() {
+    isOpen = true;
+    isAnimating = true;
+    bobActive = false;
+    bootPhase = 1;
+    bootTimer = 0;
+
+    document.getElementById('status').textContent = '● BOOTING';
+    document.getElementById('status').className   = 'hud-status booting';
+    document.getElementById('hint').textContent   = 'Initializing ROG…';
+
+    camTarget.set(-2.8, 2.2, 3.0);
+    camLookAt.set(-2.8, 1.0, -0.3);
+}
+
+function closeLaptop() {
+    isOpen      = false;
+    isAnimating = true;
+    bootPhase   = 0;
+    bootTimer   = 0;
+    screenFadeIn = 0;
+
+    screenMat.emissiveIntensity = 0;
+    screenLight.intensity       = 0;
+    screenLight2.intensity      = 0;
+    drawScreenBoot(0, 0);
+
+    document.getElementById('status').textContent = '● SLEEP';
+    document.getElementById('status').className   = 'hud-status';
+    document.getElementById('hint').textContent   = 'Click laptop to power on';
+
+    camTarget.set(0, 5, 7);
+    camLookAt.set(0, 0, 0);
+}
+
+// ─── HUD update ──────────────────────────────────────────────────────────────
+function setDesktop() {
+    document.getElementById('status').textContent = '● ONLINE';
+    document.getElementById('status').className   = 'hud-status open';
+    document.getElementById('hint').textContent   = 'Click laptop to close';
+}
+
+// ─── Animation loop ───────────────────────────────────────────────────────────
+const LID_SPEED  = 0.012;
+let screenFadeIn = 0;
+
+function animate() {
+    requestAnimationFrame(animate);
+    const delta = clock.getDelta();
+    time += delta;
+
+    // AniMe Matrix animation
+    drawAnimeMatrix(time);
+    animeTex.needsUpdate = true;
+
+    // Bob
+    if (bobActive) {
+        laptopGroup.position.y = Math.sin(time * 1.1) * 0.04;
+    }
+
+    // Lid open / close animation
+    if (isOpen && lidPivot.rotation.x > LID_OPEN) {
+        lidPivot.rotation.x -= LID_SPEED;
+        if (lidPivot.rotation.x <= LID_OPEN) {
+            lidPivot.rotation.x = LID_OPEN;
+            isAnimating = false;
+        }
+    } else if (!isOpen && lidPivot.rotation.x < 0) {
+        lidPivot.rotation.x += LID_SPEED * 0.8;
+        if (lidPivot.rotation.x >= 0) {
+            lidPivot.rotation.x = 0;
+            isAnimating = false;
+            bobActive   = true;
+        }
+    }
+
+    // Boot phase management
+    if (isOpen) {
+        bootTimer += delta;
+
+        if (bootPhase === 1) {
+            const alpha = Math.min(bootTimer / 0.6, 1);
+            drawScreenBoot(1, alpha);
+            screenMat.emissiveIntensity = alpha * 0.6;
+            screenLight.intensity  = alpha * 1.5;
+            screenLight2.intensity = alpha * 0.8;
+
+            if (bootTimer > 2.5) {
+                bootPhase = 2;
+                bootTimer = 0;
+            }
+        }
+
+        if (bootPhase === 2) {
+            screenFadeIn = Math.min(screenFadeIn + delta * 0.7, 1);
+            drawScreenBoot(2, screenFadeIn);
+            screenMat.emissiveIntensity = 0.6 + screenFadeIn * 0.4;
+            screenLight.intensity  = 1.5 + screenFadeIn * 1.5;
+            screenLight2.intensity = 0.8 + screenFadeIn * 1.2;
+
+            if (screenFadeIn >= 1 && bootTimer < 0.1) {
+                setDesktop();
+            }
+            bootTimer += delta;
+        }
+    }
+
+    // Camera smooth lerp
+    camera.position.lerp(camTarget, 0.045);
+    camLookCur.lerp(camLookAt, 0.045);
+    camera.lookAt(camLookCur);
+
+    composer.render();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+// Draw initial AniMe matrix and black screen
+drawAnimeMatrix(0);
+drawScreenBoot(0, 0);
+
+// Start with lid closed
+lidPivot.rotation.x = 0;
+
+animate();
+</script>
+</body>
+</html>

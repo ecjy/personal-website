@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elecctro Style — Workstation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { overflow: hidden; background: #edeae4; font-family: system-ui, -apple-system, sans-serif; }
+  canvas { display: block; }
+  #label {
+    position: fixed; bottom: 50px; left: 24px;
+    font: 800 16px/1 'Inter', system-ui, sans-serif;
+    letter-spacing: 0.22em; text-transform: uppercase; color: #2d2a3e;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  #subtitle {
+    position: fixed; bottom: 28px; left: 24px;
+    font: 400 12px/1 system-ui, sans-serif; color: #999; letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+<div id="label">WORKSTATION</div>
+<div id="subtitle">Elecctro-style 3D replica — Three.js</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment }  from 'three/addons/environments/RoomEnvironment.js';
+
+// ─── Renderer ────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+document.body.appendChild(renderer.domElement);
+
+// ─── Scene ───────────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xedeae4);   // warm cream like elecctro
+
+// ─── IBL Environment (soft matte reflections) ───────────────────────────────
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+// ─── Isometric-style Camera ─────────────────────────────────────────────────
+// Perspective camera with narrow FOV pushed far back = near-isometric
+const camera = new THREE.PerspectiveCamera(16, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(15, 12, 15);
+camera.lookAt(0, 0, 0);
+
+// ─── Helper: Rounded Box (Fixed to be perfectly centered) ───────────────────
+function roundedBox(w, h, d, r, s) {
+    const shape = new THREE.Shape();
+    const hw = w/2, hd = d/2;
+    shape.moveTo(-hw + r, -hd);
+    shape.lineTo( hw - r, -hd);
+    shape.quadraticCurveTo( hw, -hd, hw, -hd + r);
+    shape.lineTo( hw,  hd - r);
+    shape.quadraticCurveTo( hw,  hd,  hw - r, hd);
+    shape.lineTo(-hw + r,  hd);
+    shape.quadraticCurveTo(-hw,  hd, -hw,  hd - r);
+    shape.lineTo(-hw, -hd + r);
+    shape.quadraticCurveTo(-hw, -hd, -hw + r, -hd);
+
+    const extrudeSettings = { depth: h, bevelEnabled: true, bevelThickness: r * 0.4, bevelSize: r * 0.5, bevelSegments: s || 4 };
+    const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    // Extrusion expands Z from 0 to h. Center it on Z:
+    geo.translate(0, 0, -h / 2);
+    // Rotate so the extrusion height goes along Y
+    geo.rotateX(-Math.PI / 2); 
+    // Now X is Width, Y is Height, Z is Depth. Centered exactly at (0,0,0).
+    return geo;
+}
+
+// ─── Elecctro palette ────────────────────────────────────────────────────────
+const C = {
+    body:      0xe8e4de,
+    bodyDark:  0xd4d0c8,
+    accent:    0xf0c131,
+    accentDk:  0xd9a820,
+    dark:      0x2d2a3e,
+    screen:    0x1e3a28,
+    screenLt:  0x44e878,
+    white:     0xffffff,
+    woodPale:  0xd4b896
+};
+
+// ─── Materials ───────────────────────────────────────────────────────────────
+const bodyMat = new THREE.MeshStandardMaterial({ color: C.body, roughness: 0.82, metalness: 0.02 });
+const bodyDarkMat = new THREE.MeshStandardMaterial({ color: C.bodyDark, roughness: 0.85, metalness: 0.02 });
+const accentMat = new THREE.MeshStandardMaterial({ color: C.accent, roughness: 0.55, metalness: 0.08 });
+const darkMat = new THREE.MeshStandardMaterial({ color: C.dark, roughness: 0.78, metalness: 0.05 });
+const deskMat = new THREE.MeshStandardMaterial({ color: C.woodPale, roughness: 0.9, metalness: 0.0 });
+const whiteMat = new THREE.MeshStandardMaterial({ color: C.white, roughness: 0.9, metalness: 0.0 });
+
+// ─── Build the Scene ─────────────────────────────────────────────────────────
+const workstation = new THREE.Group();
+scene.add(workstation);
+
+// 1. Desk Surface (Desk Top is exactly at Y=0)
+const deskGeo = roundedBox(8, 0.4, 4, 0.2, 5);
+const desk = new THREE.Mesh(deskGeo, deskMat);
+desk.position.set(0, -0.2, 0); // Center is -0.2, bounds [-0.4, 0.0]
+desk.castShadow = true;
+desk.receiveShadow = true;
+workstation.add(desk);
+
+// Custom Screen Material
+const screenCanvas = document.createElement('canvas');
+screenCanvas.width = 1024; screenCanvas.height = 512;
+const ctx = screenCanvas.getContext('2d');
+ctx.fillStyle = '#2d2a3e'; ctx.fillRect(0, 0, 1024, 512);
+ctx.fillStyle = '#1e1c2a'; ctx.fillRect(0, 0, 1024, 60);
+ctx.fillStyle = '#ffffff'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('elecctro OS', 40, 38);
+function roundRect(x, y, w, h, r, color) {
+    ctx.fillStyle = color; ctx.beginPath();
+    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y); ctx.fill();
+}
+roundRect(40, 100, 300, 360, 16, '#3a3650');
+roundRect(360, 100, 620, 160, 16, '#f0c131');
+roundRect(360, 280, 290, 180, 16, '#3a3650');
+roundRect(670, 280, 310, 180, 16, '#44e878');
+
+const screenTex = new THREE.CanvasTexture(screenCanvas);
+screenTex.needsUpdate = true;
+screenTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const screenMat = new THREE.MeshBasicMaterial({
+    map: screenTex,
+    color: 0xffffff
+});
+
+// 2. Desktop Monitor Setup
+const monitorGroup = new THREE.Group();
+monitorGroup.position.set(0, 0, -0.6); // Base starts at Y=0 (desk level)
+workstation.add(monitorGroup);
+
+// Stand Base
+const standBase = new THREE.Mesh(roundedBox(1.2, 0.08, 0.8, 0.1, 4), bodyDarkMat);
+standBase.position.y = 0.04;
+standBase.castShadow = true; standBase.receiveShadow = true;
+monitorGroup.add(standBase);
+
+// Stand Neck (1.2 tall)
+const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.2, 16), bodyDarkMat);
+neck.position.set(0, 0.08 + 0.6, -0.15); // Top of neck is at 1.28
+neck.castShadow = true;
+monitorGroup.add(neck);
+
+// Monitor Screen Unit
+const screenGroup = new THREE.Group();
+screenGroup.position.set(0, 1.28, -0.02); // Attach to front of neck mount
+screenGroup.rotation.x = -0.05; // Slight tilt
+monitorGroup.add(screenGroup);
+
+// Back shell (Bulky electronics housing)
+const backBulgeGeo = roundedBox(2.2, 1.4, 0.12, 0.06, 4);
+const backBulge = new THREE.Mesh(backBulgeGeo, bodyDarkMat);
+backBulge.position.set(0, 0, -0.08); // pushed back
+backBulge.castShadow = true;
+screenGroup.add(backBulge);
+
+// Main Bezel frame
+const monitorW = 3.6, monitorH = 2.0, bezelD = 0.06, bezelR = 0.06;
+const bezelGeo = roundedBox(monitorW, monitorH, bezelD, bezelR, 4);
+const bezel = new THREE.Mesh(bezelGeo, bodyMat);
+bezel.castShadow = true;
+screenGroup.add(bezel);
+
+// Account for bevel expansion
+const bezelMaxZ = bezelD/2 + (bezelR * 0.5);
+
+// Inner Screen Glass (Dark backing)
+const innerW = monitorW - 0.16, innerH = monitorH - 0.16;
+const innerScreen = new THREE.Mesh(new THREE.PlaneGeometry(innerW, innerH), darkMat);
+innerScreen.position.set(0, 0, bezelMaxZ + 0.002);
+screenGroup.add(innerScreen);
+
+// Display UI Face (Emissive screen)
+const face = new THREE.Mesh(new THREE.PlaneGeometry(innerW - 0.02, innerH - 0.02), screenMat);
+face.position.set(0, 0, bezelMaxZ + 0.004);
+face.name = "monitorScreen"; // Tagged for raycaster
+screenGroup.add(face);
+
+// Gold Stripe Accent
+const monStripe = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.02, bezelMaxZ * 2 + 0.02), accentMat);
+monStripe.position.set(0, -monitorH/2 + 0.08, 0); // Bottom bezel edge
+screenGroup.add(monStripe);
+
+
+// 3. Keyboard — realistic QWERTY layout
+const kbGroup = new THREE.Group();
+kbGroup.position.set(0, 0.08, 1.0); // Y=0.08 sits above desk bevel
+kbGroup.rotation.x = 0.03;
+workstation.add(kbGroup);
+
+const kbBaseMat = new THREE.MeshStandardMaterial({ color: 0xbab5ad, roughness: 0.85, metalness: 0.03 });
+const kbBaseW = 2.6, kbBaseD = 0.85, kbBaseH = 0.035;
+const kbBase = new THREE.Mesh(new THREE.BoxGeometry(kbBaseW, kbBaseH, kbBaseD), kbBaseMat);
+kbBase.position.y = kbBaseH / 2;
+kbBase.castShadow = true;
+kbGroup.add(kbBase);
+
+// Key layout: {l: label, w: width in units}  — all main rows sum to 15 units
+const kbLayout = [
+    [{l:'`',w:1},{l:'1',w:1},{l:'2',w:1},{l:'3',w:1},{l:'4',w:1},{l:'5',w:1},{l:'6',w:1},{l:'7',w:1},{l:'8',w:1},{l:'9',w:1},{l:'0',w:1},{l:'-',w:1},{l:'=',w:1},{l:'Bksp',w:2}],
+    [{l:'Tab',w:1.5},{l:'Q',w:1},{l:'W',w:1},{l:'E',w:1},{l:'R',w:1},{l:'T',w:1},{l:'Y',w:1},{l:'U',w:1},{l:'I',w:1},{l:'O',w:1},{l:'P',w:1},{l:'[',w:1},{l:']',w:1},{l:'\\',w:1.5}],
+    [{l:'Caps',w:1.75},{l:'A',w:1},{l:'S',w:1},{l:'D',w:1},{l:'F',w:1},{l:'G',w:1},{l:'H',w:1},{l:'J',w:1},{l:'K',w:1},{l:'L',w:1},{l:';',w:1},{l:"'",w:1},{l:'Enter',w:2.25}],
+    [{l:'Shift',w:2.25},{l:'Z',w:1},{l:'X',w:1},{l:'C',w:1},{l:'V',w:1},{l:'B',w:1},{l:'N',w:1},{l:'M',w:1},{l:',',w:1},{l:'.',w:1},{l:'/',w:1},{l:'Shift',w:2.75}],
+    [{l:'Ctrl',w:1.5},{l:'Win',w:1},{l:'Alt',w:1.25},{l:'',w:6.5},{l:'Alt',w:1.25},{l:'Fn',w:1},{l:'☰',w:1},{l:'Ctrl',w:1.5}]
+];
+
+const kbU = kbBaseW / 15;  // unit width derived from base width
+const kbGap = 0.01;
+const kbKeyH = 0.025;
+const kbRowH = kbBaseD / kbLayout.length;
+const kbStartZ = -(kbLayout.length * kbRowH) / 2 + kbRowH / 2;
+
+// Shared materials for modifier keys (avoid creating per-key)
+const kbModMat = new THREE.MeshStandardMaterial({ color: 0xd5d2cb, roughness: 0.88, metalness: 0.02 });
+
+const keysGroup = new THREE.Group();
+keysGroup.position.y = kbBaseH;
+kbGroup.add(keysGroup);
+
+kbLayout.forEach((row, ri) => {
+    const rowTotal = row.reduce((s, k) => s + k.w, 0);
+    let x = -(rowTotal * kbU) / 2;
+    const z = kbStartZ + ri * kbRowH;
+
+    row.forEach(key => {
+        const keyW = key.w * kbU - kbGap;
+        const keyD = kbRowH - kbGap;
+
+        if (key.l === '') {
+            // Space bar
+            if (key.w > 2) {
+                const k = new THREE.Mesh(new THREE.BoxGeometry(keyW, kbKeyH, keyD), whiteMat);
+                k.position.set(x + key.w * kbU / 2, kbKeyH / 2, z);
+                k.castShadow = true;
+                keysGroup.add(k);
+            }
+            x += key.w * kbU;
+            return;
+        }
+
+        const isModifier = ['Ctrl','Alt','Win','Fn','☰','Shift','Caps','Tab','Bksp','Enter'].includes(key.l);
+        const kMat = key.l === 'Esc' ? accentMat : isModifier ? kbModMat : whiteMat;
+
+        const k = new THREE.Mesh(new THREE.BoxGeometry(keyW, kbKeyH, keyD), kMat);
+        k.position.set(x + key.w * kbU / 2, kbKeyH / 2, z);
+        k.castShadow = true;
+        keysGroup.add(k);
+
+        x += key.w * kbU;
+    });
+});
+
+
+// 4. Mouse
+const mouseGroup = new THREE.Group();
+mouseGroup.position.set(2.0, 0, 0.9);
+mouseGroup.rotation.y = -0.1;
+workstation.add(mouseGroup);
+
+const mouse = new THREE.Mesh(roundedBox(0.4, 0.15, 0.7, 0.15, 4), bodyMat);
+mouse.position.y = 0.075;
+mouse.castShadow = true;
+mouseGroup.add(mouse);
+
+const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.04, 16), accentMat);
+wheel.position.set(0, 0.14, -0.2);
+wheel.rotation.z = Math.PI/2;
+mouseGroup.add(wheel);
+
+
+// 5. Desk Accessories — Lucky Coffee Orange Americano (clear plastic cup)
+const coffeeGroup = new THREE.Group();
+coffeeGroup.position.set(-3.2, 0.08, -0.4);
+workstation.add(coffeeGroup);
+
+const cupH = 0.72, cupTopR = 0.28, cupBotR = 0.20; // Large/Venti size
+
+// Clear plastic cup shell (transparent — renders last via renderOrder)
+const clearPlasticMat = new THREE.MeshStandardMaterial({
+    color: 0xddeeff, transparent: true, opacity: 0.3,
+    roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide,
+    depthWrite: false
+});
+const cupShell = new THREE.Mesh(new THREE.CylinderGeometry(cupTopR, cupBotR, cupH, 32, 1, true), clearPlasticMat);
+cupShell.position.y = cupH / 2;
+cupShell.renderOrder = 10;
+coffeeGroup.add(cupShell);
+
+// Cup bottom (opaque)
+const cupBotMat = new THREE.MeshStandardMaterial({ color: 0xdde8f0, roughness: 0.1 });
+const cupBot = new THREE.Mesh(new THREE.CircleGeometry(cupBotR, 32), cupBotMat);
+cupBot.rotation.x = -Math.PI / 2;
+cupBot.position.y = 0.005;
+coffeeGroup.add(cupBot);
+
+// Cup lid (flat dome on top)
+const lidMat = new THREE.MeshStandardMaterial({ color: 0xe8e4dc, roughness: 0.15 });
+const lid = new THREE.Mesh(new THREE.CylinderGeometry(cupTopR + 0.01, cupTopR + 0.005, 0.02, 32), lidMat);
+lid.position.y = cupH + 0.01;
+coffeeGroup.add(lid);
+// Lid rim
+const lidRimMat = new THREE.MeshStandardMaterial({ color: 0xddd8d0, roughness: 0.15 });
+const lidRim = new THREE.Mesh(new THREE.TorusGeometry(cupTopR + 0.01, 0.006, 8, 32), lidRimMat);
+lidRim.rotation.x = Math.PI / 2;
+lidRim.position.y = cupH + 0.02;
+coffeeGroup.add(lidRim);
+// Straw hole
+const strawHoleMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+const strawHole = new THREE.Mesh(new THREE.CircleGeometry(0.025, 16), strawHoleMat);
+strawHole.rotation.x = -Math.PI / 2;
+strawHole.position.set(0.06, cupH + 0.022, 0);
+coffeeGroup.add(strawHole);
+
+// Straw — tall cylinder poking out at a slight angle
+const strawMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.4 }); // green straw
+const strawH = 0.55;
+const straw = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, strawH, 12), strawMat);
+straw.position.set(0.06, cupH + strawH / 2 + 0.01, 0);
+straw.rotation.z = -0.12; // slight tilt
+coffeeGroup.add(straw);
+// Straw bend (elbow piece)
+const strawBend = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.018, 8, 6, Math.PI * 0.35), strawMat);
+strawBend.position.set(0.06, cupH + strawH + 0.005, 0);
+strawBend.rotation.set(Math.PI / 2, 0, -0.5);
+coffeeGroup.add(strawBend);
+
+// Orange juice layer (bottom ~40% — opaque)
+const ojH = cupH * 0.40;
+const ojBotR = cupBotR;
+const ojTopR = cupBotR + (cupTopR - cupBotR) * 0.40;
+const ojMat = new THREE.MeshStandardMaterial({
+    color: 0xf5a623, roughness: 0.3, metalness: 0.0
+});
+const ojLayer = new THREE.Mesh(new THREE.CylinderGeometry(ojTopR, ojBotR, ojH, 32), ojMat);
+ojLayer.position.y = ojH / 2 + 0.005;
+coffeeGroup.add(ojLayer);
+
+// Coffee layer (top ~35% — opaque)
+const coffeeH = cupH * 0.35;
+const coffeeBotR = ojTopR;
+const coffeeTopR = cupBotR + (cupTopR - cupBotR) * 0.75;
+const coffeeMat = new THREE.MeshStandardMaterial({
+    color: 0x3e1f0d, roughness: 0.4, metalness: 0.0
+});
+const coffeeLayer = new THREE.Mesh(new THREE.CylinderGeometry(coffeeTopR, coffeeBotR, coffeeH, 32), coffeeMat);
+coffeeLayer.position.y = ojH + coffeeH / 2 + 0.005;
+coffeeGroup.add(coffeeLayer);
+
+// Gradient blend zone between OJ and coffee (opaque)
+const blendH = cupH * 0.08;
+const blendBotR = ojTopR - 0.003;
+const blendTopR = coffeeBotR + 0.003;
+const blendMat = new THREE.MeshStandardMaterial({
+    color: 0x8b5e2a, roughness: 0.35
+});
+const blendLayer = new THREE.Mesh(new THREE.CylinderGeometry(blendTopR, blendBotR, blendH, 32), blendMat);
+blendLayer.position.y = ojH + blendH / 2;
+coffeeGroup.add(blendLayer);
+
+// Ice cubes (transparent — scaled up for larger cup)
+const iceMat = new THREE.MeshStandardMaterial({
+    color: 0xddeeff, transparent: true, opacity: 0.5,
+    roughness: 0.05, metalness: 0.1, depthWrite: false
+});
+const icePositions = [
+    { x: 0.05, z: 0.04, y: 0.58, rx: 0.3, ry: 0.5, s: 0.08 },
+    { x: -0.08, z: 0.02, y: 0.62, rx: 0.8, ry: 0.2, s: 0.07 },
+    { x: 0.02, z: -0.07, y: 0.56, rx: 0.1, ry: 1.1, s: 0.085 },
+    { x: -0.04, z: 0.08, y: 0.60, rx: 0.6, ry: 0.9, s: 0.065 },
+    { x: 0.08, z: -0.04, y: 0.63, rx: 1.2, ry: 0.4, s: 0.075 },
+];
+icePositions.forEach(ip => {
+    const ice = new THREE.Mesh(new THREE.BoxGeometry(ip.s, ip.s * 0.8, ip.s), iceMat);
+    ice.position.set(ip.x, ip.y, ip.z);
+    ice.rotation.set(ip.rx, ip.ry, 0);
+    ice.renderOrder = 9;
+    coffeeGroup.add(ice);
+});
+
+// ── FRONT LABEL: Lucky Coffee branding ──
+const frontCvs = document.createElement('canvas');
+frontCvs.width = 512; frontCvs.height = 512;
+const fCtx = frontCvs.getContext('2d');
+fCtx.clearRect(0, 0, 512, 512);
+
+// Deep blue banner background
+fCtx.fillStyle = 'rgba(0,61,124,0.95)';
+const fx = 30, fy = 20, fw = 452, fh = 470, fr = 18;
+fCtx.beginPath();
+fCtx.moveTo(fx + fr, fy); fCtx.lineTo(fx + fw - fr, fy);
+fCtx.quadraticCurveTo(fx + fw, fy, fx + fw, fy + fr);
+fCtx.lineTo(fx + fw, fy + fh - fr);
+fCtx.quadraticCurveTo(fx + fw, fy + fh, fx + fw - fr, fy + fh);
+fCtx.lineTo(fx + fr, fy + fh); fCtx.quadraticCurveTo(fx, fy + fh, fx, fy + fh - fr);
+fCtx.lineTo(fx, fy + fr); fCtx.quadraticCurveTo(fx, fy, fx + fr, fy);
+fCtx.fill();
+
+// Helper: draw leaping deer silhouette (Luckin-style) at cx,cy with given scale and color
+function drawDeer(ctx, cx, cy, scale, color) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    // Body — leaping pose, facing right
+    ctx.moveTo(-2, 12);
+    // Hind legs (kicked back)
+    ctx.quadraticCurveTo(-30, 28, -38, 40);
+    ctx.quadraticCurveTo(-34, 38, -28, 30);
+    ctx.quadraticCurveTo(-32, 36, -40, 48);
+    ctx.quadraticCurveTo(-36, 40, -26, 24);
+    // Back/rump
+    ctx.quadraticCurveTo(-22, 10, -16, -2);
+    // Spine curve
+    ctx.quadraticCurveTo(-8, -14, 4, -18);
+    // Neck going up
+    ctx.quadraticCurveTo(14, -22, 20, -34);
+    // Head
+    ctx.quadraticCurveTo(24, -40, 30, -42);
+    ctx.quadraticCurveTo(34, -42, 32, -38);
+    // Snout
+    ctx.quadraticCurveTo(36, -36, 38, -34);
+    ctx.quadraticCurveTo(34, -32, 30, -32);
+    // Jaw/throat
+    ctx.quadraticCurveTo(26, -30, 22, -24);
+    // Chest
+    ctx.quadraticCurveTo(18, -16, 16, -6);
+    // Front legs (reaching forward)
+    ctx.quadraticCurveTo(18, 2, 28, 14);
+    ctx.quadraticCurveTo(32, 20, 36, 32);
+    ctx.quadraticCurveTo(32, 26, 26, 16);
+    ctx.quadraticCurveTo(22, 8, 20, 2);
+    ctx.quadraticCurveTo(20, 10, 30, 24);
+    ctx.quadraticCurveTo(34, 30, 38, 42);
+    ctx.quadraticCurveTo(34, 36, 28, 24);
+    ctx.quadraticCurveTo(18, 10, 12, 4);
+    // Belly
+    ctx.quadraticCurveTo(6, 8, -2, 12);
+    ctx.fill();
+    // Antlers — branching from top of head
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    // Left antler (3 prongs)
+    ctx.beginPath(); ctx.moveTo(24, -40); ctx.quadraticCurveTo(16, -52, 10, -60); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(16, -50); ctx.quadraticCurveTo(10, -52, 4, -54); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(18, -46); ctx.quadraticCurveTo(20, -54, 18, -58); ctx.stroke();
+    // Right antler (3 prongs)
+    ctx.beginPath(); ctx.moveTo(28, -42); ctx.quadraticCurveTo(34, -54, 40, -60); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(34, -52); ctx.quadraticCurveTo(40, -52, 46, -50); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(32, -48); ctx.quadraticCurveTo(30, -56, 32, -60); ctx.stroke();
+    ctx.restore();
+}
+
+// Large white circular logo with deer
+fCtx.fillStyle = '#fff';
+fCtx.beginPath(); fCtx.arc(256, 180, 110, 0, Math.PI * 2); fCtx.fill();
+drawDeer(fCtx, 256, 188, 1.6, '#003d7c');
+
+// Brand name below logo
+fCtx.fillStyle = '#fff';
+fCtx.font = 'bold 48px -apple-system, sans-serif';
+fCtx.textAlign = 'center';
+fCtx.fillText('LUCKY', 256, 350);
+fCtx.font = 'bold 36px -apple-system, sans-serif';
+fCtx.fillText('COFFEE', 256, 395);
+
+// Orange accent line
+fCtx.fillStyle = '#f5a623';
+fCtx.fillRect(100, 415, 312, 4);
+
+// Small tagline
+fCtx.fillStyle = 'rgba(255,255,255,0.5)';
+fCtx.font = '18px -apple-system, sans-serif';
+fCtx.fillText('PREMIUM COFFEE · EST. 2024', 256, 455);
+
+const frontTex = new THREE.CanvasTexture(frontCvs);
+const frontMat = new THREE.MeshBasicMaterial({ map: frontTex, transparent: true, side: THREE.FrontSide });
+const labelTopR = cupTopR + 0.004;
+const labelBotR = cupBotR + 0.004;
+// Front label — ~140° arc facing camera (camera at +X,+Z → theta ~0.75PI)
+// Centered at PI*0.75, so thetaStart = PI*0.75 - arc/2 = PI*0.36
+const frontGeo = new THREE.CylinderGeometry(labelTopR, labelBotR, cupH * 0.88, 32, 1, true, Math.PI * 0.36, Math.PI * 0.78);
+const frontLabel = new THREE.Mesh(frontGeo, frontMat);
+frontLabel.position.y = cupH * 0.46;
+frontLabel.renderOrder = 11;
+coffeeGroup.add(frontLabel);
+
+// ── BACK LABEL: White paper order receipt ──
+const backCvs = document.createElement('canvas');
+backCvs.width = 512; backCvs.height = 700;
+const bCtx = backCvs.getContext('2d');
+bCtx.clearRect(0, 0, 512, 700);
+
+// White paper background
+bCtx.fillStyle = 'rgba(255,255,255,0.97)';
+const bx = 15, by = 10, bw = 482, bh = 680, br = 4;
+bCtx.beginPath();
+bCtx.moveTo(bx + br, by); bCtx.lineTo(bx + bw - br, by);
+bCtx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+bCtx.lineTo(bx + bw, by + bh - br);
+bCtx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
+bCtx.lineTo(bx + br, by + bh); bCtx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
+bCtx.lineTo(bx, by + br); bCtx.quadraticCurveTo(bx, by, bx + br, by);
+bCtx.fill();
+bCtx.strokeStyle = '#ddd'; bCtx.lineWidth = 1;
+bCtx.stroke();
+
+// Header — small deer + brand
+drawDeer(bCtx, 256, 50, 0.5, '#003d7c');
+bCtx.fillStyle = '#003d7c';
+bCtx.font = 'bold 20px -apple-system, sans-serif';
+bCtx.textAlign = 'center';
+bCtx.fillText('LUCKY COFFEE', 256, 90);
+
+// Separator
+bCtx.setLineDash([5, 3]); bCtx.strokeStyle = '#bbb'; bCtx.lineWidth = 1;
+bCtx.beginPath(); bCtx.moveTo(40, 105); bCtx.lineTo(472, 105); bCtx.stroke();
+bCtx.setLineDash([]);
+
+// Drink name — large
+bCtx.fillStyle = '#111';
+bCtx.font = 'bold 34px -apple-system, sans-serif';
+bCtx.textAlign = 'left';
+bCtx.fillText('Orange Americano', 45, 148);
+bCtx.fillStyle = '#888';
+bCtx.font = '22px -apple-system, sans-serif';
+bCtx.textAlign = 'right';
+bCtx.fillText('x1', 470, 148);
+
+// Customizations — each on its own line, label: value style
+bCtx.textAlign = 'left';
+const detY = 185;
+const detLines = [
+    ['Temperature', 'Iced'],
+    ['Size', 'Tall'],
+    ['Ice', 'Less Ice'],
+    ['Sugar', 'Standard'],
+];
+detLines.forEach((d, i) => {
+    const y = detY + i * 32;
+    bCtx.fillStyle = '#999';
+    bCtx.font = '20px -apple-system, sans-serif';
+    bCtx.fillText(d[0], 55, y);
+    bCtx.fillStyle = '#333';
+    bCtx.font = 'bold 20px -apple-system, sans-serif';
+    bCtx.fillText(d[1], 250, y);
+});
+
+// Separator
+const sep1Y = detY + detLines.length * 32 + 8;
+bCtx.setLineDash([5, 3]); bCtx.strokeStyle = '#bbb';
+bCtx.beginPath(); bCtx.moveTo(40, sep1Y); bCtx.lineTo(472, sep1Y); bCtx.stroke();
+bCtx.setLineDash([]);
+
+// Pickup name — prominent
+const pickY = sep1Y + 30;
+bCtx.fillStyle = '#999';
+bCtx.font = '18px -apple-system, sans-serif';
+bCtx.textAlign = 'left';
+bCtx.fillText('Pickup Name', 45, pickY);
+bCtx.fillStyle = '#111';
+bCtx.font = 'bold 44px -apple-system, sans-serif';
+bCtx.fillText('Ed', 45, pickY + 46);
+
+// Separator
+const sep2Y = pickY + 62;
+bCtx.setLineDash([5, 3]); bCtx.strokeStyle = '#bbb';
+bCtx.beginPath(); bCtx.moveTo(40, sep2Y); bCtx.lineTo(472, sep2Y); bCtx.stroke();
+bCtx.setLineDash([]);
+
+// Order details — two columns
+const ordY = sep2Y + 28;
+bCtx.fillStyle = '#999'; bCtx.font = '17px -apple-system, sans-serif';
+bCtx.textAlign = 'left';
+bCtx.fillText('Order No.', 45, ordY);
+bCtx.fillText('Store', 45, ordY + 28);
+bCtx.fillText('Time', 45, ordY + 56);
+bCtx.fillStyle = '#333'; bCtx.font = 'bold 17px -apple-system, sans-serif';
+bCtx.fillText('#0322-1847', 200, ordY);
+bCtx.fillText('Lucky Coffee · Central', 200, ordY + 28);
+bCtx.fillText('2024-03-22  09:15 AM', 200, ordY + 56);
+
+// Separator
+const sep3Y = ordY + 76;
+bCtx.setLineDash([5, 3]); bCtx.strokeStyle = '#bbb';
+bCtx.beginPath(); bCtx.moveTo(40, sep3Y); bCtx.lineTo(472, sep3Y); bCtx.stroke();
+bCtx.setLineDash([]);
+
+// Barcode
+const bcY = sep3Y + 15;
+bCtx.fillStyle = '#333';
+for (let i = 0; i < 48; i++) {
+    const bww = (i % 3 === 0) ? 3.5 : (i % 5 === 0) ? 2 : 1.2;
+    bCtx.fillRect(80 + i * 7.3, bcY, bww, 42);
+}
+bCtx.fillStyle = '#999';
+bCtx.font = '13px monospace';
+bCtx.textAlign = 'center';
+bCtx.fillText('4 810222 123456', 256, bcY + 58);
+
+// Footer
+bCtx.fillStyle = '#bbb';
+bCtx.font = '13px -apple-system, sans-serif';
+bCtx.fillText('Thank you for choosing Lucky Coffee!', 256, bcY + 82);
+
+const backTex = new THREE.CanvasTexture(backCvs);
+const backMat = new THREE.MeshBasicMaterial({ map: backTex, transparent: true, side: THREE.FrontSide });
+// Back label — ~140° arc on opposite side (centered at PI*1.75)
+// thetaStart = PI*1.75 - arc/2 = PI*1.36
+const backGeo = new THREE.CylinderGeometry(labelTopR, labelBotR, cupH * 0.88, 32, 1, true, Math.PI * 1.36, Math.PI * 0.78);
+const backLabel = new THREE.Mesh(backGeo, backMat);
+backLabel.position.y = cupH * 0.46;
+backLabel.renderOrder = 11;
+coffeeGroup.add(backLabel);
+
+// Hit box for interaction
+const coffeeHitBox = new THREE.Mesh(
+    new THREE.CylinderGeometry(cupTopR + 0.02, cupBotR + 0.02, cupH + 0.1, 16),
+    new THREE.MeshBasicMaterial({ visible: false })
+);
+coffeeHitBox.position.y = cupH / 2;
+coffeeGroup.add(coffeeHitBox);
+
+let isInspectingCoffee = false;
+
+const phone = new THREE.Mesh(roundedBox(0.5, 0.04, 1.0, 0.05, 4), bodyDarkMat);
+phone.position.set(2.6, 0.02, 0.2);
+phone.rotation.y = -0.2;
+phone.castShadow = true;
+workstation.add(phone);
+
+const phoneScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.94), new THREE.MeshStandardMaterial({color: 0x1e1c2a}));
+phoneScreen.position.set(2.6, 0.041, 0.2);
+phoneScreen.rotation.x = -Math.PI/2;
+phoneScreen.rotation.z = -0.2;
+workstation.add(phoneScreen);
+
+// ─── 5b. iPad Air (Neuropsychological Assessment Tablet) ─────────────────────
+const tabW = 0.82, tabH = 0.03, tabD = 1.16; // iPad Air 11" scaled to desk
+const DESK_BEVEL_TOP = 0.08; // desk bevel extends above Y=0
+const tabletGroup = new THREE.Group();
+tabletGroup.position.set(-2.35, 0, 1.1);
+tabletGroup.rotation.y = 0.15; // slight angle on desk
+workstation.add(tabletGroup);
+
+// iPad Air — Space Gray aluminium
+const tabAluMat = new THREE.MeshStandardMaterial({ color: 0xb0ada6, roughness: 0.38, metalness: 0.55 });
+const tabSideMat = new THREE.MeshStandardMaterial({ color: 0xa09d96, roughness: 0.30, metalness: 0.62 });
+const tabScreenBezelMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.92, metalness: 0.0 });
+const tabBY = DESK_BEVEL_TOP; // base Y on desk
+
+// Main body — aluminium shell
+const tabBody = new THREE.Mesh(new THREE.BoxGeometry(tabW, tabH, tabD), tabAluMat);
+tabBody.position.y = tabBY + tabH/2;
+tabBody.castShadow = true; tabBody.receiveShadow = true;
+tabletGroup.add(tabBody);
+
+// Flat aluminium back panel (slightly inset, visible from below)
+const tabBack = new THREE.Mesh(new THREE.PlaneGeometry(tabW - 0.03, tabD - 0.03), tabAluMat);
+tabBack.rotation.x = Math.PI/2; // face down
+tabBack.position.y = tabBY + 0.001;
+tabletGroup.add(tabBack);
+
+// Subtle antenna line (top and bottom of back, like real iPad)
+const antMat = new THREE.MeshStandardMaterial({ color: 0x8a8780, roughness: 0.5, metalness: 0.3 });
+[[-tabD/2 + 0.06], [tabD/2 - 0.06]].forEach(([az]) => {
+    const antLine = new THREE.Mesh(new THREE.BoxGeometry(tabW - 0.06, 0.002, 0.004), antMat);
+    antLine.position.set(0, tabBY + 0.002, az);
+    tabletGroup.add(antLine);
+});
+
+// Side bands — flat edge rails like iPad Air (flat-edge design)
+// Left & right edges
+[[-1, 1], [1, 1]].forEach(([side]) => {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.004, tabH * 0.7, tabD - 0.02), tabSideMat);
+    rail.position.set(side * tabW/2, tabBY + tabH/2, 0);
+    tabletGroup.add(rail);
+});
+// Top & bottom edges
+[[-1], [1]].forEach(([side]) => {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(tabW - 0.02, tabH * 0.7, 0.004), tabSideMat);
+    rail.position.set(0, tabBY + tabH/2, side * tabD/2);
+    tabletGroup.add(rail);
+});
+
+// Screen bezel — black glass front face (below screen plane)
+const bezelFront = new THREE.Mesh(new THREE.PlaneGeometry(tabW - 0.005, tabD - 0.005),
+    new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.92, metalness: 0.0 }));
+bezelFront.rotation.x = -Math.PI/2;
+bezelFront.position.y = tabBY + tabH + 0.0005;
+tabletGroup.add(bezelFront);
+
+// Volume buttons (right side)
+const btnMat = new THREE.MeshStandardMaterial({ color: 0x9a9790, roughness: 0.28, metalness: 0.65 });
+[[-0.14], [0.0]].forEach(([bz]) => {
+    const btn = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.008, 0.06), btnMat);
+    btn.position.set(tabW/2 + 0.002, tabBY + tabH * 0.7, bz);
+    tabletGroup.add(btn);
+});
+
+// Power button with Touch ID (top edge)
+const pwrBtn = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.008, 0.006), btnMat);
+pwrBtn.position.set(tabW/2 - 0.06, tabBY + tabH * 0.7, -tabD/2 - 0.002);
+tabletGroup.add(pwrBtn);
+
+// USB-C port (bottom center)
+const usbMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.4, metalness: 0.7 });
+const usbPort = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.008, 0.006), usbMat);
+usbPort.position.set(0, tabBY + tabH * 0.35, tabD/2 + 0.002);
+tabletGroup.add(usbPort);
+
+// Speaker grilles (top & bottom edges, 2 each)
+const grilleMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.8, metalness: 0.2 });
+[[-tabD/2 - 0.002], [tabD/2 + 0.002]].forEach(([gz]) => {
+    [-0.12, -0.06, 0.0, 0.06, 0.12].forEach(gx => {
+        const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.004, 6), grilleMat);
+        hole.rotation.x = Math.PI/2;
+        hole.position.set(gx, tabBY + tabH * 0.35, gz);
+        tabletGroup.add(hole);
+    });
+});
+
+// Camera bump (back top-left corner, square module like iPad Air)
+const camModule = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.006, 0.05),
+    new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.5 }));
+camModule.position.set(-tabW/2 + 0.055, tabBY + 0.003, -tabD/2 + 0.055);
+tabletGroup.add(camModule);
+// Camera lens
+const camLens = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.004, 12),
+    new THREE.MeshStandardMaterial({ color: 0x0a0a12, roughness: 0.15, metalness: 0.8 }));
+camLens.position.set(-tabW/2 + 0.055, tabBY + 0.006, -tabD/2 + 0.055);
+tabletGroup.add(camLens);
+// Lens ring
+const lensRing = new THREE.Mesh(new THREE.TorusGeometry(0.013, 0.002, 8, 16),
+    new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.2, metalness: 0.8 }));
+lensRing.position.set(-tabW/2 + 0.055, tabBY + 0.007, -tabD/2 + 0.055);
+lensRing.rotation.x = Math.PI/2;
+tabletGroup.add(lensRing);
+
+// Apple logo (subtle embossed rectangle on back center — simplified)
+const logoMat = new THREE.MeshStandardMaterial({ color: 0xa5a29b, roughness: 0.25, metalness: 0.6 });
+const appleLogo = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 0.05), logoMat);
+appleLogo.rotation.x = Math.PI/2;
+appleLogo.position.set(0, tabBY + 0.002, 0);
+tabletGroup.add(appleLogo);
+
+// Interactive screen canvas — neuropsych assessment UI
+const tabScrW = 1024, tabScrH = 1440;
+const tabCanvas = document.createElement('canvas'); tabCanvas.width = tabScrW; tabCanvas.height = tabScrH;
+const tc = tabCanvas.getContext('2d');
+
+// Track interactive state
+const MOCA_WORDS = ['FACE', 'VELVET', 'CHURCH', 'DAISY', 'RED'];
+const tabState = {
+    currentScreen: 'home', // 'home', 'recall', 'trail', 'clock'
+    trailPart: 'A',        // 'A' or 'B'
+    trailDots: [],
+    trailConnected: [],
+    trailStartTime: 0,
+    trailEndTime: 0,
+    trailComplete: false,
+    // Clock drawing
+    clockPhase: 'draw',       // 'draw', 'numbers', 'hands', 'score'
+    clockStrokes: [],          // array of [{x,y}] strokes
+    clockCurrentStroke: null,  // current drawing stroke
+    clockScore: null,          // {circle, numbers, hands}
+    clockIsDrawing: false,
+    // Number drag-and-drop
+    clockTrayNums: [],         // shuffled numbers in the tray (not yet placed)
+    clockPlacedNums: [],       // [{num, x, y}] placed on clock face
+    clockDragging: null,       // {num, x, y} currently being dragged
+    // Immediate recall
+    recallPhase: 'idle',   // 'showing', 'input'
+    recallShowIdx: 0,
+    recallShowTimer: null,
+    recallInput: '',
+    recallAnswers: [],
+    recallCursor: true,
+    recallCursorTimer: null,
+};
+
+// Assessment screens
+function drawTabletScreen() {
+    const W = tabScrW, H = tabScrH;
+    tc.clearRect(0, 0, W, H);
+
+    // Status bar
+    tc.fillStyle = '#f5f5f7'; tc.fillRect(0, 0, W, H);
+    tc.fillStyle = '#000'; tc.fillRect(0, 0, W, 44);
+    tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText('9:41 AM', W/2, 30);
+    tc.textAlign = 'left';
+    // Battery icon
+    tc.fillStyle = '#4cd964'; tc.fillRect(W - 60, 14, 30, 16); tc.strokeStyle = '#fff'; tc.lineWidth = 1; tc.strokeRect(W - 60, 14, 30, 16);
+
+    if (tabState.currentScreen === 'home') {
+        drawHomeScreen(W, H);
+    } else if (tabState.currentScreen === 'recall') {
+        drawImmediateRecall(W, H);
+    } else if (tabState.currentScreen === 'trail') {
+        drawTrailMaking(W, H);
+    } else if (tabState.currentScreen === 'clock') {
+        drawClockDrawing(W, H);
+    }
+    tabScrTex.needsUpdate = true;
+}
+
+function drawHomeScreen(W, H) {
+    // App header
+    tc.fillStyle = '#1c1c1e'; tc.font = 'bold 42px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText('NeuroPsych Assessment', W/2, 120);
+    tc.fillStyle = '#8e8e93'; tc.font = '22px -apple-system, sans-serif';
+    tc.fillText('Cognitive Screening Battery', W/2, 160);
+
+    // Assessment cards
+    const cards = [
+        { label: 'Immediate Recall', sub: 'MoCA — Verbal Memory', icon: '🧠', color: '#34c759', screen: 'recall' },
+        { label: 'Trail Making', sub: 'TMT-A / TMT-B', icon: '🔗', color: '#007aff', screen: 'trail' },
+        { label: 'Clock Drawing', sub: 'CDT — Visuospatial', icon: '🕐', color: '#ff9500', screen: 'clock' },
+    ];
+
+    cards.forEach((card, i) => {
+        const cx = 80, cy = 220 + i * 340, cw = W - 160, ch = 290;
+        // Card shadow
+        tc.fillStyle = 'rgba(0,0,0,0.06)';
+        tc.beginPath(); tc.roundRect(cx + 4, cy + 6, cw, ch, 20); tc.fill();
+        // Card body
+        tc.fillStyle = '#ffffff';
+        tc.beginPath(); tc.roundRect(cx, cy, cw, ch, 20); tc.fill();
+        tc.strokeStyle = '#e5e5ea'; tc.lineWidth = 1;
+        tc.beginPath(); tc.roundRect(cx, cy, cw, ch, 20); tc.stroke();
+        // Color accent bar
+        tc.fillStyle = card.color; tc.fillRect(cx, cy, 8, ch);
+        // Icon circle
+        tc.fillStyle = card.color + '18';
+        tc.beginPath(); tc.arc(cx + 70, cy + ch/2, 40, 0, Math.PI*2); tc.fill();
+        tc.fillStyle = card.color; tc.font = '42px sans-serif'; tc.textAlign = 'center';
+        tc.fillText(card.icon, cx + 70, cy + ch/2 + 14);
+        // Text
+        tc.textAlign = 'left';
+        tc.fillStyle = '#1c1c1e'; tc.font = 'bold 30px -apple-system, sans-serif';
+        tc.fillText(card.label, cx + 130, cy + 110);
+        tc.fillStyle = '#8e8e93'; tc.font = '22px -apple-system, sans-serif';
+        tc.fillText(card.sub, cx + 130, cy + 150);
+        // Start button
+        tc.fillStyle = card.color;
+        tc.beginPath(); tc.roundRect(cx + cw - 190, cy + ch - 70, 150, 44, 22); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Start', cx + cw - 115, cy + ch - 42);
+        tc.textAlign = 'left';
+    });
+
+    // Bottom info
+    tc.fillStyle = '#c7c7cc'; tc.font = '18px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText('Tap a card to begin assessment', W/2, H - 60);
+}
+
+function initTrailDots(part) {
+    tabState.trailPart = part;
+    tabState.trailComplete = false;
+    tabState.trailStartTime = 0;
+    tabState.trailEndTime = 0;
+    // Generate non-crossing path with unpredictable layout:
+    // 1. Scatter random points with minimum spacing
+    // 2. Order them using a non-crossing path (convex hull peeling)
+    const margin = 50, topY = 210, botY = 1380;
+    const minDist = 80, count = 25;
+    const rawPts = [];
+    let att = 0;
+    while (rawPts.length < count && att < 8000) {
+        const x = margin + Math.random() * (tabScrW - margin * 2);
+        const y = topY + Math.random() * (botY - topY);
+        let ok = true;
+        for (const p of rawPts) {
+            const dx = x - p[0], dy = y - p[1];
+            if (dx * dx + dy * dy < minDist * minDist) { ok = false; break; }
+        }
+        if (ok) rawPts.push([x, y]);
+        att++;
+    }
+
+    // Fisher-Yates shuffle for totally random numbering
+    const pts = [...rawPts];
+    for (let i = pts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pts[i], pts[j]] = [pts[j], pts[i]];
+    }
+    if (part === 'A') {
+        tabState.trailDots = pts.map(([x,y], i) => ({ x, y, label: String(i+1) }));
+    } else {
+        const labels = ['1','A','2','B','3','C','4','D','5','E','6','F','7','G','8','H','9','I','10','J','11','K','12','L','13'];
+        tabState.trailDots = pts.map(([x,y], i) => ({ x, y, label: labels[i] }));
+    }
+    tabState.trailConnected = new Array(tabState.trailDots.length - 1).fill(false);
+}
+
+function drawTrailMaking(W, H) {
+    const part = tabState.trailPart;
+    const isB = part === 'B';
+    const color = isB ? '#5856d6' : '#007aff';
+
+    // Header
+    tc.fillStyle = color; tc.fillRect(0, 44, W, 80);
+    tc.fillStyle = '#fff'; tc.font = 'bold 30px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText(`Trail Making Test — Part ${part}`, W/2, 96);
+    tc.font = '22px -apple-system, sans-serif'; tc.textAlign = 'left';
+    tc.fillText('← Back', 30, 92);
+
+    // Instructions
+    tc.fillStyle = '#3a3a3c'; tc.font = '20px -apple-system, sans-serif'; tc.textAlign = 'center';
+    if (isB) {
+        tc.fillText('Alternate numbers and letters: 1 → A → 2 → B → ...', W/2, 158);
+    } else {
+        tc.fillText('Connect the numbers in order: 1 → 2 → 3 → ...', W/2, 158);
+    }
+    if (tabState.trailStartTime === 0 && !tabState.trailComplete) {
+        tc.fillStyle = '#f0a020'; tc.font = 'bold 18px -apple-system, sans-serif';
+        tc.fillText('Tap the yellow ① to start — go as fast as you can!', W/2, 185);
+    }
+
+    // Generate dots if needed
+    if (tabState.trailDots.length === 0) initTrailDots(part);
+
+    // Completion screen
+    if (tabState.trailComplete) {
+        const elapsed = ((tabState.trailEndTime - tabState.trailStartTime) / 1000).toFixed(1);
+        // All connections drawn
+        tc.strokeStyle = color; tc.lineWidth = 3; tc.setLineDash([]);
+        for (let i = 0; i < tabState.trailDots.length - 1; i++) {
+            const a = tabState.trailDots[i], b = tabState.trailDots[i+1];
+            tc.beginPath(); tc.moveTo(a.x, a.y); tc.lineTo(b.x, b.y); tc.stroke();
+        }
+        tabState.trailDots.forEach(dot => {
+            tc.beginPath(); tc.arc(dot.x, dot.y, 32, 0, Math.PI*2);
+            tc.fillStyle = color; tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif';
+            tc.textAlign = 'center'; tc.textBaseline = 'middle';
+            tc.fillText(dot.label, dot.x, dot.y);
+        });
+        tc.textBaseline = 'alphabetic';
+
+        // Result overlay
+        tc.fillStyle = 'rgba(255,255,255,0.92)';
+        tc.beginPath(); tc.roundRect(80, 460, W - 160, 340, 20); tc.fill();
+        tc.strokeStyle = color; tc.lineWidth = 3;
+        tc.beginPath(); tc.roundRect(80, 460, W - 160, 340, 20); tc.stroke();
+
+        tc.fillStyle = '#1c1c1e'; tc.font = 'bold 32px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText(`Part ${part} Complete!`, W/2, 520);
+        tc.fillStyle = color; tc.font = 'bold 64px -apple-system, sans-serif';
+        tc.fillText(`${elapsed}s`, W/2, 600);
+        tc.fillStyle = '#8e8e93'; tc.font = '20px -apple-system, sans-serif';
+        tc.fillText('Time to completion', W/2, 640);
+
+        // Next button
+        const nextLabel = isB ? 'Next Test →' : 'Start Part B →';
+        const nextColor = isB ? '#34c759' : '#5856d6';
+        tc.fillStyle = nextColor;
+        tc.beginPath(); tc.roundRect(W/2 - 130, 680, 260, 54, 27); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
+        tc.fillText(nextLabel, W/2, 714);
+        return;
+    }
+
+    // Live timer
+    if (tabState.trailStartTime > 0) {
+        const elapsed = ((Date.now() - tabState.trailStartTime) / 1000).toFixed(1);
+        tc.fillStyle = color; tc.font = 'bold 24px -apple-system, sans-serif'; tc.textAlign = 'right';
+        tc.fillText(`${elapsed}s`, W - 40, 170);
+        tc.textAlign = 'center';
+    }
+
+    // Draw connections
+    tc.strokeStyle = color; tc.lineWidth = 3; tc.setLineDash([]);
+    for (let i = 0; i < tabState.trailDots.length - 1; i++) {
+        if (tabState.trailConnected[i]) {
+            const a = tabState.trailDots[i], b = tabState.trailDots[i+1];
+            tc.beginPath(); tc.moveTo(a.x, a.y); tc.lineTo(b.x, b.y); tc.stroke();
+        }
+    }
+
+    // Draw labeled circles
+    tabState.trailDots.forEach((dot, i) => {
+        const connected = i > 0 && tabState.trailConnected[i-1];
+        const isNext = i === 0 ? tabState.trailStartTime === 0 : tabState.trailConnected[i-1];
+        const isLetter = /[A-Z]/.test(dot.label);
+        tc.beginPath(); tc.arc(dot.x, dot.y, 32, 0, Math.PI*2);
+        const isFirstWaiting = i === 0 && tabState.trailStartTime === 0 && !tabState.trailComplete;
+        tc.fillStyle = connected ? color : isFirstWaiting ? '#f0c020' : (isNext ? (isB ? (isLetter ? '#ede9ff' : '#e3f2ff') : '#e3f2ff') : '#f2f2f7');
+        tc.fill();
+        tc.strokeStyle = connected ? (isB ? '#3634a3' : '#0055cc') : isFirstWaiting ? '#d4a010' : color; tc.lineWidth = isFirstWaiting ? 3 : 2; tc.stroke();
+        tc.fillStyle = connected ? '#fff' : '#1c1c1e';
+        tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center'; tc.textBaseline = 'middle';
+        tc.fillText(dot.label, dot.x, dot.y);
+    });
+    tc.textBaseline = 'alphabetic';
+
+}
+
+function drawClockDrawing(W, H) {
+    const phase = tabState.clockPhase;
+    const color = '#ff9500';
+
+    // Header
+    tc.fillStyle = color; tc.fillRect(0, 44, W, 80);
+    tc.fillStyle = '#fff'; tc.font = 'bold 30px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText('Clock Drawing Test', W/2, 96);
+    tc.font = '22px -apple-system, sans-serif'; tc.textAlign = 'left';
+    tc.fillText('← Back', 30, 92);
+
+    // Instruction
+    tc.fillStyle = '#3a3a3c'; tc.font = '20px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText('Draw a clock showing "ten past eleven" (11:10)', W/2, 155);
+
+    if (phase === 'draw') {
+        tc.fillStyle = color; tc.font = 'bold 18px -apple-system, sans-serif';
+        tc.fillText('Step 1: Draw the clock face (circle)', W/2, 185);
+    } else if (phase === 'numbers') {
+        tc.fillStyle = color; tc.font = 'bold 18px -apple-system, sans-serif';
+        const remaining = tabState.clockTrayNums.length;
+        tc.fillText(`Step 2: Drag numbers onto the clock (${remaining} left)`, W/2, 185);
+    } else if (phase === 'hands') {
+        tc.fillStyle = color; tc.font = 'bold 18px -apple-system, sans-serif';
+        tc.fillText('Step 3: Draw the hour and minute hands', W/2, 185);
+    }
+
+    // Drawing area
+    const drawTop = 210, drawBot = 1180;
+    tc.fillStyle = '#fafafa';
+    tc.fillRect(40, drawTop, W - 80, drawBot - drawTop);
+    tc.strokeStyle = '#ddd'; tc.lineWidth = 2;
+    tc.strokeRect(40, drawTop, W - 80, drawBot - drawTop);
+
+    // Render all freehand strokes (circle + hands)
+    tc.strokeStyle = '#2c2c2e'; tc.lineWidth = 3; tc.lineCap = 'round'; tc.lineJoin = 'round';
+    for (const stroke of tabState.clockStrokes) {
+        if (stroke.length < 2) continue;
+        tc.beginPath(); tc.moveTo(stroke[0].x, stroke[0].y);
+        for (let i = 1; i < stroke.length; i++) tc.lineTo(stroke[i].x, stroke[i].y);
+        tc.stroke();
+    }
+    if (tabState.clockCurrentStroke && tabState.clockCurrentStroke.length >= 2) {
+        tc.beginPath(); tc.moveTo(tabState.clockCurrentStroke[0].x, tabState.clockCurrentStroke[0].y);
+        for (let i = 1; i < tabState.clockCurrentStroke.length; i++) tc.lineTo(tabState.clockCurrentStroke[i].x, tabState.clockCurrentStroke[i].y);
+        tc.stroke();
+    }
+
+    // Render placed numbers on clock face
+    tc.fillStyle = '#1c1c1e'; tc.font = 'bold 34px -apple-system, sans-serif';
+    tc.textAlign = 'center'; tc.textBaseline = 'middle';
+    for (const n of tabState.clockPlacedNums) {
+        tc.fillText(n.num.toString(), n.x, n.y);
+    }
+    tc.textBaseline = 'alphabetic';
+
+    // Render currently dragged number
+    if (tabState.clockDragging) {
+        tc.globalAlpha = 0.7;
+        tc.fillStyle = color; tc.font = 'bold 38px -apple-system, sans-serif';
+        tc.textAlign = 'center'; tc.textBaseline = 'middle';
+        tc.fillText(tabState.clockDragging.num.toString(), tabState.clockDragging.x, tabState.clockDragging.y);
+        tc.globalAlpha = 1.0;
+        tc.textBaseline = 'alphabetic';
+    }
+
+    // Phase buttons / tray
+    const trayTop = drawBot + 15;
+
+    if (phase === 'draw') {
+        const btnY = trayTop;
+        if (tabState.clockStrokes.length > 0) {
+            tc.fillStyle = '#ff3b30';
+            tc.beginPath(); tc.roundRect(W/2 - 230, btnY, 120, 50, 25); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Clear', W/2 - 170, btnY + 30);
+
+            tc.fillStyle = '#8e8e93';
+            tc.beginPath(); tc.roundRect(W/2 - 90, btnY, 120, 50, 25); tc.fill();
+            tc.fillStyle = '#fff';
+            tc.fillText('Undo', W/2 - 30, btnY + 30);
+        }
+        tc.fillStyle = tabState.clockStrokes.length > 0 ? color : '#ccc';
+        tc.beginPath(); tc.roundRect(W/2 + 50, btnY, 180, 50, 25); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Next →', W/2 + 140, btnY + 30);
+
+    } else if (phase === 'numbers') {
+        // Number tray — shuffled tiles to drag
+        const tray = tabState.clockTrayNums;
+        const tileSize = 62, tilePad = 8;
+        const totalW = tray.length * (tileSize + tilePad) - tilePad;
+        const startX = Math.max(50, (W - totalW) / 2);
+        tc.font = 'bold 26px -apple-system, sans-serif'; tc.textAlign = 'center'; tc.textBaseline = 'middle';
+        for (let i = 0; i < tray.length; i++) {
+            const tx = startX + i * (tileSize + tilePad);
+            const ty = trayTop + 10;
+            tc.fillStyle = '#fff';
+            tc.beginPath(); tc.roundRect(tx, ty, tileSize, tileSize, 12); tc.fill();
+            tc.strokeStyle = color; tc.lineWidth = 2;
+            tc.beginPath(); tc.roundRect(tx, ty, tileSize, tileSize, 12); tc.stroke();
+            tc.fillStyle = '#1c1c1e';
+            tc.fillText(tray[i].toString(), tx + tileSize/2, ty + tileSize/2);
+        }
+        tc.textBaseline = 'alphabetic';
+
+        // "Done" / "Next" button when all placed
+        if (tray.length === 0) {
+            const btnY = trayTop + 10;
+            tc.fillStyle = color;
+            tc.beginPath(); tc.roundRect(W/2 - 120, btnY, 240, 54, 27); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Draw Hands →', W/2, btnY + 32);
+        }
+
+        // Reset numbers button
+        if (tabState.clockPlacedNums.length > 0 && tray.length > 0) {
+            tc.fillStyle = '#ff3b30';
+            tc.beginPath(); tc.roundRect(W - 140, trayTop + 80, 100, 40, 20); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 16px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Reset', W - 90, trayTop + 105);
+        }
+
+    } else if (phase === 'hands') {
+        const btnY = trayTop;
+        if (tabState.clockStrokes.length > tabState._circleStrokeCount) {
+            tc.fillStyle = '#8e8e93';
+            tc.beginPath(); tc.roundRect(W/2 - 190, btnY, 120, 50, 25); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Undo', W/2 - 130, btnY + 30);
+        }
+        tc.fillStyle = tabState.clockStrokes.length > tabState._circleStrokeCount ? '#34c759' : '#ccc';
+        tc.beginPath(); tc.roundRect(W/2 + 10, btnY, 180, 50, 25); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Score →', W/2 + 100, btnY + 30);
+
+    } else if (phase === 'score') {
+        const sc = tabState.clockScore;
+        tc.fillStyle = 'rgba(255,255,255,0.94)';
+        tc.beginPath(); tc.roundRect(60, 380, W - 120, 520, 20); tc.fill();
+        tc.strokeStyle = color; tc.lineWidth = 3;
+        tc.beginPath(); tc.roundRect(60, 380, W - 120, 520, 20); tc.stroke();
+
+        tc.fillStyle = '#1c1c1e'; tc.font = 'bold 32px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Score', W/2, 440);
+
+        const total = (sc.circle ? 1 : 0) + (sc.numbers ? 1 : 0) + (sc.hands ? 1 : 0);
+        tc.fillStyle = color; tc.font = 'bold 64px -apple-system, sans-serif';
+        tc.fillText(`${total} / 3`, W/2, 520);
+
+        const items = [
+            { label: 'Closed circle drawn', pass: sc.circle },
+            { label: `Numbers correct (${sc.numCorrect}/12)`, pass: sc.numbers },
+            { label: 'Hands point to 11:10', pass: sc.hands },
+        ];
+        tc.font = '22px -apple-system, sans-serif'; tc.textAlign = 'left';
+        items.forEach((item, idx) => {
+            const iy = 590 + idx * 50;
+            tc.fillStyle = item.pass ? '#34c759' : '#ff3b30';
+            tc.fillText(item.pass ? '✓' : '✗', 110, iy);
+            tc.fillStyle = '#1c1c1e';
+            tc.fillText(item.label, 150, iy);
+        });
+
+        tc.textAlign = 'center';
+        tc.fillStyle = color;
+        tc.beginPath(); tc.roundRect(W/2 - 100, 790, 200, 50, 25); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif';
+        tc.fillText('Try Again', W/2, 822);
+    }
+}
+
+function resetClock() {
+    tabState.clockPhase = 'draw';
+    tabState.clockStrokes = [];
+    tabState.clockCurrentStroke = null;
+    tabState.clockScore = null;
+    tabState.clockIsDrawing = false;
+    tabState.clockPlacedNums = [];
+    tabState.clockDragging = null;
+    tabState._circleStrokeCount = 0;
+    // Shuffle numbers 1-12 for the tray
+    const nums = [1,2,3,4,5,6,7,8,9,10,11,12];
+    for (let i = nums.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [nums[i], nums[j]] = [nums[j], nums[i]];
+    }
+    tabState.clockTrayNums = nums;
+}
+
+function getClockCircle() {
+    // Find the largest closed-loop stroke as the clock circle
+    let best = null;
+    for (const s of tabState.clockStrokes) {
+        if (s.length < 10) continue;
+        const dx = s[0].x - s[s.length-1].x, dy = s[0].y - s[s.length-1].y;
+        const closeDist = Math.sqrt(dx*dx + dy*dy);
+        let minX=9999, maxX=0, minY=9999, maxY=0;
+        for (const p of s) { minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x); minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y); }
+        const w = maxX - minX, h = maxY - minY;
+        if (closeDist < Math.max(w, h) * 0.4 && w > 150 && h > 150) {
+            if (!best || w * h > best.w * best.h) {
+                best = { cx: (minX+maxX)/2, cy: (minY+maxY)/2, r: (w+h)/4, w, h };
+            }
+        }
+    }
+    return best;
+}
+
+function scoreClockDrawing() {
+    const strokes = tabState.clockStrokes;
+
+    // 1. Circle
+    const circle = getClockCircle();
+    const circleOk = !!circle;
+    const circleCx = circle ? circle.cx : 0;
+    const circleCy = circle ? circle.cy : 0;
+    const circleR = circle ? circle.r : 0;
+
+    // 2. Numbers: check each placed number is in correct angular position
+    let numCorrect = 0;
+    if (circleOk) {
+        for (const n of tabState.clockPlacedNums) {
+            const placedAngle = Math.atan2(n.y - circleCy, n.x - circleCx);
+            // Expected angle: clock number n.num at (n.num * 30° - 90°) from center
+            const expectedAngle = (n.num * Math.PI / 6) - Math.PI / 2;
+            let diff = placedAngle - expectedAngle;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+            if (Math.abs(diff) < Math.PI / 6) numCorrect++; // within 30° (one hour zone)
+        }
+    }
+    const numbersOk = tabState.clockPlacedNums.length === 12 && numCorrect >= 10;
+
+    // 3. Hands: detect strokes drawn in hands phase pointing toward 11 and 2
+    let handsOk = false;
+    if (circleOk) {
+        function angleDiff(a, b) {
+            let d = a - b;
+            while (d > Math.PI) d -= 2 * Math.PI;
+            while (d < -Math.PI) d += 2 * Math.PI;
+            return Math.abs(d);
+        }
+        const expectedHour = (11 * Math.PI / 6 + 10/60 * Math.PI / 6) - Math.PI / 2;
+        const expectedMin = (2 * Math.PI / 6) - Math.PI / 2;
+        const centerThresh = circleR * 0.55;
+
+        // Only check hand strokes (drawn after circle phase)
+        const handStrokes = strokes.slice(tabState._circleStrokeCount);
+        const rays = [];
+        for (const s of handStrokes) {
+            if (s.length < 3) continue;
+            let minCDist = Infinity;
+            for (let i = 0; i < s.length; i++) {
+                const d = Math.sqrt((s[i].x - circleCx)**2 + (s[i].y - circleCy)**2);
+                if (d < minCDist) minCDist = d;
+            }
+            if (minCDist > centerThresh) continue;
+            const start = s[0], end = s[s.length - 1];
+            const dStart = Math.sqrt((start.x - circleCx)**2 + (start.y - circleCy)**2);
+            const dEnd = Math.sqrt((end.x - circleCx)**2 + (end.y - circleCy)**2);
+            if (dEnd > circleR * 0.2) {
+                rays.push({ angle: Math.atan2(end.y - circleCy, end.x - circleCx), len: dEnd });
+            }
+            if (dStart > circleR * 0.2) {
+                rays.push({ angle: Math.atan2(start.y - circleCy, start.x - circleCx), len: dStart });
+            }
+        }
+
+        const tolerance = Math.PI / 7.2; // 25 degrees
+        let bestHour = null, bestHourDiff = Infinity;
+        let bestMin = null, bestMinDiff = Infinity;
+        for (const r of rays) {
+            const hd = angleDiff(r.angle, expectedHour);
+            const md = angleDiff(r.angle, expectedMin);
+            if (hd < bestHourDiff) { bestHourDiff = hd; bestHour = r; }
+            if (md < bestMinDiff) { bestMinDiff = md; bestMin = r; }
+        }
+        const hourMatch = bestHour && bestHourDiff < tolerance;
+        const minMatch = bestMin && bestMinDiff < tolerance && bestMin !== bestHour;
+        handsOk = hourMatch && minMatch;
+    }
+
+    tabState.clockScore = { circle: circleOk, numbers: numbersOk, hands: handsOk, numCorrect };
+}
+
+// ─── Immediate Recall (MoCA) ─────────────────────────────────────────────────
+function startRecallShow() {
+    tabState.recallPhase = 'showing';
+    tabState.recallShowIdx = 0;
+    tabState.recallInput = '';
+    tabState.recallAnswers = [];
+    drawTabletScreen();
+    // Show each word for 2 seconds
+    tabState.recallShowTimer = setInterval(() => {
+        tabState.recallShowIdx++;
+        if (tabState.recallShowIdx >= MOCA_WORDS.length) {
+            clearInterval(tabState.recallShowTimer);
+            tabState.recallShowTimer = null;
+            tabState.recallPhase = 'input';
+            // Start cursor blink
+            tabState.recallCursor = true;
+            if (tabState.recallCursorTimer) clearInterval(tabState.recallCursorTimer);
+            tabState.recallCursorTimer = setInterval(() => {
+                tabState.recallCursor = !tabState.recallCursor;
+                drawTabletScreen();
+            }, 530);
+        }
+        drawTabletScreen();
+    }, 2000);
+}
+
+function drawImmediateRecall(W, H) {
+    // Header
+    tc.fillStyle = '#34c759'; tc.fillRect(0, 44, W, 80);
+    tc.fillStyle = '#fff'; tc.font = 'bold 30px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText('Immediate Recall — MoCA', W/2, 96);
+    tc.font = '22px -apple-system, sans-serif'; tc.textAlign = 'left';
+    tc.fillText('← Back', 30, 92);
+
+    if (tabState.recallPhase === 'idle') {
+        // Start prompt
+        tc.fillStyle = '#3a3a3c'; tc.font = '24px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('You will be shown 5 words, one at a time.', W/2, 300);
+        tc.fillText('Each word appears for 2 seconds.', W/2, 340);
+        tc.fillText('Try to remember all of them.', W/2, 400);
+        // Start button
+        tc.fillStyle = '#34c759';
+        tc.beginPath(); tc.roundRect(W/2 - 120, 480, 240, 60, 30); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 26px -apple-system, sans-serif';
+        tc.fillText('Begin', W/2, 518);
+
+    } else if (tabState.recallPhase === 'showing') {
+        // Show current word large and centered
+        const idx = tabState.recallShowIdx;
+        // Progress dots
+        const dotY = 240;
+        MOCA_WORDS.forEach((_, i) => {
+            tc.beginPath(); tc.arc(W/2 - (MOCA_WORDS.length-1)*25 + i*50, dotY, 10, 0, Math.PI*2);
+            tc.fillStyle = i < idx ? '#34c759' : (i === idx ? '#1c1c1e' : '#d1d1d6');
+            tc.fill();
+        });
+        // Word counter
+        tc.fillStyle = '#8e8e93'; tc.font = '20px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText(`Word ${idx + 1} of ${MOCA_WORDS.length}`, W/2, 300);
+        // Big word
+        tc.fillStyle = '#1c1c1e'; tc.font = 'bold 96px -apple-system, sans-serif';
+        tc.fillText(MOCA_WORDS[idx], W/2, 550);
+        // Timer bar
+        tc.fillStyle = '#e5e5ea'; tc.fillRect(100, 650, W - 200, 8);
+        tc.fillStyle = '#34c759'; tc.fillRect(100, 650, W - 200, 8); // full bar (animated by timer)
+        // Instruction
+        tc.fillStyle = '#8e8e93'; tc.font = '20px -apple-system, sans-serif';
+        tc.fillText('Remember this word...', W/2, 720);
+
+    } else if (tabState.recallPhase === 'input') {
+        // Input phase — on-screen keyboard
+        const answered = tabState.recallAnswers.length;
+        const total = MOCA_WORDS.length;
+
+        tc.fillStyle = '#3a3a3c'; tc.font = '22px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText(`Type the words you remember (${answered}/${total})`, W/2, 180);
+
+        // Show already answered words
+        tabState.recallAnswers.forEach((ans, i) => {
+            const ay = 210 + i * 52;
+            const correct = MOCA_WORDS.map(w => w.toUpperCase()).includes(ans.toUpperCase());
+            tc.fillStyle = correct ? '#d4f5dc' : '#ffeaea';
+            tc.beginPath(); tc.roundRect(100, ay, W - 200, 44, 10); tc.fill();
+            tc.strokeStyle = correct ? '#34c759' : '#ff3b30'; tc.lineWidth = 1.5;
+            tc.beginPath(); tc.roundRect(100, ay, W - 200, 44, 10); tc.stroke();
+            tc.fillStyle = '#1c1c1e'; tc.font = 'bold 24px -apple-system, sans-serif'; tc.textAlign = 'left';
+            tc.fillText(ans.toUpperCase(), 120, ay + 30);
+            tc.fillStyle = correct ? '#34c759' : '#ff3b30'; tc.textAlign = 'right'; tc.font = '22px sans-serif';
+            tc.fillText(correct ? '✓' : '✗', W - 120, ay + 30);
+        });
+
+        // Current input field
+        const iy = 210 + answered * 52;
+        if (answered < total) {
+            tc.fillStyle = '#fff';
+            tc.beginPath(); tc.roundRect(100, iy, W - 200, 44, 10); tc.fill();
+            tc.strokeStyle = '#34c759'; tc.lineWidth = 2;
+            tc.beginPath(); tc.roundRect(100, iy, W - 200, 44, 10); tc.stroke();
+            tc.fillStyle = '#1c1c1e'; tc.font = '24px -apple-system, sans-serif'; tc.textAlign = 'left';
+            const displayText = tabState.recallInput.toUpperCase() + (tabState.recallCursor ? '|' : '');
+            tc.fillText(displayText, 120, iy + 30);
+            if (!tabState.recallInput) {
+                tc.fillStyle = '#c7c7cc'; tc.fillText('Type a word...', 120, iy + 30);
+            }
+        }
+
+        // On-screen keyboard
+        const kbY = 520;
+        const kbRows = [
+            'QWERTYUIOP',
+            'ASDFGHJKL',
+            'ZXCVBNM'
+        ];
+        tc.textAlign = 'center'; tc.textBaseline = 'middle';
+        kbRows.forEach((row, ri) => {
+            const keyW = 80, keyH = 70, gap = 8;
+            const rowW = row.length * (keyW + gap) - gap;
+            const startX = (W - rowW) / 2;
+            const ry = kbY + ri * (keyH + gap);
+            for (let ci = 0; ci < row.length; ci++) {
+                const kx = startX + ci * (keyW + gap);
+                // Key background
+                tc.fillStyle = '#fff';
+                tc.beginPath(); tc.roundRect(kx, ry, keyW, keyH, 8); tc.fill();
+                tc.strokeStyle = '#c7c7cc'; tc.lineWidth = 1;
+                tc.beginPath(); tc.roundRect(kx, ry, keyW, keyH, 8); tc.stroke();
+                // Shadow
+                tc.fillStyle = '#e5e5ea'; tc.fillRect(kx + 2, ry + keyH - 4, keyW - 4, 3);
+                // Letter
+                tc.fillStyle = '#1c1c1e'; tc.font = 'bold 28px -apple-system, sans-serif';
+                tc.fillText(row[ci], kx + keyW/2, ry + keyH/2);
+            }
+        });
+        tc.textBaseline = 'alphabetic';
+
+        // Bottom row: Backspace, Space, Enter
+        const bry = kbY + 3 * (70 + 8);
+        // Backspace
+        tc.fillStyle = '#d1d1d6';
+        tc.beginPath(); tc.roundRect(60, bry, 160, 64, 8); tc.fill();
+        tc.fillStyle = '#1c1c1e'; tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('⌫ Delete', 140, bry + 38);
+        // Space
+        tc.fillStyle = '#fff';
+        tc.beginPath(); tc.roundRect(240, bry, 340, 64, 8); tc.fill();
+        tc.strokeStyle = '#c7c7cc'; tc.lineWidth = 1;
+        tc.beginPath(); tc.roundRect(240, bry, 340, 64, 8); tc.stroke();
+        tc.fillStyle = '#8e8e93'; tc.font = '20px -apple-system, sans-serif';
+        tc.fillText('space', 410, bry + 38);
+        // Submit
+        tc.fillStyle = answered < total - 1 ? '#007aff' : '#34c759';
+        tc.beginPath(); tc.roundRect(600, bry, 180, 64, 8); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
+        tc.fillText(answered < total - 1 ? 'Next →' : 'Done ✓', 690, bry + 38);
+
+        // Score summary when all answered
+        if (answered >= total) {
+            if (tabState.recallCursorTimer) { clearInterval(tabState.recallCursorTimer); tabState.recallCursorTimer = null; }
+            const score = tabState.recallAnswers.filter(a => MOCA_WORDS.map(w=>w.toUpperCase()).includes(a.toUpperCase())).length;
+            tc.fillStyle = 'rgba(255,255,255,0.95)';
+            tc.fillRect(60, kbY - 10, W - 120, 400);
+            tc.strokeStyle = score >= 4 ? '#34c759' : '#ff9500'; tc.lineWidth = 3;
+            tc.beginPath(); tc.roundRect(60, kbY - 10, W - 120, 400, 16); tc.stroke();
+            tc.fillStyle = '#1c1c1e'; tc.font = 'bold 40px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText(`Score: ${score} / ${total}`, W/2, kbY + 60);
+            tc.fillStyle = score >= 4 ? '#34c759' : '#ff9500'; tc.font = 'bold 28px -apple-system, sans-serif';
+            tc.fillText(score >= 4 ? 'Normal range' : 'Below threshold', W/2, kbY + 110);
+            // Next Test button
+            tc.fillStyle = '#007aff';
+            tc.beginPath(); tc.roundRect(W/2 - 120, kbY + 160, 240, 54, 27); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
+            tc.fillText('Next Test →', W/2, kbY + 194);
+            // Show correct answers
+            tc.fillStyle = '#8e8e93'; tc.font = '18px -apple-system, sans-serif';
+            tc.fillText('Correct words: ' + MOCA_WORDS.join(', '), W/2, kbY + 280);
+        }
+    }
+}
+
+const tabScrTex = new THREE.CanvasTexture(tabCanvas);
+// Initial draw (after texture created so needsUpdate works)
+drawTabletScreen();
+tabScrTex.colorSpace = THREE.SRGBColorSpace;
+tabScrTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+// Screen plane facing up (+Y)
+const tabScrMat = new THREE.MeshBasicMaterial({ map: tabScrTex });
+const tabScreen = new THREE.Mesh(new THREE.PlaneGeometry(tabW - 0.08, tabD - 0.08), tabScrMat);
+tabScreen.rotation.x = -Math.PI / 2;
+tabScreen.position.y = DESK_BEVEL_TOP + tabH + 0.002;
+tabScreen.name = "tabletScreen";
+tabletGroup.add(tabScreen);
+
+// Hitbox for raycaster (horizontal)
+const tabHitBox = new THREE.Mesh(
+    new THREE.BoxGeometry(tabW + 0.1, 0.1, tabD + 0.1),
+    new THREE.MeshBasicMaterial({ visible: false })
+);
+tabHitBox.position.y = DESK_BEVEL_TOP + tabH/2;
+tabHitBox.name = "tablet";
+tabletGroup.add(tabHitBox);
+
+
+// 6. Staff Card Lanyard
+function createStaffCardTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 800;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 512, 800);
+    
+    // Top angled banner
+    ctx.fillStyle = '#b0c4cf';
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(512, 0); ctx.lineTo(512, 450); ctx.lineTo(0, 300);
+    ctx.fill();
+
+    // NUHS Logo styles
+    ctx.fillStyle = '#102a43';
+    ctx.font = 'bold 50px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText('NUHS', 480, 80);
+    ctx.font = '24px Arial';
+    ctx.fillText('National University', 480, 110);
+    ctx.fillText('Health System', 480, 140);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    // Load ID photo
+    const img = new Image();
+    img.src = 'assets/id_photo.png';
+    img.onload = () => {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(40, 300, 220, 260); // border
+        ctx.drawImage(img, 50, 310, 200, 240);
+        texture.needsUpdate = true;
+    };
+
+    // Text details
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 36px Arial';
+    ctx.fillText('Eddie Chong', 50, 640);
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('Project Manager', 50, 680);
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#333333';
+    ctx.fillText('MACC, NUS', 50, 710);
+
+    return texture;
+}
+
+const cardGroup = new THREE.Group();
+cardGroup.position.set(-3.4, 0.10, 1.2); // Left-front of desk, clear of coffee cup
+cardGroup.rotation.set(-Math.PI/2, 0, 0.2); // flat on desk
+workstation.add(cardGroup);
+
+const cardW = 0.54, cardH = 0.86, cardD = 0.02;
+
+// Use standard BoxGeometry to avoid ExtrudeGeometry failing with thin depths
+const holderGeo = new THREE.BoxGeometry(cardW + 0.04, cardH + 0.04, cardD);
+const holderMat = new THREE.MeshStandardMaterial({color: 0xdddddd, roughness: 0.4});
+const holder = new THREE.Mesh(holderGeo, holderMat);
+holder.castShadow = true;
+holder.receiveShadow = true;
+cardGroup.add(holder);
+
+const cardTex = createStaffCardTexture();
+const cardMat = new THREE.MeshBasicMaterial({map: cardTex});
+const cardFace = new THREE.Mesh(new THREE.PlaneGeometry(cardW, cardH), cardMat);
+cardFace.position.set(0, 0, cardD/2 + 0.001); // Just above holder surface
+cardGroup.add(cardFace);
+
+// Back face — contact info
+function createCardBackTexture() {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 800;
+    const cx = c.getContext('2d');
+    // White background
+    cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, 512, 800);
+    // Top accent bar
+    cx.fillStyle = '#102a43'; cx.fillRect(0, 0, 512, 60);
+    cx.fillStyle = '#f0c131'; cx.fillRect(0, 54, 512, 6);
+    // NUHS header
+    cx.fillStyle = '#ffffff'; cx.font = 'bold 28px Arial'; cx.textAlign = 'center';
+    cx.fillText('NUHS', 256, 40);
+    // Contact heading
+    cx.fillStyle = '#102a43'; cx.font = 'bold 30px Arial'; cx.textAlign = 'left';
+    cx.fillText('Contact Information', 40, 120);
+    // Divider
+    cx.fillStyle = '#f0c131'; cx.fillRect(40, 135, 180, 3);
+    // Labels + values
+    cx.font = 'bold 18px Arial'; cx.fillStyle = '#666666';
+    const entries = [
+        ['NUH Email', 'eddie_chong@nuhs.edu.sg'],
+        ['NUS Email', 'medv2851@nus.edu.sg'],
+        ['Personal Email', 'ecjywork@gmail.com'],
+        ['Contact', '+65 86135249'],
+    ];
+    let y = 190;
+    entries.forEach(([label, value]) => {
+        cx.font = 'bold 18px Arial'; cx.fillStyle = '#888888';
+        cx.fillText(label, 40, y);
+        cx.font = '22px Arial'; cx.fillStyle = '#102a43';
+        cx.fillText(value, 40, y + 30);
+        y += 80;
+    });
+    // Bottom accent
+    cx.fillStyle = '#102a43'; cx.fillRect(0, 760, 512, 40);
+    cx.fillStyle = '#f0c131'; cx.fillRect(0, 760, 512, 4);
+    cx.fillStyle = '#ffffff'; cx.font = '16px Arial'; cx.textAlign = 'center';
+    cx.fillText('National University Health System', 256, 786);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+}
+const cardBackTex = createCardBackTexture();
+const cardBackMat = new THREE.MeshBasicMaterial({map: cardBackTex});
+const cardBack = new THREE.Mesh(new THREE.PlaneGeometry(cardW, cardH), cardBackMat);
+cardBack.position.set(0, 0, -cardD/2 - 0.001); // Behind the holder
+cardBack.rotation.y = Math.PI; // Face outward on back side
+cardGroup.add(cardBack);
+
+const lanyardPoints = [
+    new THREE.Vector3(0, cardH/2, 0),
+    new THREE.Vector3(-0.2, cardH/2 + 0.4, 0.2),
+    new THREE.Vector3(-0.6, cardH/2 + 0.6, 0.6),
+    new THREE.Vector3(-1.0, cardH/2 + 0.2, 1.2),
+    new THREE.Vector3(-0.4, cardH/2 - 0.4, 0.8),
+    new THREE.Vector3(-0.1, cardH/2 - 0.1, 0.2),
+    new THREE.Vector3(0, cardH/2, 0)
+];
+const curve = new THREE.CatmullRomCurve3(lanyardPoints, true, 'chordal', 0.5);
+const strapGeo = new THREE.TubeGeometry(curve, 64, 0.04, 8, true);
+// Apply scale before Mesh to keep normals correct? No, simple scale on Mesh works for this stylized strap
+const strapMat = new THREE.MeshStandardMaterial({color: 0x102a43, roughness: 0.9});
+const strap = new THREE.Mesh(strapGeo, strapMat);
+strap.castShadow = true;
+strap.scale.z = 0.2; // flatten to ribbon
+cardGroup.add(strap);
+
+// Hitbox for raycaster
+const hitBox = new THREE.Mesh(new THREE.BoxGeometry(cardW+0.2, cardH+0.2, 0.2), new THREE.MeshBasicMaterial({visible:false}));
+hitBox.name = "staffCard";
+cardGroup.add(hitBox);
+
+
+// ─── GroundPlane ─────────────────────────────────────────────────────────────
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.08 }));
+ground.rotation.x = -Math.PI / 2;
+// Ground is slightly below the desk bottom (desk bottom is at -0.4)
+ground.position.y = -0.41;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ─── Lighting (soft, warm, matching elecctro) ────────────────────────────────
+// Hemisphere: warm sky → warm ground
+scene.add(new THREE.HemisphereLight(0xfff8ee, 0xd4ceb8, 0.6));
+
+// Key light — warm, from upper right front, soft shadows
+const keyLight = new THREE.DirectionalLight(0xfff8ee, 1.0);
+keyLight.position.set(8, 14, 10);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.camera.near = 0.5;
+keyLight.shadow.camera.far = 40;
+keyLight.shadow.camera.left = keyLight.shadow.camera.bottom = -10;
+keyLight.shadow.camera.right = keyLight.shadow.camera.top = 10;
+keyLight.shadow.bias = -0.0003;
+keyLight.shadow.radius = 4;    // soft shadow blur
+scene.add(keyLight);
+
+// Fill light — subtle cool fill from left
+const fillLight = new THREE.DirectionalLight(0xd8e0f0, 0.4);
+fillLight.position.set(-8, 8, 4);
+scene.add(fillLight);
+
+// Rim light — very subtle, from back right
+const rimLight = new THREE.DirectionalLight(0xfff0dd, 0.3);
+rimLight.position.set(4, 6, -10);
+scene.add(rimLight);
+
+// ─── Interactivity: Click to Zoom ────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const cursor = new THREE.Vector2();
+let isZoomed = false;
+let isInspectingCard = false;
+let isInspectingTablet = false;
+let isDraggingCard = false;
+let isDraggingWorkstation = false;
+let previousMousePosition = { x: 0, y: 0 };
+
+const cardRestingPos = new THREE.Vector3(-3.4, 0.10, 1.2);
+const cardRestingRot = new THREE.Euler(-Math.PI/2, 0, 0.2);
+const cardInspectPos = new THREE.Vector3(0, 3, 5);
+const cardInspectRot = new THREE.Euler(-0.2, 0, 0);
+
+const tabRestingPos = new THREE.Vector3(-2.35, 0, 1.1);
+const tabRestingRot = new THREE.Euler(0, 0.15, 0);
+const tabInspectPos = new THREE.Vector3(0, 3, 5);
+const tabInspectRot = new THREE.Euler(-0.2, 0, 0);
+
+const coffeeRestingPos = new THREE.Vector3(-3.2, 0.08, -0.4);
+const coffeeRestingRot = new THREE.Euler(0, 0, 0);
+const coffeeInspectPos = new THREE.Vector3(0, 3, 5);
+const coffeeInspectRot = new THREE.Euler(-0.2, 0, 0);
+let isDraggingCoffee = false;
+
+// Default isometric view
+const defaultCamPos = new THREE.Vector3(15, 12, 15);
+const defaultCamTarget = new THREE.Vector3(0, 0, 0);
+
+// Target view when zooming into the screen
+const zoomCamPos = new THREE.Vector3(0, 1.28, 6.0);
+const zoomCamTarget = new THREE.Vector3(0, 1.28, -0.6);
+
+// State vars for lerping
+const currentCamPos = new THREE.Vector3().copy(defaultCamPos);
+const currentTarget = new THREE.Vector3().copy(defaultCamTarget);
+
+// Helper: convert click to tablet canvas coordinates when inspecting
+function getTabletUV(e) {
+    cursor.x = (e.clientX / window.innerWidth) * 2 - 1;
+    cursor.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(cursor, camera);
+    const hits = raycaster.intersectObject(tabScreen, false);
+    if (hits.length > 0) {
+        const uv = hits[0].uv;
+        return { x: uv.x * tabScrW, y: (1 - uv.y) * tabScrH };
+    }
+    return null;
+}
+
+function resetRecall() {
+    if (tabState.recallShowTimer) { clearInterval(tabState.recallShowTimer); tabState.recallShowTimer = null; }
+    if (tabState.recallCursorTimer) { clearInterval(tabState.recallCursorTimer); tabState.recallCursorTimer = null; }
+    tabState.recallPhase = 'idle';
+    tabState.recallInput = '';
+    tabState.recallAnswers = [];
+    tabState.recallShowIdx = 0;
+}
+
+function handleTabletTap(px, py) {
+    const W = tabScrW, H = tabScrH;
+    if (tabState.currentScreen === 'home') {
+        // Check which card was tapped
+        const cards = ['recall', 'trail', 'clock'];
+        cards.forEach((screen, i) => {
+            const cy = 220 + i * 340, ch = 290;
+            if (py >= cy && py <= cy + ch && px >= 80 && px <= W - 80) {
+                if (screen === 'clock') resetClock();
+                tabState.currentScreen = screen;
+            }
+        });
+    } else if (tabState.currentScreen === 'recall') {
+        // Back button
+        if (py < 124 && px < 160) { resetRecall(); tabState.currentScreen = 'home'; }
+        else if (tabState.recallPhase === 'idle') {
+            // Begin button
+            if (px >= W/2 - 120 && px <= W/2 + 120 && py >= 480 && py <= 540) {
+                startRecallShow();
+                return; // drawTabletScreen called by startRecallShow
+            }
+        } else if (tabState.recallPhase === 'input') {
+            const answered = tabState.recallAnswers.length;
+            const total = MOCA_WORDS.length;
+
+            // Score screen: Next Test button
+            if (answered >= total) {
+                const kbY = 520;
+                if (px >= W/2 - 120 && px <= W/2 + 120 && py >= kbY + 160 && py <= kbY + 214) {
+                    resetRecall();
+                    tabState.currentScreen = 'trail';
+                }
+                drawTabletScreen(); return;
+            }
+
+            // On-screen keyboard taps
+            const kbY = 520;
+            const kbRows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+            let keyHit = false;
+            kbRows.forEach((row, ri) => {
+                const keyW = 80, keyH = 70, gap = 8;
+                const rowW = row.length * (keyW + gap) - gap;
+                const startX = (W - rowW) / 2;
+                const ry = kbY + ri * (keyH + gap);
+                for (let ci = 0; ci < row.length; ci++) {
+                    const kx = startX + ci * (keyW + gap);
+                    if (px >= kx && px <= kx + keyW && py >= ry && py <= ry + keyH) {
+                        tabState.recallInput += row[ci];
+                        keyHit = true;
+                    }
+                }
+            });
+
+            // Bottom row buttons
+            const bry = kbY + 3 * (70 + 8);
+            if (py >= bry && py <= bry + 64) {
+                if (px >= 60 && px <= 220) {
+                    // Backspace
+                    tabState.recallInput = tabState.recallInput.slice(0, -1);
+                    keyHit = true;
+                } else if (px >= 600 && px <= 780 && tabState.recallInput.length > 0) {
+                    // Submit / Next
+                    tabState.recallAnswers.push(tabState.recallInput);
+                    tabState.recallInput = '';
+                    keyHit = true;
+                }
+            }
+            if (keyHit) { drawTabletScreen(); return; }
+        }
+    } else if (tabState.currentScreen === 'trail') {
+        // Back button
+        if (py < 124 && px < 160) {
+            tabState.currentScreen = 'home'; tabState.trailDots = []; tabState.trailConnected = [];
+            tabState.trailComplete = false; tabState.trailStartTime = 0;
+        }
+        // Completion screen — next button
+        else if (tabState.trailComplete) {
+            const kbY = 680;
+            if (px >= W/2 - 130 && px <= W/2 + 130 && py >= kbY && py <= kbY + 54) {
+                if (tabState.trailPart === 'A') {
+                    // Move to Part B
+                    tabState.trailDots = [];
+                    tabState.trailConnected = [];
+                    tabState.trailComplete = false;
+                    tabState.trailStartTime = 0;
+                    initTrailDots('B');
+                } else {
+                    // Move to next test (clock)
+                    tabState.trailDots = []; tabState.trailConnected = [];
+                    tabState.trailComplete = false; tabState.trailStartTime = 0;
+                    resetClock();
+                    tabState.currentScreen = 'clock';
+                }
+            }
+        }
+        else {
+            // Check dot clicks
+            const nextIdx = tabState.trailConnected.indexOf(false);
+
+            // Tapping the first dot starts the timer
+            if (tabState.trailStartTime === 0) {
+                const first = tabState.trailDots[0];
+                const dx = px - first.x, dy = py - first.y;
+                if (dx*dx + dy*dy < 50*50) {
+                    tabState.trailStartTime = Date.now();
+                    // Also connect to second if tapped on second
+                    const second = tabState.trailDots[1];
+                    const dx2 = px - second.x, dy2 = py - second.y;
+                    if (dx2*dx2 + dy2*dy2 < 50*50) tabState.trailConnected[0] = true;
+                }
+            } else if (nextIdx >= 0 && nextIdx < tabState.trailDots.length - 1) {
+                const target = tabState.trailDots[nextIdx + 1];
+                const dx = px - target.x, dy = py - target.y;
+                if (dx*dx + dy*dy < 50*50) {
+                    tabState.trailConnected[nextIdx] = true;
+                    // Check if all connected
+                    if (tabState.trailConnected.every(Boolean)) {
+                        tabState.trailComplete = true;
+                        tabState.trailEndTime = Date.now();
+                    }
+                }
+            }
+        }
+    } else if (tabState.currentScreen === 'clock') {
+        const phase = tabState.clockPhase;
+        const drawTop = 210, drawBot = 1180;
+        const trayTop = drawBot + 15;
+        if (py < 124 && px < 160) {
+            tabState.currentScreen = 'home';
+            resetClock();
+        } else if (phase === 'draw') {
+            const btnY = trayTop;
+            if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 - 230 && px <= W/2 - 110) {
+                tabState.clockStrokes = [];
+            } else if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 - 90 && px <= W/2 + 30) {
+                tabState.clockStrokes.pop();
+            } else if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 + 50 && px <= W/2 + 230) {
+                // Next → move to numbers phase
+                tabState._circleStrokeCount = tabState.clockStrokes.length;
+                tabState.clockPhase = 'numbers';
+            } else if (py >= drawTop && py <= drawBot && px >= 40 && px <= W - 40) {
+                tabState.clockIsDrawing = true;
+                tabState.clockCurrentStroke = [{ x: px, y: py }];
+            }
+        } else if (phase === 'numbers') {
+            const tray = tabState.clockTrayNums;
+            const tileSize = 62, tilePad = 8;
+            const totalW = tray.length * (tileSize + tilePad) - tilePad;
+            const startX = Math.max(50, (W - totalW) / 2);
+
+            // Check "Draw Hands →" button (when all placed)
+            if (tray.length === 0 && py >= trayTop + 10 && py <= trayTop + 64 && px >= W/2 - 120 && px <= W/2 + 120) {
+                tabState.clockPhase = 'hands';
+            }
+            // Check "Reset" button
+            else if (tabState.clockPlacedNums.length > 0 && tray.length > 0 && py >= trayTop + 80 && py <= trayTop + 120 && px >= W - 140 && px <= W - 40) {
+                // Return all placed numbers to tray
+                for (const n of tabState.clockPlacedNums) tabState.clockTrayNums.push(n.num);
+                tabState.clockPlacedNums = [];
+            }
+            // Check tray tile tap → start dragging
+            else if (py >= trayTop + 10 && py <= trayTop + 10 + tileSize) {
+                for (let i = 0; i < tray.length; i++) {
+                    const tx = startX + i * (tileSize + tilePad);
+                    if (px >= tx && px <= tx + tileSize) {
+                        tabState.clockDragging = { num: tray[i], x: px, y: py, trayIdx: i };
+                        break;
+                    }
+                }
+            }
+        } else if (phase === 'hands') {
+            const btnY = trayTop;
+            // Undo hand stroke
+            if (tabState.clockStrokes.length > tabState._circleStrokeCount && py >= btnY && py <= btnY + 50 && px >= W/2 - 190 && px <= W/2 - 70) {
+                tabState.clockStrokes.pop();
+            }
+            // Score button
+            else if (tabState.clockStrokes.length > tabState._circleStrokeCount && py >= btnY && py <= btnY + 50 && px >= W/2 + 10 && px <= W/2 + 190) {
+                scoreClockDrawing();
+                tabState.clockPhase = 'score';
+            }
+            // Freehand drawing for hands
+            else if (py >= drawTop && py <= drawBot && px >= 40 && px <= W - 40) {
+                tabState.clockIsDrawing = true;
+                tabState.clockCurrentStroke = [{ x: px, y: py }];
+            }
+        } else if (phase === 'score') {
+            if (py >= 790 && py <= 840 && px >= W/2 - 100 && px <= W/2 + 100) {
+                resetClock();
+            }
+        }
+    }
+    drawTabletScreen();
+}
+
+// Physical keyboard input for tablet recall
+window.addEventListener('keydown', (e) => {
+    if (!isInspectingTablet || tabState.currentScreen !== 'recall' || tabState.recallPhase !== 'input') return;
+    if (tabState.recallAnswers.length >= MOCA_WORDS.length) return;
+
+    if (e.key === 'Backspace') {
+        tabState.recallInput = tabState.recallInput.slice(0, -1);
+        drawTabletScreen();
+    } else if (e.key === 'Enter' && tabState.recallInput.length > 0) {
+        tabState.recallAnswers.push(tabState.recallInput);
+        tabState.recallInput = '';
+        drawTabletScreen();
+    } else if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+        tabState.recallInput += e.key.toUpperCase();
+        drawTabletScreen();
+    }
+});
+
+const defaultSubtitle = "Elecctro-style 3D replica — Click monitor, card, or tablet";
+
+window.addEventListener('mousedown', (e) => {
+    cursor.x = (e.clientX / window.innerWidth) * 2 - 1;
+    cursor.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(cursor, camera);
+
+    const intersectsMonitor = raycaster.intersectObjects([face, bezel, innerScreen], false);
+    const intersectsCard = raycaster.intersectObjects([hitBox], false);
+    const intersectsTablet = raycaster.intersectObjects([tabHitBox], false);
+    const intersectsCoffee = raycaster.intersectObjects([coffeeHitBox], false);
+
+    // Dismiss coffee on click outside
+    if (isInspectingCoffee && intersectsCoffee.length === 0) {
+        isInspectingCoffee = false;
+        document.getElementById('subtitle').innerText = defaultSubtitle;
+        return;
+    }
+
+    // If tablet is being inspected, check for screen interaction first
+    if (isInspectingTablet) {
+        const uv = getTabletUV(e);
+        if (uv) {
+            handleTabletTap(uv.x, uv.y);
+            return;
+        }
+        // Clicked outside tablet — dismiss
+        isInspectingTablet = false;
+        document.getElementById('subtitle').innerText = defaultSubtitle;
+        return;
+    }
+
+    if (intersectsTablet.length > 0 && !isInspectingCard && !isInspectingCoffee && !isZoomed) {
+        isInspectingTablet = true;
+        document.getElementById('subtitle').innerText = "Tap the screen to interact. Click outside to dismiss.";
+        const camFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        const worldPos = camera.position.clone().add(camFwd.multiplyScalar(4.5));
+        tabInspectPos.copy(workstation.worldToLocal(worldPos.clone()));
+        // Rotate so screen faces camera, accounting for workstation rotation
+        const camQ = new THREE.Quaternion().setFromEuler(camera.rotation);
+        const tiltQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), Math.PI/2);
+        camQ.multiply(tiltQ);
+        // Convert to workstation local space
+        const wsInvQ = new THREE.Quaternion().copy(workstation.quaternion).invert();
+        camQ.premultiply(wsInvQ);
+        tabInspectRot.setFromQuaternion(camQ);
+        return;
+    }
+
+    if (intersectsCoffee.length > 0 && !isInspectingCard && !isInspectingTablet && !isZoomed) {
+        if (!isInspectingCoffee) {
+            isInspectingCoffee = true;
+            document.getElementById('subtitle').innerText = "Drag to rotate. Click outside to dismiss.";
+            // Compute inspect position in workstation local space
+            const camFwd3 = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            const worldPos3 = camera.position.clone().add(camFwd3.multiplyScalar(5.5));
+            coffeeInspectPos.copy(workstation.worldToLocal(worldPos3.clone()));
+            // Convert camera rotation to workstation local space
+            const coffQ = new THREE.Quaternion().setFromEuler(camera.rotation);
+            const wsInvQ3 = new THREE.Quaternion().copy(workstation.quaternion).invert();
+            coffQ.premultiply(wsInvQ3);
+            coffeeInspectRot.setFromQuaternion(coffQ);
+        } else {
+            isDraggingCoffee = true;
+        }
+        return;
+    }
+
+    if (intersectsCard.length > 0) {
+        if (!isInspectingCard) {
+            isInspectingCard = true;
+            isZoomed = false;
+            isInspectingTablet = false;
+            document.getElementById('subtitle').innerText = "Drag to rotate the ID card. Click outside to dismiss.";
+            const camFwd2 = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            const worldPos2 = camera.position.clone().add(camFwd2.multiplyScalar(6.5));
+            cardInspectPos.copy(workstation.worldToLocal(worldPos2.clone()));
+            // Convert camera rotation to workstation local space
+            const cardQ = new THREE.Quaternion().setFromEuler(camera.rotation);
+            const wsInvQ2 = new THREE.Quaternion().copy(workstation.quaternion).invert();
+            cardQ.premultiply(wsInvQ2);
+            cardInspectRot.setFromQuaternion(cardQ);
+        } else {
+            isDraggingCard = true;
+        }
+    } else if (intersectsMonitor.length > 0) {
+        if (!isInspectingCard) {
+            isZoomed = !isZoomed;
+            document.getElementById('subtitle').innerText = isZoomed ? "Click monitor to zoom out" : defaultSubtitle;
+        }
+    } else {
+        if (isZoomed) { isZoomed = false; document.getElementById('subtitle').innerText = defaultSubtitle; }
+        else if (isInspectingCard) { isInspectingCard = false; document.getElementById('subtitle').innerText = defaultSubtitle; }
+        else { isDraggingWorkstation = true; }
+    }
+});
+
+window.addEventListener('mousemove', (e) => {
+    // Freehand drawing on clock tablet (draw phase + hands phase)
+    if (tabState.clockIsDrawing && isInspectingTablet && tabState.currentScreen === 'clock' && (tabState.clockPhase === 'draw' || tabState.clockPhase === 'hands')) {
+        const uv = getTabletUV(e);
+        if (uv && tabState.clockCurrentStroke) {
+            tabState.clockCurrentStroke.push({ x: uv.x, y: uv.y });
+            drawTabletScreen();
+            if (tabScrTex) tabScrTex.needsUpdate = true;
+        }
+    }
+    // Drag number on clock tablet
+    if (tabState.clockDragging && isInspectingTablet && tabState.currentScreen === 'clock' && tabState.clockPhase === 'numbers') {
+        const uv = getTabletUV(e);
+        if (uv) {
+            tabState.clockDragging.x = uv.x;
+            tabState.clockDragging.y = uv.y;
+            drawTabletScreen();
+            if (tabScrTex) tabScrTex.needsUpdate = true;
+        }
+    }
+    if (isDraggingCard && isInspectingCard) {
+        const deltaMove = {
+            x: e.offsetX - previousMousePosition.x,
+            y: e.offsetY - previousMousePosition.y
+        };
+        cardInspectRot.y += deltaMove.x * 0.01;
+        cardInspectRot.x += deltaMove.y * 0.01;
+    }
+    if (isDraggingCoffee && isInspectingCoffee) {
+        const dm = {
+            x: e.offsetX - previousMousePosition.x,
+            y: e.offsetY - previousMousePosition.y
+        };
+        coffeeInspectRot.y += dm.x * 0.01;
+        coffeeInspectRot.x += dm.y * 0.01;
+    }
+    if (isDraggingWorkstation) {
+        const dx = e.offsetX - previousMousePosition.x;
+        workstation.rotation.y += dx * 0.005;
+    }
+    previousMousePosition = { x: e.offsetX, y: e.offsetY };
+});
+
+window.addEventListener('mouseup', () => {
+    // Finish freehand stroke on clock
+    if (tabState.clockIsDrawing && tabState.clockCurrentStroke && tabState.clockCurrentStroke.length > 1) {
+        tabState.clockStrokes.push(tabState.clockCurrentStroke);
+    }
+    tabState.clockIsDrawing = false;
+    tabState.clockCurrentStroke = null;
+    // Drop dragged number onto clock face
+    if (tabState.clockDragging) {
+        const d = tabState.clockDragging;
+        const drawTop = 210, drawBot = 1180;
+        // Only place if dropped within the drawing area
+        if (d.x >= 40 && d.x <= tabScrW - 40 && d.y >= drawTop && d.y <= drawBot) {
+            tabState.clockPlacedNums.push({ num: d.num, x: d.x, y: d.y });
+            tabState.clockTrayNums.splice(tabState.clockTrayNums.indexOf(d.num), 1);
+        }
+        tabState.clockDragging = null;
+        drawTabletScreen();
+    }
+    isDraggingCard = false;
+    isDraggingCoffee = false;
+    isDraggingWorkstation = false;
+});
+
+// Add instruction initial text
+document.getElementById('subtitle').innerText = defaultSubtitle;
+
+// ─── Animation loop ──────────────────────────────────────────────────────────
+function animate() {
+    requestAnimationFrame(animate);
+    
+    // Smoothly interpolate the camera position and target
+    const targetPos = isZoomed ? zoomCamPos : defaultCamPos;
+    const targetLook = isZoomed ? zoomCamTarget : defaultCamTarget;
+    
+    currentCamPos.lerp(targetPos, 0.08);
+    currentTarget.lerp(targetLook, 0.08);
+    
+    camera.position.copy(currentCamPos);
+    camera.lookAt(currentTarget);
+
+    // Animate the Staff Card
+    if (isInspectingCard) {
+        cardGroup.position.lerp(cardInspectPos, 0.08);
+        const currentQ = new THREE.Quaternion().copy(cardGroup.quaternion);
+        const targetQ = new THREE.Quaternion().setFromEuler(cardInspectRot);
+        currentQ.slerp(targetQ, 0.08);
+        cardGroup.quaternion.copy(currentQ);
+    } else {
+        cardGroup.position.lerp(cardRestingPos, 0.08);
+        const currentQ = new THREE.Quaternion().copy(cardGroup.quaternion);
+        const targetQ = new THREE.Quaternion().setFromEuler(cardRestingRot);
+        currentQ.slerp(targetQ, 0.08);
+        cardGroup.quaternion.copy(currentQ);
+        cardInspectRot.set(-0.2, 0, 0);
+    }
+
+    // Animate the Tablet
+    {
+        const tPos = isInspectingTablet ? tabInspectPos : tabRestingPos;
+        const tRot = isInspectingTablet ? tabInspectRot : tabRestingRot;
+        tabletGroup.position.lerp(tPos, 0.08);
+        const tq = new THREE.Quaternion().copy(tabletGroup.quaternion);
+        const ttq = new THREE.Quaternion().setFromEuler(tRot);
+        tq.slerp(ttq, 0.08);
+        tabletGroup.quaternion.copy(tq);
+        if (!isInspectingTablet) tabInspectRot.set(-0.2, 0, 0);
+    }
+
+    // Animate the Coffee Cup
+    {
+        const cPos = isInspectingCoffee ? coffeeInspectPos : coffeeRestingPos;
+        const cRot = isInspectingCoffee ? coffeeInspectRot : coffeeRestingRot;
+        coffeeGroup.position.lerp(cPos, 0.08);
+        const cq = new THREE.Quaternion().copy(coffeeGroup.quaternion);
+        const ctq = new THREE.Quaternion().setFromEuler(cRot);
+        cq.slerp(ctq, 0.08);
+        coffeeGroup.quaternion.copy(cq);
+        if (!isInspectingCoffee) coffeeInspectRot.set(-0.2, 0, 0);
+    }
+
+    // Live timer refresh for TMT
+    if (isInspectingTablet && tabState.currentScreen === 'trail' && tabState.trailStartTime > 0 && !tabState.trailComplete) {
+        drawTabletScreen();
+    }
+
+    renderer.render(scene, camera);
+}
+animate();
+
+// ─── Resize ──────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

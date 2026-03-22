@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Publications</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #08080f; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; }
+        canvas { display: block; }
+
+        /* ── HUD ─────────────────────────────────────────────────────── */
+        .hud {
+            position: fixed; inset: 0; pointer-events: none;
+            display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center;
+            padding: 28px 32px; z-index: 1;
+        }
+        .hud-title { color: rgba(255,255,255,0.1); font-size: 10px; letter-spacing: 0.45em; text-transform: uppercase; }
+        .hud-bottom { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .hud-status { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 600; color: #f5b840; transition: color 0.4s; }
+        .hud-status.open { color: #7fd4a0; }
+        .hud-hint { color: rgba(255,255,255,0.2); font-size: 12px; }
+        .glow {
+            position: fixed; bottom: 28%; left: 50%; transform: translateX(-50%);
+            width: 320px; height: 60px; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse, rgba(245,184,64,0.18) 0%, transparent 70%);
+            filter: blur(14px);
+        }
+
+        /* ── Paper Reader ─────────────────────────────────────────────── */
+        #reader {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(500px, 92vw);
+            height: min(680px, 86vh);
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 40px 120px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.07);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+            pointer-events: auto;
+            transition: opacity 0.45s, transform 0.45s;
+        }
+        #reader.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -46%) scale(0.93);
+        }
+
+        /* Track */
+        #reader-track { flex: 1; overflow: hidden; min-height: 0; }
+        #reader-inner {
+            display: flex;
+            height: 100%;
+            transition: transform 0.44s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Individual paper ────────────────────────────────────────── */
+        .paper {
+            flex: 0 0 100%;
+            height: 100%;
+            overflow-y: auto;
+            background: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .paper::-webkit-scrollbar { width: 5px; }
+        .paper::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+        /* Date strip */
+        .p-dates {
+            padding: 5px 14px 4px;
+            background: #fafafa;
+            border-bottom: 1px solid #eee;
+            font-size: 9px; color: #555;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 3px 0;
+        }
+        .p-date-seg { display: inline-flex; align-items: center; }
+        .p-date-label { font-weight: 700; }
+        .p-date-label.rcv { color: #c44200; }
+        .p-date-label.rev, .p-date-label.acc { color: #555; }
+        .p-date-val { color: #666; margin-left: 2px; }
+        .p-date-pipe { color: #ccc; margin: 0 7px; }
+        .p-doi-row {
+            padding: 3px 14px 5px;
+            background: #fafafa;
+            border-bottom: 1px solid #eee;
+            font-size: 9px; color: #888;
+        }
+
+        /* Journal bar */
+        .p-jbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 14px;
+            border-bottom: 2px solid var(--jc, #333);
+        }
+        .p-art-type {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+            color: var(--jc); text-transform: uppercase;
+        }
+        .p-jname-wrap { text-align: right; }
+        .p-jname {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 13px; font-weight: bold; font-style: italic;
+            color: var(--jc); display: block;
+        }
+        .p-jsub {
+            font-family: Arial, sans-serif;
+            font-size: 7.5px; color: #999; font-style: normal;
+            display: block; text-align: right; margin-top: 1px;
+        }
+
+        /* Title & authors */
+        .p-main { padding: 10px 14px 8px; }
+        .p-title {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 15px; font-weight: bold;
+            color: #111; line-height: 1.38; margin-bottom: 8px;
+        }
+        .p-authors {
+            font-size: 9.5px; font-weight: 700;
+            color: #1a3a8a; line-height: 1.6;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* Two columns */
+        .p-cols {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .p-left { font-size: 7.5px; color: #444; line-height: 1.45; }
+        .p-aff { margin-bottom: 5px; }
+        .p-aff sup { font-size: 6.5px; color: #888; }
+        .p-col-div { border: none; border-top: 1px solid #e0e0e0; margin: 7px 0; }
+        .p-sec-lbl { font-size: 8px; font-weight: 700; color: #222; margin-bottom: 3px; }
+        .p-corr-txt { font-size: 7.5px; color: #555; line-height: 1.45; }
+
+        /* Abstract box */
+        .p-abs-box {
+            background: #f6f6f6;
+            border-left: 3px solid var(--jc);
+            padding: 9px 10px;
+            border-radius: 0 3px 3px 0;
+        }
+        .p-abs-head {
+            font-family: Georgia, serif;
+            font-size: 11px; font-weight: bold; color: #111;
+            margin-bottom: 7px;
+        }
+        .p-abs-p {
+            font-size: 8.5px; color: #2a2a2a;
+            line-height: 1.58; margin-bottom: 5px;
+        }
+        .p-abs-p b { color: #000; }
+        .p-kw-lbl {
+            font-size: 8px; font-weight: 700;
+            letter-spacing: 0.07em; color: #333;
+            margin-top: 8px; margin-bottom: 3px;
+        }
+        .p-kw { font-size: 7.5px; font-style: italic; color: #555; line-height: 1.55; }
+
+        /* Footer */
+        .p-foot {
+            margin-top: 10px;
+            padding: 6px 14px;
+            border-top: 2px solid var(--jc);
+            display: flex; justify-content: space-between;
+            font-size: 7.5px; color: #888;
+            background: #fafafa;
+        }
+
+        /* ── Nav bar ────────────────────────────────────────────────── */
+        .reader-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-top: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+        .nav-btn {
+            background: white; border: 1px solid #ccc;
+            border-radius: 5px; width: 32px; height: 32px;
+            font-size: 22px; cursor: pointer; color: #333;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s; -webkit-user-select: none; user-select: none;
+            pointer-events: auto; line-height: 1;
+        }
+        .nav-btn:hover:not(:disabled) { background: #e4e4e4; border-color: #aaa; }
+        .nav-btn:disabled { opacity: 0.3; cursor: default; }
+        .nav-mid { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .nav-counter { font-size: 12px; color: #555; font-weight: 500; }
+        .nav-dots { display: flex; gap: 6px; }
+        .nav-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #ccc; cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .nav-dot.active { background: #555; transform: scale(1.2); }
+        .nav-dot:hover { background: #999; }
+    </style>
+</head>
+<body>
+    <div class="hud">
+        <div class="hud-title">3D Folder · 2026 Publications</div>
+        <div class="hud-bottom">
+            <div class="hud-status" id="status">● Closed</div>
+            <div class="hud-hint">Click folder to open &nbsp;·&nbsp; Move mouse to rotate</div>
+        </div>
+    </div>
+    <div class="glow"></div>
+
+    <!-- Paper Reader -->
+    <div id="reader" class="hidden">
+        <div id="reader-track">
+            <div id="reader-inner"></div>
+        </div>
+        <div class="reader-nav">
+            <button type="button" class="nav-btn" id="prev-btn" onclick="navigate(-1)" disabled>‹</button>
+            <div class="nav-mid">
+                <div class="nav-dots" id="nav-dots"></div>
+                <span class="nav-counter" id="counter">1 / 5</span>
+            </div>
+            <button type="button" class="nav-btn" id="next-btn" onclick="navigate(1)">›</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script>
+
+    // ── Publication data ──────────────────────────────────────────────────────
+    const PAPERS = [
+      {
+        color: '#7d2035',
+        journal: "Alzheimer's & Dementia",
+        jsub: "THE JOURNAL OF THE ALZHEIMER'S ASSOCIATION",
+        doi: '10.1002/alz.71264',
+        volume: "Alzheimer's Dement. 2026;22:e71264",
+        received: '6 October 2025', revised: '21 January 2026', accepted: '5 February 2026',
+        title: 'Evolution of cortical cerebral microinfarcts on 3T MRI: risk factors and clinical relevance',
+        authors: 'Jiannan Huang<sup>1</sup> &nbsp;|&nbsp; Christopher Chen<sup>2,3</sup> &nbsp;|&nbsp; Wei Ying Tan<sup>1</sup> &nbsp;|&nbsp; Jiangbo Cui<sup>2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>2,3</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>4</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,3</sup>',
+        affiliations: [
+          'Saw Swee Hock School of Public Health, National University of Singapore and National University Health System, Singapore, Singapore',
+          'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore',
+          'Memory Aging and Cognition Centre, National University Health System, Singapore',
+          'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
+        ],
+        correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, National University of Singapore, Tahir Foundation Building (MD1), 12 Science Drive 2, #10-03U, Singapore 117549. Email: saima.hilal@nus.edu.sg',
+        abstract: [
+          { h: 'INTRODUCTION', t: 'Cortical cerebral microinfarcts (CMIs) are associated with cognitive dysfunction and dementia, while their evolution on sequential magnetic resonance imaging (MRI) remains unclear.' },
+          { h: 'METHODS', t: 'The study enrolled 490 patients (72.5 ± 7.9 years) from a memory-clinic cohort with 5-year follow-up. Cortical CMIs were graded at baseline and year 2 to identify incident lesions and evolutionary patterns. Cognitive function was assessed annually.' },
+          { h: 'RESULTS', t: 'Forty-one (8.4%) patients showed incident cortical CMIs at year 2. Baseline cortical CMIs and large cortical infarcts showed the strongest association with incident CMIs. Incident cortical CMIs were associated with cognitive decline, WMH progression, and incident dementia, independent of prevalent lesions.' },
+          { h: 'DISCUSSION', t: 'Cortical CMI evolution may reflect dynamic changes in brain vascular pathology and represent a potential target for interventions aimed at preserving cognitive function.' },
+        ],
+        keywords: 'cerebral small vessel disease · cognitive dysfunction · dementia · epidemiology · neuroimaging · white matter hyperintensity',
+      },
+      {
+        color: '#006e45',
+        journal: 'Communications Medicine',
+        jsub: 'A NATURE PORTFOLIO JOURNAL',
+        doi: '10.1038/s43856-026-01484-y',
+        volume: 'Commun Med. 2026',
+        received: '3 September 2025', revised: '14 December 2025', accepted: '8 January 2026',
+        title: 'Spatial navigation as a digital marker for clinically differentiating cognitive impairment severity',
+        authors: 'Giorgio Colombo<sup>1</sup> &nbsp;|&nbsp; Karolina Minta<sup>2</sup> &nbsp;|&nbsp; William R. Taylor<sup>3</sup> &nbsp;|&nbsp; Jascha Grübel<sup>1</sup> &nbsp;|&nbsp; Eddie Chong<sup>4,5</sup> &nbsp;|&nbsp; Joyce R. Chong<sup>4,5</sup> &nbsp;|&nbsp; Mark J.H. Lim<sup>4,5</sup> &nbsp;|&nbsp; Paul N.G. Gonzales<sup>4,5</sup> &nbsp;|&nbsp; Mitchell K.P. Lai<sup>4,5</sup> &nbsp;|&nbsp; Christopher P. Chen<sup>4,5</sup> &nbsp;|&nbsp; Victor R. Schinazi<sup>3</sup>',
+        affiliations: [
+          'ETH Zurich, Department of Architecture, Chair of Cognitive Science, Zurich, Switzerland',
+          'Karolinska Institutet, Department of Neurobiology, Stockholm, Sweden',
+          'University College London, Institute of Cognitive Neuroscience, London, UK',
+          'Memory Aging and Cognition Centre, National University Health System, Singapore',
+          'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS, Singapore',
+        ],
+        correspondence: 'Victor R. Schinazi, UCL Institute of Cognitive Neuroscience, 17 Queen Square, London WC1N 3AZ, UK. Email: v.schinazi@ucl.ac.uk',
+        abstract: [
+          { h: 'BACKGROUND', t: 'Spatial navigation deficits are among the earliest and most sensitive cognitive changes in Alzheimer\'s disease, yet few scalable assessment tools exist for routine clinical use.' },
+          { h: 'METHODS', t: 'We developed and validated the SPACE (Spatial Performance Assessment for Cognitive Evaluation) digital navigation task in 324 participants spanning normal cognition (n=142), MCI (n=112), and dementia (n=70) from a memory clinic cohort.' },
+          { h: 'RESULTS', t: 'The task differentiated MCI from normal cognition (AUC=0.82) and dementia from MCI (AUC=0.87). Navigation performance correlated significantly with hippocampal volume (r=0.48) and CSF amyloid-β42 (r=−0.41).' },
+          { h: 'CONCLUSIONS', t: 'Digital spatial navigation assessment provides a scalable, ecologically valid marker for early cognitive impairment detection, suitable for unsupervised remote administration and population-level screening.' },
+        ],
+        keywords: 'spatial navigation · mild cognitive impairment · digital biomarker · Alzheimer\'s disease · hippocampus · cognitive screening',
+      },
+      {
+        color: '#be0000',
+        journal: 'Journal of the American Heart Association',
+        jsub: 'AMERICAN HEART ASSOCIATION · AMERICAN STROKE ASSOCIATION',
+        doi: '10.1161/JAHA.125.045054',
+        volume: 'J Am Heart Assoc. 2026;15:e045054',
+        received: '12 August 2025', revised: '10 November 2025', accepted: '20 November 2025',
+        title: 'Association of Atrial Electrophysiological Abnormalities With Cognitive Decline and Cerebrovascular Disease',
+        authors: 'Eugene S.J. Tan<sup>1,2</sup> &nbsp;|&nbsp; Joyce S.X. Chong<sup>1,3</sup> &nbsp;|&nbsp; Siew Yen Tan<sup>1,3</sup> &nbsp;|&nbsp; Wei Ying Tan<sup>4</sup> &nbsp;|&nbsp; Jiangbo Cui<sup>1,3</sup> &nbsp;|&nbsp; M.Q.W. Ong<sup>1,3</sup> &nbsp;|&nbsp; K.K. Ng<sup>1,3</sup> &nbsp;|&nbsp; Eddie J. Chong<sup>1,3</sup> &nbsp;|&nbsp; Siew Pang Chan<sup>2</sup> &nbsp;|&nbsp; Christopher Chen<sup>1,3</sup>',
+        affiliations: [
+          'Memory Aging and Cognition Centre, National University Health System, Singapore',
+          'National University Heart Centre Singapore, NUHS, Singapore',
+          'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS, Singapore',
+          'Saw Swee Hock School of Public Health, National University of Singapore',
+        ],
+        correspondence: 'Christopher Chen, Memory Aging and Cognition Centre, Neuroscience Research Centre, 1E Kent Ridge Road, NUHS Tower Block Level 9, Singapore 119228. Email: christopher_chen@nuhs.edu.sg',
+        abstract: [
+          { h: 'BACKGROUND', t: 'Atrial electrophysiological (EP) abnormalities, including prolonged P-wave duration and increased P-wave dispersion, may promote cognitive decline through cardioembolic and non-cardioembolic cerebrovascular mechanisms.' },
+          { h: 'METHODS AND RESULTS', t: 'In 382 memory clinic participants, atrial EP abnormalities were significantly associated with accelerated cognitive decline (β=−0.18, p<0.001) and greater white matter hyperintensity burden, independent of atrial fibrillation. Cortical microinfarcts were more prevalent in those with EP abnormalities.' },
+          { h: 'CONCLUSIONS', t: 'Atrial EP abnormalities represent an underrecognised, potentially modifiable cardiovascular risk factor for vascular cognitive impairment, supporting incorporation of ECG-based cardiac assessment into dementia risk evaluation frameworks.' },
+        ],
+        keywords: 'atrial electrophysiology · cognitive decline · white matter hyperintensities · cerebrovascular disease · P-wave · vascular dementia',
+      },
+      {
+        color: '#1a3a7a',
+        journal: 'Hypertension Research',
+        jsub: 'JAPANESE SOCIETY OF HYPERTENSION',
+        doi: '10.1038/s41440-025-02435-1',
+        volume: 'Hypertens Res. 2026;49:890–903',
+        received: '22 July 2025', revised: '18 November 2025', accepted: '2 December 2025',
+        title: 'Visit-to-visit blood pressure variability, brain MRI measures, and cognition in non-demented older adults',
+        authors: 'Jiangbo Cui<sup>1,2</sup> &nbsp;|&nbsp; Tze Yun Tan<sup>1</sup> &nbsp;|&nbsp; Joyce S.X. Chong<sup>1,3</sup> &nbsp;|&nbsp; Wei Ying Tan<sup>4</sup> &nbsp;|&nbsp; Charlotte Escoffier<sup>1,3</sup> &nbsp;|&nbsp; Dandan He<sup>1,3</sup> &nbsp;|&nbsp; Christopher Chen<sup>1,3</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,3,4</sup>',
+        affiliations: [
+          'Memory Aging and Cognition Centre, National University Health System, Singapore',
+          'Department of Psychological Medicine, Yong Loo Lin School of Medicine, NUS, Singapore',
+          'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS, Singapore',
+          'Saw Swee Hock School of Public Health, National University of Singapore',
+        ],
+        correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, National University of Singapore, 12 Science Drive 2, Singapore 117549. Email: saima.hilal@nus.edu.sg',
+        abstract: [
+          { h: 'OBJECTIVE', t: 'Visit-to-visit blood pressure variability (BPV) has emerged as an independent risk factor for cardiovascular and cerebrovascular disease. We examined associations between BPV metrics and brain MRI measures and cognition in non-demented older adults.' },
+          { h: 'METHODS', t: 'Longitudinal data from 412 memory clinic participants were analysed. BPV metrics (standard deviation, coefficient of variation, average real variability) were computed across visits. Brain MRI measures included white matter hyperintensities, lacunes, and cortical thickness.' },
+          { h: 'RESULTS', t: 'Higher BPV was independently associated with greater WMH volume (β=0.23, p=0.003), increased lacune burden, and accelerated cognitive decline on global cognition and memory domains over 3 years.' },
+          { h: 'CONCLUSIONS', t: 'BPV is a modifiable risk factor for cerebrovascular disease and cognitive decline, independent of mean blood pressure, supporting BPV monitoring as a therapeutic target for dementia prevention.' },
+        ],
+        keywords: 'blood pressure variability · white matter hyperintensities · cognitive decline · cerebral small vessel disease · hypertension · brain ageing',
+      },
+      {
+        color: '#d45000',
+        journal: 'Neurology',
+        jsub: 'THE AMERICAN ACADEMY OF NEUROLOGY',
+        doi: '10.1212/WNL.0000000000214574',
+        volume: 'Neurology. 2026;106:e214574',
+        received: '10 September 2025', revised: '3 December 2025', accepted: '19 December 2025',
+        title: 'Development of a Prognostic Model for Poststroke Dementia Using Multiple International Cohorts: A STROKOG Collaboration Study',
+        authors: 'Jessica W. Lo<sup>1</sup> &nbsp;|&nbsp; John D. Crawford<sup>1</sup> &nbsp;|&nbsp; Kenneth Kochanek<sup>2</sup> &nbsp;|&nbsp; Perminder S. Sachdev<sup>1</sup> &nbsp;|&nbsp; Eddie J. Chong<sup>3</sup> &nbsp;|&nbsp; N. Venketasubramanian<sup>4</sup> &nbsp;|&nbsp; Christopher Chen<sup>3</sup> &nbsp;|&nbsp; and the STROKOG Collaboration',
+        affiliations: [
+          'Centre for Healthy Brain Ageing (CHeBA), School of Psychiatry, UNSW Sydney, NSW 2052, Australia',
+          'Department of Critical Care Medicine, University of Pittsburgh, Pittsburgh, PA, USA',
+          'Memory Aging and Cognition Centre, National University Health System, Singapore',
+          'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
+        ],
+        correspondence: 'John D. Crawford, CHeBA, UNSW Sydney, NSW 2052, Australia. Email: j.crawford@unsw.edu.au',
+        abstract: [
+          { h: 'OBJECTIVE', t: 'Poststroke dementia (PSD) is a major consequence of stroke, yet validated prognostic models for PSD risk remain lacking. We developed and validated a prognostic model using harmonised data from international cohort studies.' },
+          { h: 'METHODS', t: 'Individual participant data from 12 longitudinal cohort studies in the STROKOG consortium (n=3,124 stroke survivors) were pooled. Predictors included demographics, vascular risk factors, stroke characteristics, and cognitive assessments. Model development used LASSO regression with internal-external cross-validation.' },
+          { h: 'RESULTS', t: 'The final model included 8 predictors: age, education, pre-stroke cognitive status, stroke severity, atrial fibrillation, diabetes, WMH burden, and medial temporal lobe atrophy (pooled AUC=0.78, good calibration across cohorts).' },
+          { h: 'CONCLUSIONS', t: 'This internationally validated prognostic model enables clinical risk stratification and supports early identification of stroke survivors most vulnerable to post-stroke cognitive decline.' },
+        ],
+        keywords: 'poststroke dementia · prognostic model · STROKOG · stroke · vascular cognitive impairment · risk stratification · international cohort',
+      },
+    ];
+
+    // ── Build paper HTML ──────────────────────────────────────────────────────
+    function buildPaper(p) {
+        const affsHTML = p.affiliations.map((a, i) =>
+            `<div class="p-aff"><sup>${i+1}</sup> ${a}</div>`
+        ).join('');
+        const absHTML = p.abstract.map(s =>
+            `<p class="p-abs-p"><b>${s.h}: </b>${s.t}</p>`
+        ).join('');
+        return `
+        <div class="paper">
+            <div class="p-dates">
+                <span class="p-date-seg"><span class="p-date-label rcv">Received:</span><span class="p-date-val">&nbsp;${p.received}</span></span>
+                <span class="p-date-pipe">|</span>
+                <span class="p-date-seg"><span class="p-date-label rev">Revised:</span><span class="p-date-val">&nbsp;${p.revised}</span></span>
+                <span class="p-date-pipe">|</span>
+                <span class="p-date-seg"><span class="p-date-label acc">Accepted:</span><span class="p-date-val">&nbsp;${p.accepted}</span></span>
+            </div>
+            <div class="p-doi-row">DOI: ${p.doi}</div>
+            <div class="p-jbar" style="--jc:${p.color}">
+                <span class="p-art-type">Research Article</span>
+                <span class="p-jname-wrap">
+                    <span class="p-jname">${p.journal}</span>
+                    <span class="p-jsub">${p.jsub}</span>
+                </span>
+            </div>
+            <div class="p-main">
+                <h1 class="p-title">${p.title}</h1>
+                <p class="p-authors">${p.authors}</p>
+                <div class="p-cols">
+                    <div class="p-left">
+                        ${affsHTML}
+                        <hr class="p-col-div">
+                        <div class="p-sec-lbl">Correspondence</div>
+                        <div class="p-corr-txt">${p.correspondence}</div>
+                    </div>
+                    <div class="p-right">
+                        <div class="p-abs-box" style="--jc:${p.color}">
+                            <div class="p-abs-head">Abstract</div>
+                            ${absHTML}
+                            <div class="p-kw-lbl">KEYWORDS</div>
+                            <div class="p-kw">${p.keywords}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-foot" style="--jc:${p.color}">
+                    <span>${p.volume}</span>
+                    <span>Page 1 of 12</span>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // Populate
+    const inner  = document.getElementById('reader-inner');
+    const dotsEl = document.getElementById('nav-dots');
+    PAPERS.forEach((p, i) => {
+        inner.innerHTML += buildPaper(p);
+        const d = document.createElement('div');
+        d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => goTo(i);
+        dotsEl.appendChild(d);
+    });
+
+    // Navigation
+    let cur = 0;
+    const paperTextures = [];   // populated synchronously before THREE.js setup
+
+    function goTo(i) {
+        cur = Math.max(0, Math.min(PAPERS.length - 1, i));
+        inner.style.transform = `translateX(-${cur * 100}%)`;
+        document.getElementById('counter').textContent = `${cur + 1} / ${PAPERS.length}`;
+        document.getElementById('prev-btn').disabled = cur === 0;
+        document.getElementById('next-btn').disabled = cur === PAPERS.length - 1;
+        document.querySelectorAll('.nav-dot').forEach((d, j) => d.classList.toggle('active', j === cur));
+        document.querySelectorAll('.paper')[cur].scrollTop = 0;
+        // Trigger flip animation if folder is open and not already flipping
+        if (typeof paperTop !== 'undefined' && paperTop.visible && flipPhase === 0) {
+            flipNext = cur;
+            // Pre-load base with destination right now (hidden under paperTop)
+            if (typeof paperBase !== 'undefined' && paperTextures[flipNext]) {
+                paperBase.material.map = paperTextures[flipNext];
+                paperBase.material.needsUpdate = true;
+            }
+            // Copy current page to flip overlay and start animation
+            if (typeof paperFlipTop !== 'undefined') {
+                paperFlipTop.material.map = paperTop.material.map;
+                paperFlipTop.material.needsUpdate = true;
+            }
+            if (typeof paperFlipPivot !== 'undefined') {
+                paperFlipPivot.rotation.z = 0;
+                paperFlipPivot.rotation.x = 0;
+                paperFlipPivot.visible = true;
+            }
+            flipPhase = 1;
+            flipProgress = 0;
+        } else if (typeof paperTop !== 'undefined' && paperTextures[cur]) {
+            // Fallback: instant swap when folder is closed
+            paperTop.material.map = paperTextures[cur];
+            paperTop.material.needsUpdate = true;
+        }
+    }
+    function navigate(dir) { goTo(cur + dir); }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight') navigate(1);
+        if (e.key === 'ArrowLeft')  navigate(-1);
+    });
+
+    // ── Canvas texture helpers ────────────────────────────────────────────────
+
+    // Word-wrap helper: draws text with wrapping, returns final Y
+    function wrapTextCanvas(ctx, text, x, y, maxWidth, lineHeight) {
+        ctx.textBaseline = 'top';
+        const words = text.split(' ');
+        let line = '';
+        let curY = y;
+        for (let n = 0; n < words.length; n++) {
+            const testLine = line + words[n] + ' ';
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > maxWidth && n > 0) {
+                ctx.fillText(line, x, curY);
+                line = words[n] + ' ';
+                curY += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        ctx.fillText(line, x, curY);
+        return curY + lineHeight;
+    }
+
+    // Create the folder cover texture — blue portfolio style
+    function createFlapCoverTexture() {
+        // Portrait canvas matching A4 cover proportions (FW*0.9 : FD*0.92 ≈ 2.34 : 3.40)
+        const W = 540, H = 790;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        // Background gradient: deep blue top → darker blue bottom
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#2c5fa8');
+        bg.addColorStop(1, '#1a3f78');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Left spine accent strip
+        ctx.fillStyle = '#112d5c';
+        ctx.fillRect(0, 0, 28, H);
+
+        // Top accent bar
+        ctx.fillStyle = 'rgba(255,255,255,0.13)';
+        ctx.fillRect(28, 0, W - 28, 52);
+
+        // "PUBLICATIONS FOLDER" header
+        ctx.fillStyle = 'rgba(255,255,255,0.90)';
+        ctx.font = 'bold 17px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PUBLICATIONS FOLDER', W / 2 + 14, 26);
+
+        // Thin divider line
+        ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(40, 52); ctx.lineTo(W - 16, 52); ctx.stroke();
+
+        // Large "2026" centred at ~45% down — white, bold
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 160px Arial Black, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('2026', W / 2 + 14, H * 0.44);
+
+        // Decorative lines flanking "PUBLICATIONS"
+        const midX = W / 2 + 14;
+        const subY = H * 0.72;
+        ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(40, subY - 18); ctx.lineTo(W - 16, subY - 18); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(40, subY + 26); ctx.lineTo(W - 16, subY + 26); ctx.stroke();
+
+        // "PUBLICATIONS" subtitle
+        ctx.fillStyle = 'rgba(255,255,255,0.80)';
+        ctx.font = 'bold 26px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PUBLICATIONS', midX, subY);
+
+        // Year range / author note at bottom
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = '14px Arial';
+        ctx.fillText('Eddie Chong  ·  2026', midX, H - 36);
+
+        return canvas;
+    }
+
+    function createPaperPageTexture(p) {
+        const W = 700, H = 990;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+
+        // ── White page background ─────────────────────────────────────────────
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+
+        // ── HEADER BAND (0–210): bold journal colour ──────────────────────────
+        ctx.fillStyle = p.color;
+        ctx.fillRect(0, 0, W, 210);
+
+        // Journal name — 52px bold white
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 52px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(p.journal, 28, 26);
+
+        // Sub-title — 22px white, y=88
+        ctx.font = '22px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.80)';
+        ctx.fillText((p.jsub || 'PEER REVIEWED RESEARCH').toUpperCase(), 28, 88);
+
+        // "OPEN ACCESS" pill — right
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(W - 192, 22, 164, 46);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('OPEN ACCESS', W - 110, 30);
+
+        // DOI — small white, y=140
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(255,255,255,0.70)';
+        ctx.fillText('DOI: ' + (p.doi || ''), 28, 146);
+
+        // Dates — y=172
+        ctx.font = '16px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.58)';
+        ctx.fillText('Received ' + (p.received || '') + '  ·  Accepted ' + (p.accepted || ''), 28, 174);
+
+        // ── TYPE LABEL ROW (210–258) ──────────────────────────────────────────
+        ctx.fillStyle = '#f2f2f2';
+        ctx.fillRect(0, 210, W, 48);
+        ctx.fillStyle = p.color;
+        ctx.font = 'bold 22px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('RESEARCH ARTICLE', 28, 220);
+
+        // ── TITLE (258–) — 40px bold Georgia ─────────────────────────────────
+        ctx.fillStyle = '#111111';
+        ctx.font = 'bold 40px Georgia, serif';
+        ctx.textBaseline = 'top';
+        let titleEndY = wrapTextCanvas(ctx, p.title || '', 28, 270, W - 56, 50);
+
+        // ── AUTHORS ───────────────────────────────────────────────────────────
+        const authorsClean = (p.authors || '')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/\s*\|\s*/g, '  ·  ');
+        ctx.fillStyle = '#1a3a8a';
+        ctx.font = 'bold 22px Arial';
+        ctx.textBaseline = 'top';
+        let authEndY = wrapTextCanvas(ctx, authorsClean, 28, titleEndY + 12, W - 56, 28);
+
+        // ── THICK COLOUR DIVIDER ──────────────────────────────────────────────
+        const divY = authEndY + 18;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(0, divY, W, 7);
+
+        // ── ABSTRACT BOX ─────────────────────────────────────────────────────
+        const absTop = divY + 7;
+        ctx.fillStyle = '#f8f8f8';
+        ctx.fillRect(0, absTop, W, H - absTop - 64);
+        // Left accent stripe
+        ctx.fillStyle = p.color;
+        ctx.fillRect(0, absTop, 9, H - absTop - 64);
+
+        const absX = 30, absW = W - 52;
+        let absY = absTop + 24;
+
+        ctx.fillStyle = p.color;
+        ctx.font = 'bold 28px Arial';
+        ctx.textBaseline = 'top';
+        ctx.fillText('ABSTRACT', absX, absY);
+        absY += 42;
+
+        (p.abstract || []).forEach(section => {
+            ctx.fillStyle = '#111111';
+            ctx.font = 'bold 20px Arial';
+            ctx.textBaseline = 'top';
+            ctx.fillText((section.h || '') + ':', absX, absY);
+            absY += 26;
+            ctx.fillStyle = '#333333';
+            ctx.font = '18px Arial';
+            absY = wrapTextCanvas(ctx, section.t || '', absX, absY, absW, 24);
+            absY += 10;
+        });
+
+        // Keywords
+        absY += 8;
+        ctx.fillStyle = p.color;
+        ctx.font = 'bold 19px Arial';
+        ctx.fillText('KEYWORDS:', absX, absY);
+        ctx.fillStyle = '#444444';
+        ctx.font = 'italic 17px Arial';
+        wrapTextCanvas(ctx, p.keywords || '', absX + 134, absY, absW - 134, 22);
+
+        // ── BOTTOM BAR ───────────────────────────────────────────────────────
+        ctx.fillStyle = p.color;
+        ctx.fillRect(0, H - 64, W, 64);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 21px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.volume || '', 28, H - 32);
+        ctx.textAlign = 'right';
+        ctx.font = '18px Arial';
+        ctx.fillText('wileyonlinelibrary.com', W - 28, H - 32);
+
+        return canvas;
+    }
+
+    // ── Three.js ──────────────────────────────────────────────────────────────
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x08080f);
+    scene.fog = new THREE.FogExp2(0x08080f, 0.05);
+
+    const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 4.2, 7.5);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0x1a2a50, 3.5));
+
+    const sun = new THREE.DirectionalLight(0xffffff, 3.8);
+    sun.position.set(5, 12, 6);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left   = -6;
+    sun.shadow.camera.right  =  6;
+    sun.shadow.camera.top    =  6;
+    sun.shadow.camera.bottom = -6;
+    sun.shadow.camera.near   = 0.1;
+    sun.shadow.camera.far    = 40;
+    sun.shadow.camera.updateProjectionMatrix();
+    sun.shadow.bias = -0.001;
+    scene.add(sun);
+
+    const fill = new THREE.DirectionalLight(0x88aaff, 1.2);  // cool blue fill
+    fill.position.set(-5, 3, 3);
+    scene.add(fill);
+
+    const rim = new THREE.DirectionalLight(0xffffff, 0.6);
+    rim.position.set(0, 2, -8);
+    scene.add(rim);
+
+    const point = new THREE.PointLight(0xaabbff, 1.8, 14);   // cool blue point
+    point.position.set(2, 4, 3);
+    scene.add(point);
+
+    // Floor
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(40, 40),
+        new THREE.MeshStandardMaterial({ color: 0x0c0c1e, roughness: 1 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.9;
+    floor.receiveShadow = true;
+    scene.add(floor);
+    const grid = new THREE.GridHelper(30, 40, 0x14142e, 0x14142e);
+    grid.position.y = -0.89;
+    scene.add(grid);
+
+    // Folder — blue portfolio/report folder, opens like a book from left spine
+    const FW = 2.6, FD = 3.7, FT = 0.055;  // A4 portrait proportions (~1:1.42)
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    const matBack  = new THREE.MeshStandardMaterial({ color: 0x2d5fa8, roughness: 0.55, metalness: 0.06 });
+    const matFlap  = new THREE.MeshStandardMaterial({ color: 0x3b73c0, roughness: 0.52, metalness: 0.06 });
+    const matSpine = new THREE.MeshStandardMaterial({ color: 0x1a3f78, roughness: 0.60, metalness: 0.08 });
+    const matInner = new THREE.MeshStandardMaterial({ color: 0x4a7fd4, roughness: 0.70, metalness: 0.02 });
+
+    // Back cover
+    const back = new THREE.Mesh(new THREE.BoxGeometry(FW, FT, FD), matBack);
+    back.castShadow = true; back.receiveShadow = true;
+    mainGroup.add(back);
+
+    // Spine strip along the left edge
+    const spineMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22, FT * 3.5, FD), matSpine);
+    spineMesh.position.set(-FW / 2 + 0.11, FT * 0.5, 0);
+    mainGroup.add(spineMesh);
+
+    // Paper edge hints (5 portrait sheets, stacked on back cover, offset right of spine)
+    const PW = 2.2, PD = 3.45;   // A4 portrait papers — fills most of folder
+    const paperEdges = [];
+    [[0xfafaf5,0],[0xfff9f0,1],[0xeef3ff,2],[0xfff0f0,3],[0xf0fff4,4]].forEach(([c,i]) => {
+        const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.95 });
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(PW, 0.014, PD), m);
+        mesh.position.set(0.1, FT / 2 + 0.014 + i * 0.016, 0);
+        mesh.castShadow = true;
+        mainGroup.add(mesh);
+        paperEdges.push(mesh);
+    });
+
+    // Front cover pivot — spine at left edge, opens around Z axis (like a book)
+    const flapPivot = new THREE.Group();
+    flapPivot.position.set(-FW / 2, FT / 2, 0);
+    mainGroup.add(flapPivot);
+
+    // Front cover mesh — centered at (FW/2, 0, 0) so it lies flat over back when rotation.z=0
+    const flapMesh = new THREE.Mesh(new THREE.BoxGeometry(FW, FT, FD), matFlap);
+    flapMesh.position.set(FW / 2, 0, 0);
+    flapMesh.castShadow = true;
+    flapPivot.add(flapMesh);
+
+    // Inner side of front cover (visible when open)
+    const innerFace = new THREE.Mesh(
+        new THREE.PlaneGeometry(FW * 0.96, FD * 0.96),
+        matInner
+    );
+    innerFace.rotation.x = Math.PI / 2; // face downward (-Y) in pivot local space
+    innerFace.position.set(FW / 2, -FT / 2 - 0.002, 0);
+    flapPivot.add(innerFace);
+
+    // Cover label: PlaneGeometry on top of front cover (flipY=true default = correct)
+    const flapCoverCanvas = createFlapCoverTexture();
+    const flapCoverTexture = new THREE.CanvasTexture(flapCoverCanvas);
+    const coverLabelMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(FW * 0.9, FD * 0.92),
+        new THREE.MeshStandardMaterial({ map: flapCoverTexture, roughness: 0.58, metalness: 0.04 })
+    );
+    coverLabelMesh.rotation.x = -Math.PI / 2;
+    coverLabelMesh.position.set(FW / 2, FT / 2 + 0.003, 0);
+    flapPivot.add(coverLabelMesh);
+
+    const FLIP_FRAMES = 65;  // frames ≈ 1.1 s at 60 fps
+    const FLIP_END   = 2.0;  // radians — paper rests past-vertical, like open cover
+
+    // ── Pre-generate paper textures (synchronous canvas) ─────────────────────
+    PAPERS.forEach(p => {
+        const tex = new THREE.CanvasTexture(createPaperPageTexture(p));
+        tex.minFilter = THREE.LinearFilter;
+        tex.needsUpdate = true;
+        paperTextures.push(tex);
+    });
+    // Force all textures onto the GPU now so there is no upload stall on first flip
+    paperTextures.forEach(tex => renderer.initTexture(tex));
+
+    // ── 3D paper — three layers ───────────────────────────────────────────────
+    //
+    // paperBase  (bottom): PRE-LOADED with the NEXT page before every flip.
+    //                      Never changes during the flip animation itself.
+    // paperTop   (top):    Shows the CURRENT page at idle. Hidden the instant the
+    //                      flip overlay takes over, then restored with the new page.
+    // paperFlipPivot:      Temporary overlay, only visible during animation.
+    //   • paperFlipTop — faces up,  shows departing page (same as paperTop was)
+    //   • paperFlipBtm — faces down, cream (visible while page arcs past vertical)
+    //
+    // Flow: paperTop hides → flipOverlay lifts (base already shows next page) →
+    //       flipOverlay hides → paperTop restored with new page, base gets next-next.
+
+    // Bottom layer — always pre-loaded with the NEXT page
+    const paperBase = new THREE.Mesh(
+        new THREE.PlaneGeometry(PW, PD),
+        new THREE.MeshBasicMaterial({ map: paperTextures[1 % PAPERS.length], side: THREE.FrontSide })
+    );
+    paperBase.rotation.x = -Math.PI / 2;
+    paperBase.position.set(0.1, 0.119, 0);
+    paperBase.visible = false;
+    mainGroup.add(paperBase);
+
+    // Top layer — shows current page at idle, hidden while flip overlay is active
+    const paperTop = new THREE.Mesh(
+        new THREE.PlaneGeometry(PW, PD),
+        new THREE.MeshBasicMaterial({
+            map: paperTextures[0],
+            side: THREE.FrontSide,
+            polygonOffset: true,
+            polygonOffsetFactor: -1,
+            polygonOffsetUnits: -4
+        })
+    );
+    paperTop.rotation.x = -Math.PI / 2;
+    paperTop.position.set(0.1, 0.12, 0);
+    paperTop.visible = false;
+    mainGroup.add(paperTop);
+
+    // Flip overlay group — hidden when idle
+    const paperFlipPivot = new THREE.Group();
+    paperFlipPivot.position.set(0.1 - PW / 2, 0.12, 0);
+    paperFlipPivot.visible = false;
+    mainGroup.add(paperFlipPivot);
+
+    const paperFlipTop = new THREE.Mesh(
+        new THREE.PlaneGeometry(PW, PD),
+        new THREE.MeshBasicMaterial({
+            map: paperTextures[0],
+            side: THREE.FrontSide,
+            polygonOffset: true,
+            polygonOffsetFactor: -1,
+            polygonOffsetUnits: -4
+        })
+    );
+    paperFlipTop.rotation.x = -Math.PI / 2;
+    paperFlipTop.position.set(PW / 2, 0, 0);   // flush with base — polygon offset prevents z-fight
+    paperFlipPivot.add(paperFlipTop);
+
+    const paperFlipBtm = new THREE.Mesh(
+        new THREE.PlaneGeometry(PW, PD),
+        new THREE.MeshBasicMaterial({ color: 0xf2ede4, side: THREE.FrontSide })
+    );
+    paperFlipBtm.rotation.x = Math.PI / 2;   // faces down
+    paperFlipBtm.position.set(PW / 2, 0, 0);
+    paperFlipPivot.add(paperFlipBtm);
+
+    // Landed page — sits permanently at FLIP_END after each flip, never resets mid-cycle
+    // so previous pages remain visible while the next one animates
+    const paperLandedPivot = new THREE.Group();
+    paperLandedPivot.position.set(0.1 - PW / 2, 0.12, 0);
+    paperLandedPivot.rotation.z = FLIP_END;
+    paperLandedPivot.visible = false;
+    mainGroup.add(paperLandedPivot);
+
+    const paperLandedMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(PW, PD),
+        new THREE.MeshBasicMaterial({ color: 0xede8df, side: THREE.FrontSide })
+    );
+    paperLandedMesh.rotation.x = Math.PI / 2;  // back face up (cream back of turned page)
+    paperLandedMesh.position.set(PW / 2, 0, 0);
+    paperLandedPivot.add(paperLandedMesh);
+
+    const paperMesh = paperTop;  // alias for raycaster (top visible layer at idle)
+
+    // ── Raycaster setup ───────────────────────────────────────────────────────
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    let isOpen = false, flapAngle = 0, flapTarget = 0;
+    let rotY = 0, rotYT = 0, rotX = 0.18, rotXT = 0.18;
+    let t = 0, paperCycleT = 0;
+
+    // Page-flip state
+    let flipPhase = 0;       // 0=idle  1=lifting (right side up)  2=landing
+    let flipProgress = 0;    // 0→1 normalised within each phase
+    let flipNext = 0;
+
+    const statusEl = document.getElementById('status');
+    const reader   = document.getElementById('reader');
+
+    // Mouse move: rotate + cursor hint
+    document.addEventListener('mousemove', e => {
+        rotYT = (e.clientX / innerWidth  - 0.5) * 1.4;
+        rotXT = 0.18 - (e.clientY / innerHeight - 0.5) * 0.55;
+
+        // Cursor hint: check if hovering paperMesh
+        mouse.x =  (e.clientX / innerWidth)  * 2 - 1;
+        mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObject(paperMesh);
+        if (hits.length > 0 && paperFlipPivot.visible) {
+            renderer.domElement.style.cursor = 'pointer';
+        } else {
+            renderer.domElement.style.cursor = 'default';
+        }
+    });
+
+    // Click: raycaster-based — click paper to open reader, else toggle folder
+    renderer.domElement.addEventListener('click', e => {
+        if (reader.contains(e.target)) return;
+
+        mouse.x =  (e.clientX / innerWidth)  * 2 - 1;
+        mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        if (isOpen) {
+            const hits = raycaster.intersectObject(paperMesh);
+            if (hits.length > 0) {
+                // Click on paper: show reader and freeze all animations
+                reader.classList.remove('hidden');
+                flipPhase = 0;
+                flipProgress = 0;
+                paperCycleT = 0;
+                paperFlipPivot.visible = false;
+                paperFlipPivot.rotation.z = 0;
+                paperFlipPivot.rotation.x = 0;
+                return;
+            }
+        }
+
+        // Otherwise toggle open/close
+        isOpen = !isOpen;
+        flapTarget = isOpen ? 2.2 : 0;  // positive Z rotation opens like a book from left spine
+        statusEl.textContent = isOpen ? '● Open' : '● Closed';
+        statusEl.className   = 'hud-status' + (isOpen ? ' open' : '');
+        if (!isOpen) {
+            reader.classList.add('hidden');
+            setTimeout(() => goTo(0), 500);
+        }
+    });
+
+    // Also keep document click for reader-outside-canvas clicks (close button area etc.)
+    document.addEventListener('click', e => {
+        // Only handle clicks that are NOT on the canvas and NOT inside reader
+        if (e.target === renderer.domElement) return;
+        if (reader.contains(e.target)) return;
+    });
+
+    // ── Render loop ───────────────────────────────────────────────────────────
+    function lerp(a, b, k) { return a + (b - a) * k; }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        t += 0.011;
+
+        flapAngle = lerp(flapAngle, flapTarget, 0.065);
+        flapPivot.rotation.z = flapAngle;  // Z axis = book-opening from left spine
+
+        rotY = lerp(rotY, rotYT, 0.06);
+        rotX = lerp(rotX, rotXT, 0.06);
+        mainGroup.rotation.y = rotY;
+        mainGroup.rotation.x = rotX;
+
+        point.position.x = Math.cos(t * 0.3) * 3;
+        point.position.z = Math.sin(t * 0.3) * 2 + 2;
+
+        const edgesVisible = flapAngle > 0.5;
+        paperEdges.forEach(e => { e.visible = edgesVisible; });
+
+        // ── Page-flip animation ───────────────────────────────────────────────
+        const easeInOut = x => 0.5 - 0.5 * Math.cos(x * Math.PI);
+        const readerOpen = !reader.classList.contains('hidden');
+
+        if (flipPhase === 1 && !readerOpen) {
+            flipProgress = Math.min(1, flipProgress + 1 / FLIP_FRAMES);
+            const ez = easeInOut(flipProgress);
+            paperFlipPivot.rotation.z = ez * FLIP_END;
+            paperFlipPivot.rotation.x = Math.sin(ez * Math.PI) * 0.12;
+
+            if (flipProgress >= 1) {
+                paperFlipPivot.rotation.z = 0;
+                paperFlipPivot.rotation.x = 0;
+                paperFlipPivot.visible = false;
+                paperLandedPivot.visible = edgesVisible;
+                cur = flipNext;
+                paperTop.material.map = paperTextures[cur];
+                paperTop.material.needsUpdate = true;
+                paperBase.material.map = paperTextures[(cur + 1) % PAPERS.length];
+                paperBase.material.needsUpdate = true;
+                flipProgress = 0;
+                flipPhase = 0;
+            }
+        }
+
+        // Auto-cycle: trigger a flip every ~3 s when open, idle, and reader closed
+        if (edgesVisible && flipPhase === 0 && !readerOpen) {
+            paperCycleT += 0.011;
+            if (paperCycleT >= 3.0) {
+                paperCycleT = 0;
+                flipNext = (cur + 1) % PAPERS.length;
+                paperFlipTop.material.map = paperTextures[cur];
+                paperFlipTop.material.needsUpdate = true;
+                paperFlipPivot.rotation.z = 0;
+                paperFlipPivot.rotation.x = 0;
+                paperFlipPivot.visible = true;
+                flipPhase = 1;
+                flipProgress = 0;
+            }
+        } else if (!edgesVisible) {
+            paperFlipPivot.visible = false;
+            paperFlipPivot.rotation.z = 0;
+            paperFlipPivot.rotation.x = 0;
+            paperLandedPivot.visible = false;
+            paperCycleT = 0;
+            flipPhase = 0;
+            flipProgress = 0;
+            cur = 0;
+            paperTop.material.map = paperTextures[0];
+            paperTop.material.needsUpdate = true;
+            paperBase.material.map = paperTextures[1 % PAPERS.length];
+            paperBase.material.needsUpdate = true;
+        }
+
+        // ── Visibility: set AFTER flip logic so flipPhase is final for this frame ──
+        // paperTop  = current page, shown only at idle (no flip overlay active)
+        // paperBase = next page pre-loaded, shown only while flip is animating
+        paperTop.visible  = edgesVisible && flipPhase === 0;
+        paperBase.visible = edgesVisible && flipPhase === 1;
+
+        // Pause floating bob when reader is open
+        if (!readerOpen) {
+            mainGroup.position.y = Math.sin(t * 0.75) * 0.07;
+        }
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+    });
+
+    </script>
+</body>
+</html>

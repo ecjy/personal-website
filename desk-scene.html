@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Work Desk</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#060608; overflow:hidden; }
+canvas { display:block; }
+#hint { position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    font:11px/1 'Inter',sans-serif; color:rgba(255,255,255,0.3);
+    letter-spacing:0.2em; text-transform:uppercase; pointer-events:none; }
+</style>
+</head>
+<body>
+<div id="hint">Drag to Rotate · Scroll to Zoom</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }   from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer }  from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }      from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
+
+// ─── Renderer ─────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.68;
+document.body.appendChild(renderer.domElement);
+
+const scene  = new THREE.Scene();
+scene.background = new THREE.Color(0x060608);
+scene.fog = new THREE.FogExp2(0x060608, 0.022);
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.01, 200);
+camera.position.set(0, 4.5, 10);
+
+// ─── Controls ─────────────────────────────────────────────────────────────────
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.target.set(0, 0.6, 0);
+controls.maxPolarAngle = Math.PI / 2.1;
+controls.minDistance = 2; controls.maxDistance = 18;
+controls.update();
+
+// ─── Environment (IBL) ────────────────────────────────────────────────────────
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.07).texture;
+
+// ─── Post-processing ──────────────────────────────────────────────────────────
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.14, 0.35, 0.92);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+window.addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    composer.setSize(innerWidth, innerHeight);
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function box(w, h, d) { return new THREE.BoxGeometry(w, h, d); }
+function cyl(rt, rb, h, s = 24) { return new THREE.CylinderGeometry(rt, rb, h, s); }
+
+function std(color, rough = 0.5, metal = 0) {
+    return new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
+}
+function phys(color, rough = 0.5, metal = 0, cc = 0, ccr = 0.3) {
+    return new THREE.MeshPhysicalMaterial({ color, roughness: rough, metalness: metal,
+        clearcoat: cc, clearcoatRoughness: ccr });
+}
+
+function add(mesh, parent = scene) { parent.add(mesh); return mesh; }
+function mesh(geo, mat, px = 0, py = 0, pz = 0, parent = scene, shadow = true) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(px, py, pz);
+    if (shadow) { m.castShadow = true; m.receiveShadow = true; }
+    parent.add(m);
+    return m;
+}
+
+// Rounded-rect canvas helper (avoids ctx.roundRect compat issues)
+function rRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+    ctx.arcTo(x+w, y, x+w, y+r, r); ctx.lineTo(x+w, y+h-r);
+    ctx.arcTo(x+w, y+h, x+w-r, y+h, r); ctx.lineTo(x+r, y+h);
+    ctx.arcTo(x, y+h, x, y+h-r, r); ctx.lineTo(x, y+r);
+    ctx.arcTo(x, y, x+r, y, r); ctx.closePath();
+}
+
+// ─── Wood texture ─────────────────────────────────────────────────────────────
+function makeWoodTex(baseHex = '#1a0a03', repeat = [2, 1]) {
+    const W = 1024, H = 512;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+
+    // Seeded RNG — deterministic, same result every load
+    let _s = 0x6a3c91d7;
+    const rng = () => { _s ^= _s << 13; _s ^= _s >>> 17; _s ^= _s << 5; return ((_s >>> 0) / 0x100000000); };
+
+    // Dark walnut base
+    ctx.fillStyle = baseHex; ctx.fillRect(0, 0, W, H);
+
+    // Broad annual-ring bands (wide, low-opacity)
+    for (let i = 0; i < 28; i++) {
+        const baseY = (i / 28) * H + rng() * 10 - 5;
+        const k = 1 + Math.floor(rng() * 3);           // 1–3 full cycles → seamless at W
+        const ph = rng() * Math.PI * 2;
+        const amp = 8 + rng() * 18;
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 4) {
+            const y = baseY + Math.sin(x * Math.PI * 2 * k / W + ph) * amp;
+            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = `rgba(6,2,0,${0.06 + rng() * 0.10})`;
+        ctx.lineWidth = 4 + rng() * 10; ctx.stroke();
+    }
+
+    // Fine grain lines (high density, thin, varying darkness)
+    for (let i = 0; i < 220; i++) {
+        const baseY = (i / 220) * H + (rng() - 0.5) * (H / 220) * 2.5;
+        const k  = 1 + Math.floor(rng() * 5);          // 1–5 cycles
+        const k2 = k * 2 + Math.floor(rng() * 3);      // harmonic
+        const ph1 = rng() * Math.PI * 2, ph2 = rng() * Math.PI * 2;
+        const a1 = 1.5 + rng() * 5, a2 = a1 * 0.3;
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 3) {
+            const y = baseY
+                + Math.sin(x * Math.PI * 2 * k  / W + ph1) * a1
+                + Math.sin(x * Math.PI * 2 * k2 / W + ph2) * a2;
+            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        const dark = rng() > 0.38;
+        const alpha = 0.04 + rng() * 0.13;
+        // Dark walnut palette: near-black ring edges, warm mid-brown inter-ring
+        ctx.strokeStyle = dark
+            ? `rgba(5,1,0,${alpha})`
+            : `rgba(55,22,4,${alpha * 0.65})`;
+        ctx.lineWidth = 0.3 + rng() * 2.0; ctx.stroke();
+    }
+
+    // Subtle pore channels (vertical micro-streaks)
+    for (let i = 0; i < 30; i++) {
+        const px = rng() * W;
+        ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px + (rng() - 0.5) * 4, H);
+        ctx.strokeStyle = `rgba(4,1,0,${0.015 + rng() * 0.03})`;
+        ctx.lineWidth = 0.5 + rng() * 1.2; ctx.stroke();
+    }
+
+    // Subtle uniform warm tint (no directional gradient)
+    ctx.fillStyle = 'rgba(55,22,4,0.05)'; ctx.fillRect(0, 0, W, H);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(...repeat);
+    tex.anisotropy = 8;
+    return tex;
+}
+
+// ─── DESK ─────────────────────────────────────────────────────────────────────
+const DW = 12, DD = 5.5, DT = 0.18;
+const woodTex = makeWoodTex('#1c0b03', [2, 1]);
+const deskMat = new THREE.MeshPhysicalMaterial({
+    map: woodTex, roughness: 0.88, metalness: 0.0,
+    clearcoat: 0.06, clearcoatRoughness: 0.72
+});
+
+mesh(box(DW, DT, DD), deskMat, 0, -DT/2, 0);
+
+// Edge banding
+const edgeMat = phys(0x1e0d04, 0.65);
+[[ 0, DT/2, DD/2+.02, DW+.02, DT+.01, 0.04 ],
+ [ 0, DT/2,-DD/2-.02, DW+.02, DT+.01, 0.04 ]].forEach(([x,y,z,w,h,d]) => mesh(box(w,h,d), edgeMat, x,y,z));
+
+// Legs
+const legMat = phys(0x111116, 0.45, 0.85, 0.1, 0.35);
+[[-DW/2+.25, -DD/2+.25],[DW/2-.25, -DD/2+.25],
+ [-DW/2+.25,  DD/2-.25],[DW/2-.25,  DD/2-.25]].forEach(([lx, lz]) => {
+    mesh(box(0.11, 2.85, 0.11), legMat, lx, -1.605, lz);
+    mesh(cyl(0.09, 0.09, 0.03, 12), legMat, lx, -3.02, lz);
+});
+// Stretchers
+const strMat = phys(0x0d0d11, 0.25, 0.88);
+mesh(box(DW-.5, 0.055, 0.055), strMat, 0, -2.5, -DD/2+.25);
+mesh(box(DW-.5, 0.055, 0.055), strMat, 0, -2.5,  DD/2-.25);
+
+// Floor
+const floorMat = std(0x090909, 0.95);
+const floorM = mesh(new THREE.PlaneGeometry(60, 60), floorMat, 0, -3.05, 0);
+floorM.rotation.x = -Math.PI/2; floorM.castShadow = false;
+
+// ─── LAPTOP (ASUS ROG Zephyrus G14) ──────────────────────────────────────────
+const LW = 2.62, LD = 1.74, LH = 0.095;
+const lapG = new THREE.Group(); lapG.position.set(-2.5, 0, 0.8); scene.add(lapG);
+
+// Eclipse Gray magnesium alloy body
+const lapMat     = phys(0x282830, 0.42, 0.55, 0.03, 0.60);
+const lapDarkMat = phys(0x101016, 0.40, 0.70);
+const hingeMat   = phys(0x3c3c48, 0.22, 0.80);
+
+// Base chassis
+mesh(box(LW, LH, LD), lapMat, 0, LH/2, 0, lapG);
+
+// Front edge lip (subtle taper)
+mesh(box(LW - 0.06, 0.006, 0.025), lapDarkMat, 0, 0.003, LD/2 - 0.013, lapG);
+
+// Port stubs — right side: USB-A x2
+[0.22, -0.08].forEach(pz =>
+    mesh(box(0.016, 0.022, 0.046), lapDarkMat, LW/2 + 0.005, LH * 0.55, pz, lapG));
+// Port stubs — left side: USB-C x2, HDMI
+[-0.25, 0.06, 0.30].forEach((pz, i) =>
+    mesh(box(0.016, 0.019, i === 2 ? 0.052 : 0.038), lapDarkMat, -LW/2 - 0.005, LH * 0.52, pz, lapG));
+
+// Hinge blocks on base (ergo-lift style)
+[-LW/2 + 0.20, LW/2 - 0.20].forEach(hx =>
+    mesh(box(0.08, LH + 0.006, 0.15), hingeMat, hx, LH/2, -LD/2 + 0.075, lapG));
+
+// Keyboard canvas
+const kbC = document.createElement('canvas'); kbC.width = 1024; kbC.height = 680;
+const kbX = kbC.getContext('2d');
+kbX.fillStyle = '#07070e'; kbX.fillRect(0, 0, 1024, 680);
+kbX.fillStyle = '#cc1122'; kbX.font = 'bold 13px Arial'; kbX.fillText('ROG', 22, 20);
+kbX.fillStyle = 'rgba(170,170,195,0.38)'; kbX.font = '10px Arial';
+kbX.fillText('ZEPHYRUS G14', 58, 20);
+
+const wasd = new Set(['W','A','S','D']);
+// u=key width, kh=key height (square-ish ≈ real G14 18.7mm pitch)
+const u = 56, kh = 54, g = 5, ml = 20;
+function drawKey(x, y, w, h, lbl) {
+    const acc = wasd.has(lbl);
+    const hue = Math.round((x / 1024) * 300 + (y / 680) * 40);
+    rRect(kbX, x, y, w, h, 4);
+    kbX.fillStyle = acc ? '#180d26' : '#0c0c18'; kbX.fill();
+    kbX.strokeStyle = acc ? '#5522aa' : '#1a1a26'; kbX.lineWidth = 1; kbX.stroke();
+    rRect(kbX, x+1, y+1, w-2, h-4, 3);
+    const tg = kbX.createLinearGradient(x, y, x, y+h);
+    tg.addColorStop(0, 'rgba(255,255,255,0.06)'); tg.addColorStop(1, 'rgba(0,0,0,0.12)');
+    kbX.fillStyle = tg; kbX.fill();
+    kbX.fillStyle = acc ? 'rgba(110,40,255,0.92)' : `hsla(${hue},85%,58%,0.68)`;
+    kbX.fillRect(x+3, y+h-3, w-6, 2);
+    if (lbl && lbl !== ' ') {
+        kbX.fillStyle = acc ? '#b088ff' : 'rgba(205,210,230,0.88)';
+        kbX.font = `${h >= 46 ? 11 : 9}px Arial`;
+        kbX.textAlign = 'center'; kbX.textBaseline = 'middle';
+        kbX.fillText(lbl, x+w/2, y+h/2);
+    }
+}
+
+// Fn row (height 26, positioned at top with small top margin)
+let fkx = ml;
+[['Esc',62],[null,12],['F1',44],['F2',44],['F3',44],['F4',44],[null,10],
+ ['F5',44],['F6',44],['F7',44],['F8',44],[null,10],
+ ['F9',44],['F10',44],['F11',44],['F12',44],[null,8],['Del',62]].forEach(([l,w]) => {
+    if (l) drawKey(fkx, 28, w, 26, l); fkx += w + (l ? g : 0);
+});
+
+// Main rows — key widths calculated to align right edges (total row width = 901px each)
+// u=56, g=5, ml=20 → 20 + 13×(56+5) + 88 = 20 + 793 + 88 = 901
+const rows = [
+    [['`',u],['1',u],['2',u],['3',u],['4',u],['5',u],['6',u],['7',u],['8',u],['9',u],['0',u],['-',u],['=',u],['⌫',88]],
+    [['Tab',74],['Q',u],['W',u],['E',u],['R',u],['T',u],['Y',u],['U',u],['I',u],['O',u],['P',u],['[',u],[']',u],['\\',70]],
+    [['Caps',90],['A',u],['S',u],['D',u],['F',u],['G',u],['H',u],['J',u],['K',u],['L',u],[';',u],["'",u],['Enter',115]],
+    [['⇧',133],['Z',u],['X',u],['C',u],['V',u],['B',u],['N',u],['M',u],[',',u],['.',u],['/',u],['⇧',133]],
+    [['Ctrl',70],['Fn',54],['⊞',54],['Alt',62],[' ',332],['Alt',62],['Ctrl',70],['←',44],['↕',44],['→',44]],
+];
+rows.forEach((row, ri) => {
+    const ry = 64 + ri * (kh + g);
+    let x = ml;
+    row.forEach(([l, w]) => { drawKey(x, ry, w, kh, l); x += w + g; });
+});
+
+// Trackpad — centered on keyboard, proportionally sized (≈ 114mm × 70mm on G14)
+const tpX = 313, tpY = 378, tpW = 294, tpH = 178;
+rRect(kbX, tpX, tpY, tpW, tpH, 10);
+kbX.fillStyle = '#0c0c16'; kbX.fill();
+kbX.strokeStyle = '#1c1c28'; kbX.lineWidth = 1.5; kbX.stroke();
+const tpg = kbX.createLinearGradient(tpX, tpY, tpX, tpY + tpH);
+tpg.addColorStop(0, 'rgba(255,255,255,0.045)'); tpg.addColorStop(1, 'rgba(0,0,0,0)');
+rRect(kbX, tpX+1, tpY+1, tpW-2, tpH/2, 9); kbX.fillStyle = tpg; kbX.fill();
+
+const kbTex = new THREE.CanvasTexture(kbC);
+const kbMesh = mesh(new THREE.PlaneGeometry(LW - 0.12, LD - 0.18),
+    new THREE.MeshStandardMaterial({
+        map: kbTex, emissiveMap: kbTex,
+        emissive: 0xffffff, emissiveIntensity: 0.18, roughness: 0.92
+    }), 0, LH + 0.001, 0.05, lapG, false);
+kbMesh.rotation.x = -Math.PI/2;
+
+// Lid pivot at hinge (back edge of base)
+const lidPivot = new THREE.Group();
+lidPivot.position.set(0, LH, -LD/2);
+lapG.add(lidPivot);
+
+const LID_T = 0.062;
+// Lid: nearly-black Eclipse Gray, very matte so slash lights stand out
+const lidBodyMat = phys(0x111118, 0.72, 0.30);
+mesh(box(LW, LID_T, LD), lidBodyMat, 0, 0, LD/2, lidPivot);
+
+// G14 slash-light overlay — TRANSPARENT background so dark lid body shows through.
+// Only the RGB slash lines and ROG text are drawn; everything else is alpha=0.
+function makeG14SlashTex() {
+    const W = 1024, H = 680;
+    const ac = document.createElement('canvas'); ac.width = W; ac.height = H;
+    const ax = ac.getContext('2d');
+    ax.clearRect(0, 0, W, H);   // fully transparent — no background tint at all
+
+    // Real G14 slash angle: ~60° from vertical = 30° from horizontal
+    const angle = Math.PI * 0.335;
+
+    // 5 slash strips: red → orange → warm-white → cyan → violet
+    const slashes = [
+        { cx: W*0.28, w:  5, r: 255, g:  38, b:  55, a: 0.88 },
+        { cx: W*0.40, w:  9, r: 255, g: 105, b:  22, a: 0.94 },
+        { cx: W*0.53, w: 15, r: 255, g: 215, b: 110, a: 1.00 },   // bright center
+        { cx: W*0.66, w:  9, r:  45, g: 175, b: 255, a: 0.94 },
+        { cx: W*0.78, w:  5, r: 115, g:  42, b: 255, a: 0.88 },
+    ];
+
+    slashes.forEach(({ cx, w, r, g, b, a }) => {
+        ax.save();
+        ax.translate(cx, H * 0.48);
+        ax.rotate(angle);
+
+        // Narrow soft glow (2.5× core width)
+        const glow = ax.createLinearGradient(-w * 2.5, 0, w * 2.5, 0);
+        glow.addColorStop(0,    'rgba(0,0,0,0)');
+        glow.addColorStop(0.38, `rgba(${r},${g},${b},${+(a*0.25).toFixed(3)})`);
+        glow.addColorStop(0.5,  `rgba(${r},${g},${b},${+(a*0.42).toFixed(3)})`);
+        glow.addColorStop(0.62, `rgba(${r},${g},${b},${+(a*0.25).toFixed(3)})`);
+        glow.addColorStop(1,    'rgba(0,0,0,0)');
+        ax.fillStyle = glow;
+        ax.fillRect(-w * 2.5, -H * 1.3, w * 5, H * 2.6);
+
+        // Sharp bright core with white-hot centre
+        const core = ax.createLinearGradient(-w, 0, w, 0);
+        core.addColorStop(0,    'rgba(0,0,0,0)');
+        core.addColorStop(0.20, `rgba(${r},${g},${b},${+(a*0.90).toFixed(3)})`);
+        core.addColorStop(0.5,  `rgba(255,255,255,${a.toFixed(3)})`);
+        core.addColorStop(0.80, `rgba(${r},${g},${b},${+(a*0.90).toFixed(3)})`);
+        core.addColorStop(1,    'rgba(0,0,0,0)');
+        ax.fillStyle = core;
+        ax.fillRect(-w, -H * 1.3, w * 2, H * 2.6);
+
+        ax.restore();
+    });
+
+    // ROG wordmark near bottom-centre
+    ax.save();
+    ax.shadowColor = 'rgba(210,28,42,0.95)';
+    ax.shadowBlur = 16;
+    ax.fillStyle = 'rgba(230,28,45,0.96)';
+    ax.font = 'bold 34px Arial';
+    ax.textAlign = 'center';
+    ax.fillText('ROG', W * 0.52, H * 0.87);
+    ax.restore();
+
+    return new THREE.CanvasTexture(ac);
+}
+
+const lidTex = makeG14SlashTex();
+// transparent:true → canvas alpha=0 areas are invisible → dark lidBodyMat shows through
+// polygonOffset eliminates z-fighting with the lid box top face
+const lidBackMat = new THREE.MeshStandardMaterial({
+    map: lidTex, emissiveMap: lidTex,
+    emissive: 0xffffff, emissiveIntensity: 0.80,
+    roughness: 0.42, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+});
+const animeBack = new THREE.Mesh(new THREE.PlaneGeometry(LW - 0.02, LD - 0.02), lidBackMat);
+animeBack.position.set(0, LID_T / 2 + 0.001, LD / 2);
+animeBack.rotation.x = -Math.PI / 2;
+lidPivot.add(animeBack);
+
+// Screen canvas
+const scrC = document.createElement('canvas'); scrC.width = 1600; scrC.height = 1000;
+const scrX = scrC.getContext('2d');
+const sg = scrX.createLinearGradient(0, 0, 1600, 1000);
+sg.addColorStop(0, '#08081c'); sg.addColorStop(.35, '#110622');
+sg.addColorStop(.7, '#060b1e'); sg.addColorStop(1, '#0a0418');
+scrX.fillStyle = sg; scrX.fillRect(0, 0, 1600, 1000);
+[[380, 520, 480, '#7840ff'], [1200, 420, 400, '#2890ff']].forEach(([cx, cy, r, col]) => {
+    const rad = scrX.createRadialGradient(cx, cy, 0, cx, cy, r);
+    const c = new THREE.Color(col);
+    rad.addColorStop(0, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.42)`);
+    rad.addColorStop(1, 'rgba(0,0,0,0)'); scrX.fillStyle = rad; scrX.fillRect(0, 0, 1600, 1000);
+});
+scrX.fillStyle = 'rgba(255,255,255,0.92)'; scrX.font = 'bold 68px sans-serif'; scrX.fillText('EDDIE CHONG', 110, 420);
+scrX.fillStyle = 'rgba(160,180,255,0.85)'; scrX.font = '30px sans-serif'; scrX.fillText('Research Manager  ·  AI Integration', 112, 476);
+scrX.fillStyle = 'rgba(100,130,255,0.55)'; scrX.font = '18px monospace'; scrX.fillText('NUS  ·  MACC  ·  38+ Publications', 113, 522);
+scrX.fillStyle = 'rgba(0,0,0,0.5)'; scrX.fillRect(0, 930, 1600, 70);
+scrX.fillStyle = 'rgba(80,120,255,0.6)'; scrX.fillRect(30, 944, 42, 42);
+
+const scrTex = new THREE.CanvasTexture(scrC);
+const scrMat = new THREE.MeshStandardMaterial({
+    map: scrTex, emissiveMap: scrTex, emissive: 0xffffff, emissiveIntensity: 0.30,
+    side: THREE.FrontSide
+});
+// Screen on inner face of lid — facing -Y in lidPivot space (= toward camera when lid open)
+const scrMesh = new THREE.Mesh(new THREE.PlaneGeometry(LW - 0.18, LD - 0.22), scrMat);
+scrMesh.position.set(0, -LID_T/2 - 0.001, LD/2);
+scrMesh.rotation.x = Math.PI/2;
+lidPivot.add(scrMesh);
+
+// Dual-torque hinges (G14 style)
+[-LW/2 + 0.20, LW/2 - 0.20].forEach(hx => {
+    const h = new THREE.Mesh(cyl(0.044, 0.044, 0.18, 16), hingeMat);
+    h.rotation.z = Math.PI/2; h.position.set(hx, 0, 0); lidPivot.add(h);
+});
+
+// Lid open/close state (1 = open, 0 = closed)
+const lapState = { open: 1, target: 1 };
+const LAP_OPEN_ANGLE = -1.18;
+lidPivot.rotation.x = LAP_OPEN_ANGLE;
+
+// Large invisible hit plane covering entire laptop (base + lid footprint) for click/hover
+const lapHitPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(LW + 0.3, LD + 0.3),
+    new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }));
+lapHitPlane.rotation.x = -Math.PI/2;
+lapHitPlane.position.set(0, LH + 0.02, 0);
+lapG.add(lapHitPlane);
+
+// Screen glow light
+const scrLight = new THREE.PointLight(0x5060cc, 1.6, 4.0);
+scrLight.position.copy(lapG.position).add(new THREE.Vector3(0, 1.2, 0.5));
+scene.add(scrLight);
+// Slash RGB ambient — warm from lid back when open
+const slashLight = new THREE.PointLight(0xff8830, 0.45, 3.0);
+slashLight.position.copy(lapG.position).add(new THREE.Vector3(0, 0.8, -0.6));
+scene.add(slashLight);
+
+// ─── DESKTOP MONITOR + KEYBOARD (main workstation, center of desk) ───────────
+const monG = new THREE.Group(); monG.position.set(0, 0, -1.4); scene.add(monG);
+
+// Monitor dimensions (≈ 27" 16:9)
+const MW = 4.2, MH = 2.45, MT = 0.12;
+const monMat = phys(0x0e0e14, 0.35, 0.72);
+
+// Panel
+mesh(box(MW, MH, MT), monMat, 0, MH/2 + 1.58, 0, monG);
+
+// Thin bezel frame
+const bezMat = phys(0x08080c, 0.45, 0.55);
+const bT = 0.045;   // bezel thickness
+mesh(box(MW + 0.02, bT, MT + 0.01), bezMat, 0, MH + 1.58 + bT/2, 0, monG);   // top bezel
+mesh(box(MW + 0.02, 0.065, MT + 0.01), bezMat, 0, 1.58 - 0.032, 0, monG);     // bottom chin (thicker)
+mesh(box(bT, MH + 0.02, MT + 0.01), bezMat, -MW/2 - bT/2, MH/2 + 1.58, 0, monG);   // left
+mesh(box(bT, MH + 0.02, MT + 0.01), bezMat,  MW/2 + bT/2, MH/2 + 1.58, 0, monG);   // right
+
+// Screen canvas (wallpaper + widgets)
+const mScrC = document.createElement('canvas'); mScrC.width = 1920; mScrC.height = 1080;
+const mScrX = mScrC.getContext('2d');
+const mbg = mScrX.createLinearGradient(0, 0, 1920, 1080);
+mbg.addColorStop(0, '#06071a'); mbg.addColorStop(0.3, '#0a0520');
+mbg.addColorStop(0.6, '#04081e'); mbg.addColorStop(1, '#08031a');
+mScrX.fillStyle = mbg; mScrX.fillRect(0, 0, 1920, 1080);
+// Soft ambient blobs
+[[450, 500, 500, '#5020aa'], [1400, 380, 420, '#1860cc'], [960, 650, 350, '#6010a0']].forEach(([cx,cy,r,col]) => {
+    const rg = mScrX.createRadialGradient(cx, cy, 0, cx, cy, r);
+    const c = new THREE.Color(col);
+    rg.addColorStop(0, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.32)`);
+    rg.addColorStop(1, 'rgba(0,0,0,0)');
+    mScrX.fillStyle = rg; mScrX.fillRect(0, 0, 1920, 1080);
+});
+// Name + role
+mScrX.fillStyle = 'rgba(255,255,255,0.90)'; mScrX.font = 'bold 78px sans-serif';
+mScrX.fillText('EDDIE CHONG', 140, 440);
+mScrX.fillStyle = 'rgba(160,180,255,0.80)'; mScrX.font = '34px sans-serif';
+mScrX.fillText('Research Manager  ·  AI Integration  ·  NUS', 142, 500);
+// Terminal-style stats
+mScrX.fillStyle = 'rgba(80,220,120,0.55)'; mScrX.font = '20px monospace';
+mScrX.fillText('> 38+ Publications  ·  MACC  ·  Agentic Systems', 144, 560);
+// Taskbar
+mScrX.fillStyle = 'rgba(0,0,0,0.55)'; mScrX.fillRect(0, 1020, 1920, 60);
+['rgba(60,120,255,0.65)','rgba(100,200,80,0.55)','rgba(220,80,60,0.55)','rgba(200,160,40,0.50)'].forEach((col, i) => {
+    mScrX.fillStyle = col; rRect(mScrX, 40 + i * 56, 1032, 40, 36, 6); mScrX.fill();
+});
+// Clock
+mScrX.fillStyle = 'rgba(255,255,255,0.65)'; mScrX.font = '18px sans-serif';
+mScrX.textAlign = 'right'; mScrX.fillText('10:42 PM', 1880, 1055); mScrX.textAlign = 'left';
+
+const mScrTex = new THREE.CanvasTexture(mScrC);
+const mScrMat = new THREE.MeshStandardMaterial({
+    map: mScrTex, emissiveMap: mScrTex,
+    emissive: 0xffffff, emissiveIntensity: 0.28, side: THREE.FrontSide
+});
+const mScrMesh = new THREE.Mesh(new THREE.PlaneGeometry(MW - 0.08, MH - 0.10), mScrMat);
+mScrMesh.position.set(0, MH/2 + 1.58, MT/2 + 0.001);
+monG.add(mScrMesh);
+
+// Monitor stand — thin vertical neck + flat rectangular base
+const standMat = phys(0x16161e, 0.30, 0.82);
+// Neck
+mesh(box(0.16, 1.56, 0.16), standMat, 0, 0.78, 0, monG);
+// Neck-to-panel bracket
+mesh(box(0.40, 0.30, 0.10), standMat, 0, 1.46, 0, monG);
+// Base plate
+mesh(box(1.8, 0.045, 0.9), standMat, 0, 0.022, 0.20, monG);
+// Base front lip
+mesh(box(1.8, 0.035, 0.04), phys(0x0e0e14, 0.38, 0.78), 0, 0.018, 0.66, monG);
+
+// ─── Monitor glow light ─────────────────────────────────────────────────────
+const monLight = new THREE.PointLight(0x4050bb, 1.5, 5.5);
+monLight.position.set(0, 2.8, -0.5);
+scene.add(monLight);
+
+// ─── DESKTOP MECHANICAL KEYBOARD ─────────────────────────────────────────────
+const dkG = new THREE.Group(); dkG.position.set(0, 0, 0.6); dkG.rotation.y = 0.02; scene.add(dkG);
+
+// Keyboard dimensions (compact TKL)
+const DKW = 3.2, DKD = 1.1, DKH = 0.065;
+const dkBodyMat = phys(0x101018, 0.38, 0.68);
+
+// Base body (slightly elevated back — angled keyboard)
+mesh(box(DKW, DKH, DKD), dkBodyMat, 0, DKH/2, 0, dkG);
+// Rear feet (elevate back for typing angle)
+mesh(box(DKW - 0.1, 0.022, 0.06), dkBodyMat, 0, 0.011, -DKD/2 + 0.03, dkG);
+
+// Keyboard canvas
+const dkC = document.createElement('canvas'); dkC.width = 1024; dkC.height = 380;
+const dkX = dkC.getContext('2d');
+dkX.fillStyle = '#08080f'; dkX.fillRect(0, 0, 1024, 380);
+
+// Keys layout (TKL: no numpad)
+const dku = 58, dkh = 52, dkg = 5, dkml = 16;
+function dkDrawKey(x, y, w, h, lbl) {
+    const hue = Math.round((x / 1024) * 340);
+    rRect(dkX, x, y, w, h, 5);
+    dkX.fillStyle = '#0d0d18'; dkX.fill();
+    dkX.strokeStyle = '#1c1c2a'; dkX.lineWidth = 1; dkX.stroke();
+    rRect(dkX, x+1, y+1, w-2, h-4, 4);
+    const tg = dkX.createLinearGradient(x, y, x, y+h);
+    tg.addColorStop(0, 'rgba(255,255,255,0.05)'); tg.addColorStop(1, 'rgba(0,0,0,0.10)');
+    dkX.fillStyle = tg; dkX.fill();
+    // RGB underglow
+    dkX.fillStyle = `hsla(${hue},80%,55%,0.62)`;
+    dkX.fillRect(x+4, y+h-3, w-8, 2);
+    if (lbl && lbl !== ' ') {
+        dkX.fillStyle = 'rgba(210,215,235,0.85)';
+        dkX.font = `${h >= 48 ? 11 : 9}px Arial`;
+        dkX.textAlign = 'center'; dkX.textBaseline = 'middle';
+        dkX.fillText(lbl, x+w/2, y+h/2);
+    }
+}
+
+// Fn row
+let dkfx = dkml;
+[['Esc',58],[null,12],['F1',42],['F2',42],['F3',42],['F4',42],[null,10],
+ ['F5',42],['F6',42],['F7',42],['F8',42],[null,10],
+ ['F9',42],['F10',42],['F11',42],['F12',42],[null,14],
+ ['Prt',42],['Scr',42],['Pse',42]].forEach(([l,w]) => {
+    if (l) dkDrawKey(dkfx, 10, w, 24, l); dkfx += w + (l ? dkg : 0);
+});
+
+// Main rows (TKL layout — with nav cluster on right)
+const dkRows = [
+    [['`',dku],['1',dku],['2',dku],['3',dku],['4',dku],['5',dku],['6',dku],['7',dku],['8',dku],['9',dku],['0',dku],['-',dku],['=',dku],['⌫',92],[null,12],['Ins',42],['Hm',42],['PU',42]],
+    [['Tab',78],['Q',dku],['W',dku],['E',dku],['R',dku],['T',dku],['Y',dku],['U',dku],['I',dku],['O',dku],['P',dku],['[',dku],[']',dku],['\\',72],[null,12],['Del',42],['End',42],['PD',42]],
+    [['Caps',92],['A',dku],['S',dku],['D',dku],['F',dku],['G',dku],['H',dku],['J',dku],['K',dku],['L',dku],[';',dku],["'",dku],['Enter',110]],
+    [['⇧',130],['Z',dku],['X',dku],['C',dku],['V',dku],['B',dku],['N',dku],['M',dku],[',',dku],['.',dku],['/',dku],['⇧',130],[null,54],['↑',42]],
+    [['Ctrl',72],['⊞',54],['Alt',54],[' ',340],['Alt',54],['Fn',54],['Ctrl',72],[null,12],['←',42],['↓',42],['→',42]],
+];
+dkRows.forEach((row, ri) => {
+    const ry = 44 + ri * (dkh + dkg);
+    let x = dkml;
+    row.forEach(([l, w]) => {
+        if (l) dkDrawKey(x, ry, w, dkh, l);
+        x += w + (l ? dkg : 0);
+    });
+});
+
+const dkTex = new THREE.CanvasTexture(dkC);
+const dkMesh = mesh(new THREE.PlaneGeometry(DKW - 0.06, DKD - 0.06),
+    new THREE.MeshStandardMaterial({
+        map: dkTex, emissiveMap: dkTex,
+        emissive: 0xffffff, emissiveIntensity: 0.15, roughness: 0.92
+    }), 0, DKH + 0.001, 0, dkG, false);
+dkMesh.rotation.x = -Math.PI / 2;
+
+// ─── DESKTOP MOUSE (right of keyboard) ──────────────────────────────────────
+const mouseG = new THREE.Group(); mouseG.position.set(2.4, 0, 0.6); mouseG.rotation.y = -0.08; scene.add(mouseG);
+const mouseMat = phys(0x101018, 0.35, 0.65);
+// Mouse body — ellipsoid shape
+const mouseBody = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), mouseMat);
+mouseBody.scale.set(1, 0.40, 1.5);
+mouseBody.position.set(0, 0.09, 0);
+mouseBody.castShadow = true; mouseBody.receiveShadow = true;
+mouseG.add(mouseBody);
+// Scroll wheel
+mesh(cyl(0.025, 0.025, 0.06, 10), phys(0x222230, 0.28, 0.80), 0, 0.14, -0.08, mouseG);
+// Mouse pad
+mesh(box(1.2, 0.018, 0.9), phys(0x0a0a12, 0.85, 0.05), -0.05, 0.009, 0.05, mouseG);
+
+// ─── NOTEBOOK ─────────────────────────────────────────────────────────────────
+const nbG = new THREE.Group(); nbG.position.set(4.2, 0, 0.3); nbG.rotation.y = -.2; scene.add(nbG);
+mesh(box(1.5, 0.058, 2.08), phys(0x1a3366, 0.55), 0, .029, 0, nbG);
+mesh(box(1.44, 0.048, 2.02), std(0xf0ece0, 0.9), .03, .077, 0, nbG);
+// Spiral binding
+for (let i = -8; i <= 8; i++) {
+    mesh(cyl(.022, .022, .15, 8), phys(0x888898, 0.2, 0.8), -.78, .08, i*.12, nbG);
+}
+// Pen
+const penG = new THREE.Group(); penG.position.set(5.0, 0.07, 0.5); penG.rotation.z = .05; scene.add(penG);
+mesh(cyl(.023, .020, 1.75, 10), phys(0x0a0a0a, 0.25, 0.85), 0, 0, 0, penG);
+mesh(cyl(.024, .024, .08, 10), phys(0xd4a800, 0.2, 0.9), 0, .84, 0, penG);
+
+// ─── COFFEE MUG ───────────────────────────────────────────────────────────────
+const mugG = new THREE.Group(); mugG.position.set(5.3, 0, -0.7); scene.add(mugG);
+const ceramicMat = phys(0xf2eeea, 0.38, 0, 0.55, 0.28);
+mesh(cyl(.25, .21, .52, 24), ceramicMat, 0, .26, 0, mugG);
+mesh(cyl(.32, .32, .022, 24), phys(0x2a1505, 0.72), 0, .011, 0, mugG);
+mesh(new THREE.CircleGeometry(.23, 24), std(0x1e0e00, 0.4), 0, .535, 0, mugG).rotation.x = -Math.PI/2;
+// Handle
+const hCurve = new THREE.TorusGeometry(.135, .022, 8, 16, Math.PI);
+const handleM = new THREE.Mesh(hCurve, ceramicMat);
+handleM.rotation.y = Math.PI/2; handleM.position.set(.34, .26, 0); handleM.castShadow = true;
+mugG.add(handleM);
+
+// ─── PAPERS ───────────────────────────────────────────────────────────────────
+const papG = new THREE.Group(); papG.position.set(-5.0, 0, -0.8); papG.rotation.y = .12; scene.add(papG);
+for (let i = 0; i < 6; i++) {
+    mesh(box(1.38, .007, 1.78), std(i === 0 ? 0xf4f0e8 : 0xeae6d8, .92),
+        (Math.random()-.5)*.03, i*.008, (Math.random()-.5)*.03, papG);
+}
+
+// ─── SMALL PLANT ──────────────────────────────────────────────────────────────
+const plG = new THREE.Group(); plG.position.set(5.2, 0, -2.0); scene.add(plG);
+mesh(cyl(.22, .17, .3, 16), phys(0xb06050, 0.72), 0, .15, 0, plG);
+mesh(new THREE.CircleGeometry(.2, 16), std(0x241408, 0.95), 0, .31, 0, plG).rotation.x = -Math.PI/2;
+const leafMat = phys(0x2e6a32, 0.62);
+for (let i = 0; i < 8; i++) {
+    const a = (i/8)*Math.PI*2;
+    const lf = mesh(new THREE.SphereGeometry(.095, 7, 5), leafMat,
+        Math.cos(a)*.13, .44+Math.random()*.07, Math.sin(a)*.13, plG);
+    lf.scale.set(.55, 1.5, .55);
+}
+const cl = mesh(new THREE.SphereGeometry(.095, 7, 5), leafMat, 0, .58, 0, plG);
+cl.scale.set(.5, 1.8, .5);
+
+// ─── LIGHTING ─────────────────────────────────────────────────────────────────
+// Key light (warm, from upper right front)
+const key = new THREE.DirectionalLight(0xfff8ee, 0.82);
+key.position.set(1, 14, 5);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -10; key.shadow.camera.right = 10;
+key.shadow.camera.top  =  10; key.shadow.camera.bottom = -10;
+key.shadow.camera.near = 0.5; key.shadow.camera.far = 30;
+key.shadow.bias = -0.0003;
+scene.add(key);
+
+// Fill (cool blue, left)
+const fill = new THREE.DirectionalLight(0x8899cc, 0.30);
+fill.position.set(-5, 10, 3); scene.add(fill);
+
+// Rim (warm, behind)
+const rim = new THREE.DirectionalLight(0xffaa80, 0.18);
+rim.position.set(1, 3, -7); scene.add(rim);
+
+// Ambient
+scene.add(new THREE.HemisphereLight(0x2a3d6a, 0x181018, 0.38));
+
+// Desk lamp light (over papers area)
+const lampLight = new THREE.SpotLight(0xfff0d0, 2.4, 8, Math.PI/5, 0.5, 1.8);
+lampLight.position.set(-5.0, 3.5, -0.8);
+lampLight.target.position.set(-3, 0, 0);
+lampLight.castShadow = true;
+lampLight.shadow.mapSize.set(1024, 1024);
+scene.add(lampLight); scene.add(lampLight.target);
+
+// ─── PUBLICATION CATEGORIES ───────────────────────────────────────────────────
+const CATS = [
+    { label: 'Cognitive\nDecline', short: 'COG', col: 0x1a4bb5, hex: '#4a7fff',
+      papers: [
+        { t: 'Spatial navigation as a digital marker for clinically differentiating cognitive impairment', v: 'Communications Medicine', y: 2026 },
+        { t: 'Mind the Gap: Does Brain Age Improve Alzheimer\'s Disease Prediction?', v: 'Alzheimer\'s & Dementia', y: 2025 },
+        { t: 'Robust and interpretable AI-guided marker for early dementia prediction in real-world clinical settings', v: 'npj Digital Medicine', y: 2024 },
+        { t: 'Unsupervised multimodal modeling of cognitive and brain health trajectories for early dementia prediction', v: 'PLOS Digital Health', y: 2024 },
+        { t: 'Longitudinal associations between β-amyloid and cortical thickness in mild cognitive impairment', v: 'Neurology', y: 2023 },
+        { t: 'Distinct BOLD variability changes in the default mode and salience networks in Alzheimer\'s disease', v: 'Human Brain Mapping', y: 2020 },
+        { t: 'Longitudinal trajectory of Amyloid-related hippocampal subfield atrophy in nondemented elderly', v: 'Alzheimer\'s & Dementia', y: 2020 },
+        { t: 'Beyond Screening: Can the Mini-Mental State Examination be Used as an Exclusion Tool?', v: 'J Alzheimer\'s Disease', y: 2015 },
+      ]},
+    { label: 'Stroke &\nCerebrovascular', short: 'CVD', col: 0xb52a1a, hex: '#e84030',
+      papers: [
+        { t: 'Development of a Prognostic Model for Poststroke Dementia Using Multiple International Cohorts', v: 'Neurology', y: 2026 },
+        { t: 'Effect of metabolic syndrome severity on cerebral haemodynamics and cognition in community adults', v: 'Atherosclerosis', y: 2025 },
+        { t: 'Synergistic effect between cortical cerebral microinfarcts and brain atrophy on cognitive function', v: 'Brain', y: 2025 },
+        { t: 'Long-Term Cognitive Decline After Stroke: An Individual Participant Data Meta-Analysis', v: 'Stroke', y: 2022 },
+        { t: 'Short-term Trajectories of Poststroke Cognitive Function', v: 'Neurology', y: 2023 },
+        { t: 'Domain-Specific Cognitive Trajectories Among Patients with Minor Stroke or Transient Ischaemic Attack', v: 'JAMA Neurology', y: 2021 },
+        { t: 'Cerebral Microbleeds and White Matter Hyperintensities are Associated with Cognitive Impairment', v: 'J Neurol Neurosurg Psychiatry', y: 2021 },
+        { t: 'The Impact of Strategic White Matter Hyperintensity Lesion Location on Language', v: 'Neuropsychologia', y: 2021 },
+        { t: 'Genetic and lifestyle risk factors for MRI-defined brain infarcts in a population-based setting', v: 'Neurology', y: 2019 },
+        { t: 'Profile of and risk factors for poststroke cognitive impairment in diverse ethnoregional settings', v: 'Neurology', y: 2019 },
+      ]},
+    { label: 'Imaging &\nBiomarkers', short: 'IMG', col: 0x1a7a38, hex: '#2dba55',
+      papers: [
+        { t: 'A deep-learning retinal aging biomarker for cognitive decline and incident dementia', v: 'Nature Aging', y: 2025 },
+        { t: 'Retinal thickness predicts the risk of cognitive decline over five years', v: 'Ophthalmology', y: 2024 },
+        { t: 'Association of Atrial Electrophysiological Abnormalities With Cognitive Decline and Cerebral Injury', v: 'JAHA', y: 2026 },
+        { t: 'Associations of Circulating Platelet Endothelial Cell Adhesion Molecule-1 Levels With Cognitive Decline', v: 'Neurology', y: 2024 },
+        { t: 'Association of Interleukin-6 and Interleukin-8 with Cognitive Decline in an Asian Memory Clinic Cohort', v: 'Brain Behavior Immunity', y: 2023 },
+        { t: 'Cerebral microinfarcts affect brain structural network topology in cognitively impaired individuals', v: 'NeuroImage: Clinical', y: 2021 },
+        { t: 'Association of MRI Markers of Cerebrovascular Disease Burden and Cognitive Impairment', v: 'Stroke', y: 2015 },
+        { t: 'Validation of the Total Cerebrovascular Disease Burden Scale in a Community Sample', v: 'Stroke', y: 2016 },
+      ]},
+    { label: 'Clinical\nStudies', short: 'CLN', col: 0x7a1ab5, hex: '#b040e8',
+      papers: [
+        { t: 'Adherence to lifestyle intervention activities in the SINgapore GERiatric intervention study (SINGER)', v: 'Alzheimer\'s & Dementia', y: 2025 },
+        { t: 'The SINgapore GERiatric Intervention Study to Reduce Cognitive Decline and Physical Frailty', v: 'JAMA Internal Medicine', y: 2022 },
+        { t: 'Independent and joint associations of cardiometabolic multimorbidity and depression on cognitive decline', v: 'Age and Ageing', y: 2024 },
+        { t: 'Vision, vision-specific functioning and mobility, and their relationship with clinical frailty', v: 'Age and Ageing', y: 2021 },
+        { t: 'NEURoaid II (MLC901) in cognitively Impaired not demented patients (NEURITES): A pilot study', v: 'PLOS ONE', y: 2021 },
+        { t: 'Validation of the Informant Quick Dementia Rating System (QDRS) among Older Adults in Singapore', v: 'J Alzheimer\'s Disease', y: 2022 },
+        { t: 'Psychometric Properties of the NINDS-CSN 5-Minute Protocol in Ischemic Stroke', v: 'Stroke', y: 2020 },
+      ]},
+];
+
+// ─── SINGLE CLASSIFICATION FOLDER ─────────────────────────────────────────────
+const FW = 1.75, FD = 2.45, FT = 0.014, FTc = 0.013, FTd = 0.006;
+const TAB_W = 0.42, TAB_D = 0.48;
+
+// Dark navy pressboard cover texture (neutral — single folder)
+function makePressboardTex() {
+    const C = document.createElement('canvas'); C.width = 512; C.height = 720;
+    const ctx = C.getContext('2d');
+    let s = 0x4a1f3d22;
+    const rng = () => { s^=s<<13; s^=s>>>17; s^=s<<5; return (s>>>0)/0x100000000; };
+    ctx.fillStyle = '#1e2535'; ctx.fillRect(0, 0, 512, 720);
+    for (let i = 0; i < 200; i++) {
+        const y = rng()*720;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y+(rng()-.5)*2.5);
+        ctx.strokeStyle = `rgba(${rng()>.5?255:0},${rng()>.5?255:0},${rng()>.5?255:0},${.008+rng()*.018})`;
+        ctx.lineWidth = .3+rng()*.65; ctx.stroke();
+    }
+    const vg = ctx.createRadialGradient(256,360,80,256,360,490);
+    vg.addColorStop(0,'rgba(255,255,255,0.04)'); vg.addColorStop(1,'rgba(0,0,0,0.26)');
+    ctx.fillStyle = vg; ctx.fillRect(0,0,512,720);
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1.8;
+    ctx.strokeRect(152,545,208,46);
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(153,546,206,44);
+    // Label text
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.textAlign = 'center';
+    ctx.font = 'bold 13px Arial'; ctx.fillText('PUBLICATIONS', 256, 573);
+    const tex = new THREE.CanvasTexture(C); tex.anisotropy = 8; return tex;
+}
+
+// Kraft divider body texture (shared)
+function makeKraftTex() {
+    const C = document.createElement('canvas'); C.width = 512; C.height = 720;
+    const ctx = C.getContext('2d');
+    let s = 0x3b7c9a2d;
+    const rng = () => { s^=s<<13; s^=s>>>17; s^=s<<5; return (s>>>0)/0x100000000; };
+    ctx.fillStyle = '#8a6e2a'; ctx.fillRect(0, 0, 512, 720);
+    for (let i = 0; i < 180; i++) {
+        const y = rng()*720;
+        ctx.beginPath(); ctx.moveTo(rng()*512, y); ctx.lineTo(rng()*512, y+(rng()-.5)*7);
+        ctx.strokeStyle = `rgba(${rng()>.5?140:55},${rng()>.5?90:40},${rng()>.5?18:8},${.022+rng()*.052})`;
+        ctx.lineWidth = .3+rng()*.85; ctx.stroke();
+    }
+    const vg = ctx.createRadialGradient(256,360,60,256,360,500);
+    vg.addColorStop(0,'rgba(220,175,80,0.06)'); vg.addColorStop(1,'rgba(0,0,0,0.18)');
+    ctx.fillStyle = vg; ctx.fillRect(0,0,512,720);
+    const tex = new THREE.CanvasTexture(C); tex.anisotropy = 8; return tex;
+}
+const sharedKraftMat = new THREE.MeshStandardMaterial({ map: makeKraftTex(), roughness: 0.92, metalness: 0 });
+
+// Tab texture — category colour + label
+function makeTabTex(cat) {
+    const C = document.createElement('canvas'); C.width = 256; C.height = 256;
+    const ctx = C.getContext('2d');
+    ctx.fillStyle = '#9a7c35'; ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = cat.hex + 'ee'; ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const lines = cat.label.split('\n');
+    ctx.font = `bold ${lines.length > 1 ? 32 : 38}px Arial`;
+    if (lines.length === 1) ctx.fillText(lines[0], 128, 128);
+    else { ctx.fillText(lines[0], 128, 100); ctx.fillText(lines[1], 128, 144); }
+    const tex = new THREE.CanvasTexture(C); tex.anisotropy = 8; return tex;
+}
+
+// Tab z-slots: staggered front-to-back (4 categories)
+const tabZSlots = [FD*0.35, FD*0.11, -FD*0.11, -FD*0.35];
+
+// ── Single folder geometry ──────────────────────────────────────────────────
+const FEAT     = { x: 0.8, y: 2.4, z: 4.2 };
+const STACK_H  = FT + FTd * 4 + 0.016;
+const folPos   = { x: -3.25, z: -1.5, ry: 0.08 };
+const folState = { open: 0, target: 0, flt: 0, fltTarget: 0 };
+let   folActive = false;
+
+const pressMat = new THREE.MeshStandardMaterial({ map: makePressboardTex(), roughness: 0.84, metalness: 0.01 });
+const folGroup = new THREE.Group();
+folGroup.position.set(folPos.x, 0, folPos.z);
+folGroup.rotation.y = folPos.ry;
+scene.add(folGroup);
+
+const backM = new THREE.Mesh(box(FW, FT, FD), pressMat);
+backM.position.set(0, FT/2, 0); backM.castShadow = true; backM.receiveShadow = true;
+folGroup.add(backM);
+const allHits = [backM];
+
+// 4 kraft dividers — one per category, staggered tabs on right side
+CATS.forEach((cat, i) => {
+    const dy = FT + 0.002 + i * (FTd + 0.003) + FTd/2;
+    const divM = new THREE.Mesh(box(FW, FTd, FD), sharedKraftMat);
+    divM.position.set(0, dy, 0); divM.castShadow = true; folGroup.add(divM);
+    const tabM = new THREE.Mesh(box(TAB_W, FTd, TAB_D),
+        new THREE.MeshStandardMaterial({ map: makeTabTex(cat), roughness: 0.88 }));
+    tabM.position.set(FW/2 + TAB_W/2, dy, tabZSlots[i]); folGroup.add(tabM);
+    allHits.push(divM, tabM);
+});
+
+// Index texture — printed category grid on inside cover
+function makeIndexTex() {
+    const W = 512, H = 720;
+    const C = document.createElement('canvas'); C.width = W; C.height = H;
+    const ctx = C.getContext('2d');
+    ctx.fillStyle = '#f3ede0'; ctx.fillRect(0, 0, W, H);
+    // Header bar
+    ctx.fillStyle = '#1a2232'; ctx.fillRect(0, 0, W, 54);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 19px Arial'; ctx.fillText('RESEARCH PUBLICATIONS', W/2, 27);
+    // 2×2 category cards
+    const pad = 9, hdr = 54;
+    const qw = (W - pad*3) / 2, qh = (H - hdr - pad*3) / 2;
+    CATS.forEach((cat, i) => {
+        const col = i % 2, row = Math.floor(i / 2);
+        const x = pad + col*(qw+pad), y = hdr + pad + row*(qh+pad);
+        // Card background
+        ctx.fillStyle = '#fff'; ctx.fillRect(x, y, qw, qh);
+        ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1; ctx.strokeRect(x, y, qw, qh);
+        // Colour header
+        ctx.fillStyle = cat.hex; ctx.fillRect(x, y, qw, 44);
+        // Category name
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        const lines = cat.label.split('\n');
+        ctx.font = `bold ${lines.length>1?14:16}px Arial`;
+        if (lines.length===1) ctx.fillText(lines[0], x+8, y+22);
+        else { ctx.fillText(lines[0], x+8, y+14); ctx.fillText(lines[1], x+8, y+32); }
+        // Paper count (right)
+        ctx.textAlign = 'right'; ctx.font = '11px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.fillText(cat.papers.length+' papers', x+qw-6, y+22);
+        // Paper list
+        let py = y + 52;
+        cat.papers.slice(0, 4).forEach(p => {
+            if (py > y+qh-28) return;
+            ctx.fillStyle = '#222'; ctx.textAlign = 'left'; ctx.font = 'bold 9.5px Arial';
+            ctx.textBaseline = 'top';
+            let t = p.t.length > 38 ? p.t.slice(0,35)+'…' : p.t;
+            ctx.fillText(t, x+8, py);
+            ctx.fillStyle = cat.hex; ctx.font = '9px Arial';
+            ctx.fillText(p.v.split(' ')[0]+' '+p.y, x+8, py+13);
+            py += 26;
+        });
+        // Tap prompt
+        ctx.fillStyle = cat.hex+'28'; ctx.fillRect(x, y+qh-24, qw, 24);
+        ctx.fillStyle = cat.hex; ctx.textAlign = 'center'; ctx.font = 'bold 10px Arial';
+        ctx.textBaseline = 'middle'; ctx.fillText('Tap to browse  →', x+qw/2, y+qh-12);
+    });
+    const tex = new THREE.CanvasTexture(C); tex.anisotropy = 16; return tex;
+}
+
+// Cover pivot at LEFT spine edge — opens like a book around Z axis
+const coverPivot = new THREE.Group();
+coverPivot.position.set(-FW/2, STACK_H, 0);
+folGroup.add(coverPivot);
+const coverM = new THREE.Mesh(box(FW, FTc, FD), pressMat);
+coverM.position.set(FW/2, FTc/2, 0); coverM.castShadow = true;
+coverPivot.add(coverM); allHits.push(coverM);
+
+// Inner face: category index printed on inside of cover
+const innerFace = new THREE.Mesh(
+    new THREE.PlaneGeometry(FW - 0.05, FD - 0.05),
+    new THREE.MeshStandardMaterial({ map: makeIndexTex(), roughness: 0.88, metalness: 0 })
+);
+innerFace.rotation.x = Math.PI / 2;          // face -Y in local space
+innerFace.position.set(FW/2, -FTc/2 - 0.001, 0);
+coverPivot.add(innerFace);
+
+// 4 invisible hit planes for category clicks (children of coverPivot, 2×2 grid)
+const catHitPlanes = CATS.map((_, i) => {
+    const col = i % 2, row = Math.floor(i / 2);
+    const qw = (FW - 0.12) / 2, qd = (FD - 0.12) / 2;
+    const px = 0.06 + col*(qw+0.04) + qw/2;        // local x within cover
+    const pz = -FD/2 + 0.06 + row*(qd+0.04) + qd/2; // local z
+    const hm = new THREE.Mesh(
+        new THREE.PlaneGeometry(qw, qd),
+        new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
+    );
+    hm.rotation.x = Math.PI / 2;
+    hm.position.set(px, -FTc/2 - 0.003, pz);
+    hm._catIdx = i;
+    coverPivot.add(hm);
+    return hm;
+});
+
+// Large invisible hit plane — makes the folder easy to click from any angle
+const hitPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(FW + TAB_W + 0.5, FD + 0.6),
+    new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
+);
+hitPlane.rotation.x = -Math.PI / 2;
+hitPlane.position.set(TAB_W / 2, STACK_H + 0.02, 0);
+folGroup.add(hitPlane);
+allHits.push(hitPlane);
+
+// Hover glow plane (shown on hover, hidden otherwise)
+const glowMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff, transparent: true, opacity: 0, depthWrite: false });
+const glowPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(FW + TAB_W + 0.6, FD + 0.7), glowMat);
+glowPlane.rotation.x = -Math.PI / 2;
+glowPlane.position.set(TAB_W / 2, STACK_H + 0.015, 0);
+folGroup.add(glowPlane);
+
+// "Click to open" hint sprite above folder
+const hintC = document.createElement('canvas'); hintC.width = 320; hintC.height = 64;
+const hintX = hintC.getContext('2d');
+hintX.fillStyle = 'rgba(0,0,0,0.55)'; hintX.roundRect(0, 0, 320, 64, 16); hintX.fill();
+hintX.fillStyle = '#fff'; hintX.font = 'bold 22px system-ui,Arial';
+hintX.textAlign = 'center'; hintX.textBaseline = 'middle';
+hintX.fillText('Click to open folder', 160, 32);
+const hintTex = new THREE.CanvasTexture(hintC);
+const hintMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.4, 0.28),
+    new THREE.MeshBasicMaterial({ map: hintTex, transparent: true, opacity: 0, depthWrite: false })
+);
+hintMesh.position.set(0, 0.5, FD/2 + 0.1);
+folGroup.add(hintMesh);
+
+// ─── BOOK OVERLAY ──────────────────────────────────────────────────────────────
+const bookCSS = document.createElement('style');
+bookCSS.textContent = `
+#bookWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  z-index:100;pointer-events:none;transition:opacity .38s,transform .38s cubic-bezier(.4,0,.2,1);}
+#bookWrap.hidden{opacity:0;transform:scale(0.94) translateY(18px);pointer-events:none;}
+#bookOuter{display:flex;width:min(560px,94vw);height:min(620px,86vh);
+  background:#fff;border-radius:8px;
+  box-shadow:0 44px 130px rgba(0,0,0,0.88),0 0 0 1px rgba(255,255,255,0.07);
+  overflow:hidden;pointer-events:auto;}
+#bookSpine{width:36px;flex-shrink:0;background:#1a2232;display:flex;align-items:center;
+  justify-content:center;}
+#bookSpine span{writing-mode:vertical-rl;transform:rotate(180deg);color:rgba(255,255,255,0.35);
+  font:700 9px/1 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;}
+#bookMain{flex:1;display:flex;flex-direction:column;min-width:0;}
+#bookTabBar{display:flex;border-bottom:1px solid #e8e8e8;flex-shrink:0;}
+.btab{flex:1;padding:10px 4px;text-align:center;font:700 10px/1 system-ui,sans-serif;
+  letter-spacing:.06em;cursor:pointer;border-bottom:3px solid transparent;
+  transition:background .18s,border-color .18s;color:#999;text-transform:uppercase;}
+.btab:hover{background:#f8f8f8;}
+.btab.active{color:#111;border-bottom-color:var(--tc);}
+.toc-card{border-radius:8px;overflow:hidden;cursor:pointer;border:1px solid #eee;
+  transition:transform .18s,box-shadow .18s;}
+.toc-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.10);}
+#bookVP{flex:1;position:relative;overflow:hidden;perspective:1400px;}
+.bpg{position:absolute;inset:0;overflow-y:auto;padding:20px 22px;box-sizing:border-box;
+  transform-origin:0 50%;backface-visibility:hidden;will-change:transform,opacity;}
+.bpg.s-active{transform:rotateY(0deg);opacity:1;z-index:2;pointer-events:auto;
+  transition:transform .46s cubic-bezier(.4,0,.2,1),opacity .35s;}
+.bpg.s-exit{transform:rotateY(-115deg);opacity:0;z-index:1;pointer-events:none;
+  transition:transform .44s cubic-bezier(.4,0,.2,1),opacity .32s;}
+.bpg.s-enter{transform:rotateY(55deg);opacity:0;z-index:1;pointer-events:none;
+  transition:transform .46s cubic-bezier(.4,0,.2,1),opacity .35s;}
+.bpg.s-hidden{transform:rotateY(55deg);opacity:0;z-index:0;pointer-events:none;transition:none;}
+.bpg.s-hidden-back{transform:rotateY(-115deg);opacity:0;z-index:0;pointer-events:none;transition:none;}
+#bookNav{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;background:#f5f5f5;border-top:1px solid #e0e0e0;flex-shrink:0;}
+.bnav-btn{background:#fff;border:1px solid #ccc;border-radius:5px;
+  width:34px;height:34px;font-size:22px;cursor:pointer;color:#444;
+  display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.bnav-btn:hover:not(:disabled){background:#eee;}
+.bnav-btn:disabled{opacity:.3;cursor:default;}
+#bClose{background:none;border:1px solid #ddd;border-radius:20px;padding:5px 14px;
+  font:13px system-ui,sans-serif;color:#666;cursor:pointer;transition:background .15s;}
+#bClose:hover{background:#f0f0f0;}`;
+document.head.appendChild(bookCSS);
+
+const bookWrap = document.createElement('div');
+bookWrap.id = 'bookWrap'; bookWrap.classList.add('hidden');
+document.body.appendChild(bookWrap);
+// Page 0 = TOC, pages 1–4 = categories  (5 total)
+const TOTAL_PAGES = CATS.length + 1;
+
+// 4 category pages only (no TOC — index is in 3D)
+bookWrap.innerHTML = `
+  <div id="bookOuter">
+    <div id="bookSpine"><span>Publications</span></div>
+    <div id="bookMain">
+      <div id="bookTabBar">
+        ${CATS.map((c,i)=>`<div class="btab" data-ci="${i}" style="--tc:${c.hex};">
+          ${c.label.replace('\n','<br>')}</div>`).join('')}
+      </div>
+      <div id="bookVP">
+        ${CATS.map((cat,i)=>`
+        <div class="bpg s-hidden" id="bpg${i}">
+          <div style="border-bottom:3px solid ${cat.hex};padding-bottom:11px;margin-bottom:15px;
+            display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:10px;height:10px;border-radius:50%;background:${cat.hex};
+                flex-shrink:0;display:inline-block;"></span>
+              <span style="font:700 14px/1 system-ui,sans-serif;color:${cat.hex};">
+                ${cat.label.replace('\n',' ')}</span>
+            </div>
+            <span style="font:11px system-ui,sans-serif;color:#bbb;">${cat.papers.length} papers</span>
+          </div>
+          ${cat.papers.map((p,pi)=>`
+          <div style="padding:10px 13px;border:1px solid #efefef;border-radius:6px;
+            margin-bottom:8px;background:${pi%2===0?'#fafafa':'#fff'};">
+            <p style="font:700 12.5px/1.52 Georgia,serif;color:#111;margin:0 0 5px;">${p.t}</p>
+            <p style="font:11px system-ui,sans-serif;color:${cat.hex};margin:0;">
+              ${p.v} &nbsp;·&nbsp; ${p.y}</p>
+          </div>`).join('')}
+        </div>`).join('')}
+      </div>
+      <div id="bookNav">
+        <button class="bnav-btn" id="bPrev">‹</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+          <div style="display:flex;gap:6px;" id="bDots">
+            ${CATS.map((c,i)=>`<div style="width:7px;height:7px;border-radius:50%;cursor:pointer;
+              background:#ccc;transition:background .2s;" data-pg="${i}"></div>`).join('')}
+          </div>
+          <span id="bCount" style="font:12px system-ui,sans-serif;color:#777;"></span>
+        </div>
+        <button class="bnav-btn" id="bNext">›</button>
+        <button id="bClose">✕ Close</button>
+      </div>
+    </div>
+  </div>`;
+
+let curPage = 0;
+
+function flipTo(next, dir) {
+    if (next === curPage || next < 0 || next >= CATS.length) return;
+    const pages = document.querySelectorAll('.bpg');
+    const prev = curPage;
+    pages[next].className = 'bpg ' + (dir > 0 ? 's-hidden' : 's-hidden-back');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        pages[prev].className = 'bpg ' + (dir > 0 ? 's-exit' : 's-enter');
+        pages[next].className = 'bpg s-active';
+        curPage = next;
+        updateBookUI();
+    }));
+}
+
+function updateBookUI() {
+    const cat = CATS[curPage];
+    document.querySelectorAll('[data-ci]').forEach((t, i) => {
+        const active = i === curPage;
+        t.className = 'btab' + (active ? ' active' : '');
+        t.style.color = active ? '#111' : '#999';
+        t.style.borderBottomColor = active ? cat.hex : 'transparent';
+    });
+    document.querySelectorAll('#bDots [data-pg]').forEach((d, i) => {
+        d.style.background = i === curPage ? '#555' : '#ccc';
+    });
+    document.getElementById('bCount').textContent =
+        `${curPage+1} / ${CATS.length}  ·  ${cat.label.replace('\n',' ')}`;
+    document.getElementById('bPrev').disabled = curPage === 0;
+    document.getElementById('bNext').disabled = curPage === CATS.length - 1;
+    document.querySelectorAll('.bpg')[curPage].scrollTop = 0;
+}
+
+document.querySelectorAll('[data-ci]').forEach(t => {
+    t.onclick = () => { const i = +t.dataset.ci; flipTo(i, i > curPage ? 1 : -1); };
+});
+document.getElementById('bPrev').onclick = () => flipTo(curPage - 1, -1);
+document.getElementById('bNext').onclick = () => flipTo(curPage + 1,  1);
+document.getElementById('bClose').onclick = () => bookWrap.classList.add('hidden');
+document.querySelectorAll('#bDots [data-pg]').forEach(d => {
+    d.onclick = () => { const pg = +d.dataset.pg; flipTo(pg, pg > curPage ? 1 : -1); };
+});
+document.addEventListener('keydown', e => {
+    if (!folActive) return;
+    if (e.key === 'ArrowRight') flipTo(curPage + 1,  1);
+    if (e.key === 'ArrowLeft')  flipTo(curPage - 1, -1);
+    if (e.key === 'Escape')     closeFol();
+});
+
+// Open folder (3D only — no overlay yet; user sees 3D index first)
+function openFol() {
+    if (folActive) { closeFol(); return; }
+    folActive = true;
+    folState.target = 1; folState.fltTarget = 1;
+    controls.enabled = false;
+}
+
+// Open a specific category in the overlay (called when clicking 3D index)
+function openCategory(catIdx) {
+    curPage = catIdx;
+    document.querySelectorAll('.bpg').forEach((p, i) =>
+        p.className = 'bpg ' + (i === catIdx ? 's-active' : 's-hidden'));
+    updateBookUI();
+    bookWrap.classList.remove('hidden');
+}
+
+function closeFol() {
+    folActive = false;
+    folState.target = 0; folState.fltTarget = 0;
+    bookWrap.classList.add('hidden');
+    controls.enabled = true;
+}
+
+// ─── INTERACTION ──────────────────────────────────────────────────────────────
+const rc = new THREE.Raycaster();
+const mp = new THREE.Vector2();
+
+let hoverFolder = false;
+
+renderer.domElement.addEventListener('click', e => {
+    mp.set((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
+    rc.setFromCamera(mp, camera);
+    if (!folActive) {
+        // Laptop lid toggle
+        if (rc.intersectObjects([lapHitPlane], true).length) {
+            lapState.target = lapState.target > 0.5 ? 0 : 1;
+            return;
+        }
+        if (rc.intersectObjects(allHits, true).length) openFol();
+    } else {
+        // Folder open — check category hit planes on inner face
+        const catHit = rc.intersectObjects(catHitPlanes, true);
+        if (catHit.length) openCategory(catHit[0].object._catIdx);
+    }
+});
+
+renderer.domElement.addEventListener('mousemove', e => {
+    mp.set((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
+    rc.setFromCamera(mp, camera);
+    if (!folActive) {
+        const onLap = rc.intersectObjects([lapHitPlane], true).length > 0;
+        const onFol = !onLap && rc.intersectObjects(allHits, true).length > 0;
+        renderer.domElement.style.cursor = (onLap || onFol) ? 'pointer' : 'default';
+        hoverFolder = onFol;
+    } else {
+        const onCat = rc.intersectObjects(catHitPlanes, true).length > 0;
+        renderer.domElement.style.cursor = onCat ? 'pointer' : 'default';
+        hoverFolder = false;
+    }
+});
+
+// ─── ANIMATE ──────────────────────────────────────────────────────────────────
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+
+    // Laptop lid animation
+    lapState.open += (lapState.target - lapState.open) * 0.06;
+    lidPivot.rotation.x = LAP_OPEN_ANGLE * lapState.open;
+    scrLight.intensity   = 1.6 * lapState.open;
+    slashLight.intensity = 0.45 * lapState.open;
+
+    // Folder animation
+    folState.open += (folState.target    - folState.open) * 0.07;
+    folState.flt  += (folState.fltTarget - folState.flt)  * 0.07;
+    coverPivot.rotation.z = Math.PI * 0.95 * folState.open;
+    // Hover glow + hint fade
+    const hoverT = (hoverFolder && !folActive) ? 1 : 0;
+    glowMat.opacity  += (hoverT * 0.06 - glowMat.opacity)  * 0.12;
+    hintMesh.material.opacity += (hoverT - hintMesh.material.opacity) * 0.10;
+    folGroup.position.x = folPos.x + (FEAT.x - folPos.x) * folState.flt;
+    folGroup.position.y = FEAT.y * folState.flt;
+    folGroup.position.z = folPos.z + (FEAT.z - folPos.z) * folState.flt;
+    folGroup.rotation.y = folPos.ry * (1 - folState.flt);
+    composer.render();
+}
+animate();
+</script>
+</body>
+</html>
