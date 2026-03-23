@@ -999,66 +999,375 @@ bookRackGroup.add(rackBase);
     }
 });
 
-// Books — 6 books standing upright between the bookends
+// Books — 5 books with realistic covers, openable
 const bookDefs = [
-    { title: "The Manager's Path", author: 'Fournier', color: 0x2c3e50, w: 0.14, h: 1.18, d: 0.76, titleColor: '#e8d44d' },
-    { title: 'Co-Intelligence', author: 'Mollick', color: 0xf0f0f0, w: 0.12, h: 1.16, d: 0.74, titleColor: '#1a73e8' },
-    { title: 'The Phoenix Project', author: 'Kim', color: 0xc0392b, w: 0.15, h: 1.20, d: 0.78, titleColor: '#fff' },
-    { title: 'Designing Data-Intensive Apps', author: 'Kleppmann', color: 0x1a1a2e, w: 0.16, h: 1.22, d: 0.80, titleColor: '#ddd' },
-    { title: 'Clinical Neuropsych of Emotion', author: 'Gainotti', color: 0x5b8c5a, w: 0.13, h: 1.15, d: 0.73, titleColor: '#fff' },
+    { title: "The Manager's Path", author: 'Camille Fournier', color: 0x1a2744, w: 0.14, h: 1.18, d: 0.76, titleColor: '#e8d44d',
+      subtitle: 'A Guide for Tech Leaders\nNavigating Growth & Change',
+      firstPage: "Why I read this:\n\nManaging people is the hardest\npart of any leadership role.\nThis book gave me practical\nframeworks for growing from\nIC to team lead to director.\n\nKey takeaway: Trust is built\nthrough 1:1s, not standups.",
+      drawCover: function(ctx, W, H) {
+        // Dark navy background with geometric path pattern
+        ctx.fillStyle = '#1a2744'; ctx.fillRect(0, 0, W, H);
+        // Decorative path lines
+        ctx.strokeStyle = '#e8d44d'; ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+            ctx.beginPath();
+            ctx.moveTo(40 + i * 30, H * 0.25);
+            ctx.lineTo(W/2, H * 0.15 + i * 15);
+            ctx.lineTo(W - 40 - i * 30, H * 0.25);
+            ctx.stroke();
+        }
+        // Title
+        ctx.fillStyle = '#e8d44d'; ctx.font = 'bold 52px Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.fillText("The", W/2, H * 0.38);
+        ctx.fillText("Manager's", W/2, H * 0.45);
+        ctx.fillText("Path", W/2, H * 0.52);
+        // Subtitle
+        ctx.fillStyle = '#8899bb'; ctx.font = '22px -apple-system, sans-serif';
+        ctx.fillText('A Guide for Tech Leaders', W/2, H * 0.60);
+        ctx.fillText('Navigating Growth & Change', W/2, H * 0.64);
+        // Author
+        ctx.fillStyle = '#ccc'; ctx.font = '26px -apple-system, sans-serif';
+        ctx.fillText('Camille Fournier', W/2, H * 0.82);
+        // Publisher line
+        ctx.fillStyle = '#556'; ctx.font = '14px sans-serif';
+        ctx.fillText("O'REILLY", W/2, H * 0.92);
+      }
+    },
+    { title: 'Co-Intelligence', author: 'Ethan Mollick', color: 0xf0f0f0, w: 0.12, h: 1.16, d: 0.74, titleColor: '#1a73e8',
+      subtitle: 'Living and Working with AI',
+      firstPage: "Why I read this:\n\nAI is transforming how we\nwork and think. Mollick shows\nhow to partner with AI rather\nthan compete against it.\n\nKey takeaway: AI augments\nhuman judgment — it doesn't\nreplace it. Use it as a\nthought partner.",
+      drawCover: function(ctx, W, H) {
+        // Clean white/light background
+        ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0, 0, W, H);
+        // Abstract AI circuit pattern
+        ctx.strokeStyle = '#1a73e8'; ctx.lineWidth = 1.5;
+        for (let i = 0; i < 12; i++) {
+            const cx = W * 0.2 + Math.random() * W * 0.6;
+            const cy = H * 0.08 + Math.random() * H * 0.22;
+            ctx.beginPath(); ctx.arc(cx, cy, 4 + Math.random() * 8, 0, Math.PI * 2); ctx.stroke();
+            if (i < 10) {
+                const nx = W * 0.2 + Math.random() * W * 0.6;
+                const ny = H * 0.08 + Math.random() * H * 0.22;
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
+            }
+        }
+        // Blue accent bar
+        ctx.fillStyle = '#1a73e8'; ctx.fillRect(W * 0.1, H * 0.33, W * 0.8, 4);
+        // Title
+        ctx.fillStyle = '#1a73e8'; ctx.font = 'bold 54px Georgia, serif'; ctx.textAlign = 'center';
+        ctx.fillText('Co-', W/2, H * 0.44);
+        ctx.fillText('Intelligence', W/2, H * 0.52);
+        // Subtitle
+        ctx.fillStyle = '#444'; ctx.font = '24px -apple-system, sans-serif';
+        ctx.fillText('Living and Working with AI', W/2, H * 0.62);
+        // Author
+        ctx.fillStyle = '#222'; ctx.font = 'bold 28px -apple-system, sans-serif';
+        ctx.fillText('Ethan Mollick', W/2, H * 0.80);
+        // Bottom accent
+        ctx.fillStyle = '#1a73e8'; ctx.fillRect(W * 0.1, H * 0.90, W * 0.8, 3);
+      }
+    },
+    { title: 'The Phoenix Project', author: 'Gene Kim', color: 0xc0392b, w: 0.15, h: 1.20, d: 0.78, titleColor: '#fff',
+      subtitle: 'A Novel About IT, DevOps,\nand Helping Your Business Win',
+      firstPage: "Why I read this:\n\nProject management isn't just\nGantt charts. This novel showed\nme how bottlenecks, WIP limits,\nand flow thinking apply to\nany complex operation.\n\nKey takeaway: Unplanned work\nis the silent killer of\nall planned work.",
+      drawCover: function(ctx, W, H) {
+        // Rich red background
+        ctx.fillStyle = '#b5201e'; ctx.fillRect(0, 0, W, H);
+        // Flames / phoenix silhouette
+        ctx.fillStyle = '#d4443e';
+        ctx.beginPath();
+        ctx.moveTo(W * 0.2, H * 0.30);
+        ctx.quadraticCurveTo(W * 0.35, H * 0.05, W * 0.5, H * 0.12);
+        ctx.quadraticCurveTo(W * 0.65, H * 0.05, W * 0.8, H * 0.30);
+        ctx.quadraticCurveTo(W * 0.65, H * 0.18, W * 0.5, H * 0.22);
+        ctx.quadraticCurveTo(W * 0.35, H * 0.18, W * 0.2, H * 0.30);
+        ctx.fill();
+        // Flame highlights
+        ctx.fillStyle = '#e8a825';
+        ctx.beginPath();
+        ctx.moveTo(W * 0.35, H * 0.28);
+        ctx.quadraticCurveTo(W * 0.42, H * 0.10, W * 0.5, H * 0.16);
+        ctx.quadraticCurveTo(W * 0.58, H * 0.10, W * 0.65, H * 0.28);
+        ctx.quadraticCurveTo(W * 0.55, H * 0.20, W * 0.5, H * 0.23);
+        ctx.quadraticCurveTo(W * 0.45, H * 0.20, W * 0.35, H * 0.28);
+        ctx.fill();
+        // Title
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 36px Georgia, serif'; ctx.textAlign = 'center';
+        ctx.fillText('THE', W/2, H * 0.40);
+        ctx.font = 'bold 56px Georgia, serif';
+        ctx.fillText('PHOENIX', W/2, H * 0.49);
+        ctx.fillText('PROJECT', W/2, H * 0.57);
+        // Subtitle
+        ctx.fillStyle = '#ffcccc'; ctx.font = '18px -apple-system, sans-serif';
+        ctx.fillText('A Novel About IT, DevOps, and', W/2, H * 0.66);
+        ctx.fillText('Helping Your Business Win', W/2, H * 0.70);
+        // Author
+        ctx.fillStyle = '#fff'; ctx.font = '26px -apple-system, sans-serif';
+        ctx.fillText('Gene Kim, Kevin Behr', W/2, H * 0.82);
+        ctx.fillText('& George Spafford', W/2, H * 0.87);
+      }
+    },
+    { title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', color: 0x1a1a2e, w: 0.16, h: 1.22, d: 0.80, titleColor: '#ddd',
+      subtitle: 'The Big Ideas Behind Reliable,\nScalable, and Maintainable Systems',
+      firstPage: "Why I read this:\n\nData is the backbone of\nclinical research systems.\nThis book taught me to think\ncritically about data pipelines,\nconsistency, and storage.\n\nKey takeaway: There is no\none-size-fits-all database.\nUnderstand your access patterns.",
+      drawCover: function(ctx, W, H) {
+        // O'Reilly style — white top, animal illustration
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+        // Red banner at top
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(0, 0, W, H * 0.06);
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(0, H * 0.54, W, H * 0.04);
+        // O'Reilly text
+        ctx.fillStyle = '#c0392b'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText("O'Reilly", 20, H * 0.04);
+        // Animal illustration area — wild boar silhouette
+        ctx.fillStyle = '#2c2c2c';
+        ctx.beginPath();
+        ctx.ellipse(W/2, H * 0.32, W * 0.22, H * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Head
+        ctx.beginPath();
+        ctx.ellipse(W * 0.7, H * 0.28, W * 0.10, H * 0.08, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        // Legs
+        for (let lx of [0.32, 0.42, 0.55, 0.65]) {
+            ctx.fillRect(W * lx - 4, H * 0.38, 8, H * 0.08);
+        }
+        // Tusks
+        ctx.strokeStyle = '#888'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(W * 0.78, H * 0.26, 12, -0.5, 1.2); ctx.stroke();
+        // Title
+        ctx.fillStyle = '#333'; ctx.font = 'bold 32px Georgia, serif'; ctx.textAlign = 'center';
+        ctx.fillText('Designing', W/2, H * 0.62);
+        ctx.fillText('Data-Intensive', W/2, H * 0.68);
+        ctx.fillText('Applications', W/2, H * 0.74);
+        // Subtitle
+        ctx.fillStyle = '#666'; ctx.font = '16px -apple-system, sans-serif';
+        ctx.fillText('The Big Ideas Behind Reliable,', W/2, H * 0.80);
+        ctx.fillText('Scalable, and Maintainable Systems', W/2, H * 0.84);
+        // Author
+        ctx.fillStyle = '#333'; ctx.font = 'bold 22px -apple-system, sans-serif';
+        ctx.fillText('Martin Kleppmann', W/2, H * 0.93);
+      }
+    },
+    { title: 'Clinical Neuropsychology of Emotion', author: 'Gainotti (Ed.)', color: 0x2e5e3e, w: 0.13, h: 1.15, d: 0.73, titleColor: '#fff',
+      subtitle: 'Edited Collection on\nNeuropsychological Assessment',
+      firstPage: "Why I read this:\n\nAs someone working in\nneuropsych assessment, this\nis essential reading. It bridges\nemotion theory with clinical\nassessment practice.\n\nKey takeaway: Emotion is not\nseparate from cognition —\nthey are deeply intertwined\nin assessment outcomes.",
+      drawCover: function(ctx, W, H) {
+        // Academic green/teal
+        ctx.fillStyle = '#1e4d3a'; ctx.fillRect(0, 0, W, H);
+        // Brain illustration — stylized outline
+        ctx.strokeStyle = '#5aaa7a'; ctx.lineWidth = 2;
+        const bcx = W/2, bcy = H * 0.22;
+        // Left hemisphere
+        ctx.beginPath();
+        ctx.ellipse(bcx - 20, bcy, 55, 50, 0, 0.5, 5.8);
+        ctx.stroke();
+        // Right hemisphere
+        ctx.beginPath();
+        ctx.ellipse(bcx + 20, bcy, 55, 50, 0, -2.3, 2.6);
+        ctx.stroke();
+        // Sulci lines
+        ctx.strokeStyle = '#4a9a6a'; ctx.lineWidth = 1;
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.moveTo(bcx - 50 + i * 18, bcy - 30);
+            ctx.quadraticCurveTo(bcx - 30 + i * 15, bcy + 10 + i * 4, bcx - 40 + i * 20, bcy + 35);
+            ctx.stroke();
+        }
+        // Heart symbol inside brain
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath();
+        ctx.moveTo(bcx, bcy + 10);
+        ctx.bezierCurveTo(bcx - 15, bcy - 5, bcx - 25, bcy + 10, bcx, bcy + 25);
+        ctx.bezierCurveTo(bcx + 25, bcy + 10, bcx + 15, bcy - 5, bcx, bcy + 10);
+        ctx.fill();
+        // Gold line separator
+        ctx.strokeStyle = '#c9a84c'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(40, H * 0.38); ctx.lineTo(W - 40, H * 0.38); ctx.stroke();
+        // Title
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 34px Georgia, serif'; ctx.textAlign = 'center';
+        ctx.fillText('Clinical', W/2, H * 0.47);
+        ctx.fillText('Neuropsychology', W/2, H * 0.54);
+        ctx.fillText('of Emotion', W/2, H * 0.61);
+        // Subtitle
+        ctx.fillStyle = '#8abf9a'; ctx.font = '18px -apple-system, sans-serif';
+        ctx.fillText('Edited Collection on', W/2, H * 0.70);
+        ctx.fillText('Neuropsychological Assessment', W/2, H * 0.74);
+        // Editor
+        ctx.fillStyle = '#ccc'; ctx.font = '24px -apple-system, sans-serif';
+        ctx.fillText('Guido Gainotti (Ed.)', W/2, H * 0.86);
+        // Publisher
+        ctx.fillStyle = '#5a8a6a'; ctx.font = '14px sans-serif';
+        ctx.fillText('GUILFORD PRESS', W/2, H * 0.94);
+      }
+    },
 ];
 
-const bookMeshes = []; // for raycasting
+// Helper: draw a first page with title and personal note
+function drawFirstPage(ctx, W, H, book) {
+    ctx.fillStyle = '#faf8f2'; ctx.fillRect(0, 0, W, H);
+    // Subtle page border
+    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2;
+    ctx.strokeRect(W * 0.08, H * 0.05, W * 0.84, H * 0.90);
+    // Title
+    ctx.fillStyle = '#222'; ctx.font = 'bold 38px Georgia, serif';
+    ctx.textAlign = 'center';
+    const titleLines = book.title.split(/(?<=\s)/);
+    // Word wrap title
+    let words = book.title.split(' '), lines = [], line = '';
+    for (const w of words) {
+        if (ctx.measureText(line + w).width > W * 0.7) { lines.push(line.trim()); line = w + ' '; }
+        else line += w + ' ';
+    }
+    if (line.trim()) lines.push(line.trim());
+    lines.forEach((l, i) => ctx.fillText(l, W/2, H * 0.14 + i * 42));
+    const titleEndY = H * 0.14 + lines.length * 42;
+    // Author
+    ctx.fillStyle = '#666'; ctx.font = '24px -apple-system, sans-serif';
+    ctx.fillText(book.author, W/2, titleEndY + 20);
+    // Separator
+    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W * 0.25, titleEndY + 40); ctx.lineTo(W * 0.75, titleEndY + 40); ctx.stroke();
+    // Personal note — handwriting style
+    ctx.textAlign = 'left';
+    const noteLines = book.firstPage.split('\n');
+    let ny = titleEndY + 70;
+    noteLines.forEach(nl => {
+        if (nl.startsWith('Why') || nl.startsWith('Key')) {
+            ctx.fillStyle = '#c0392b'; ctx.font = 'bold italic 20px Georgia, serif';
+        } else {
+            ctx.fillStyle = '#444'; ctx.font = '19px Georgia, serif';
+        }
+        ctx.fillText(nl, W * 0.14, ny);
+        ny += 26;
+    });
+    // Page number
+    ctx.fillStyle = '#bbb'; ctx.font = '14px serif'; ctx.textAlign = 'center';
+    ctx.fillText('— i —', W/2, H * 0.95);
+}
+
+const bookMeshes = []; // for raycasting (hit the whole book group's children)
+const bookGroups = []; // the group for each book
+const bookFrontCovers = []; // front cover mesh for opening animation
 const bookRestingPositions = [];
 const bookRestingRotations = [];
+const bookCoverThick = 0.015; // cover thickness
 
 let bookX = -rackBaseW / 2 + 0.04;
 bookDefs.forEach((b, idx) => {
-    const bookGeo = new THREE.BoxGeometry(b.w, b.h, b.d);
-    const bookBaseMat = new THREE.MeshStandardMaterial({ color: b.color, roughness: 0.7, metalness: 0.05 });
+    const bookGroup = new THREE.Group();
+    const hex = '#' + b.color.toString(16).padStart(6, '0');
+    const coverMat = new THREE.MeshStandardMaterial({ color: b.color, roughness: 0.6, metalness: 0.05 });
+    const pageMat = new THREE.MeshStandardMaterial({ color: 0xfaf8f2, roughness: 0.85, metalness: 0.0 });
+    const pageEdgeMat = new THREE.MeshStandardMaterial({ color: 0xf0ece0, roughness: 0.9, metalness: 0.0 });
 
-    // Canvas for spine text (+z face)
+    // ── Spine (left edge, connects front & back covers) ──
+    const spineGeo = new THREE.BoxGeometry(b.w, b.h, bookCoverThick * 2);
+    // Canvas for spine
     const spineCvs = document.createElement('canvas');
     spineCvs.width = 128; spineCvs.height = 512;
     const sCtx = spineCvs.getContext('2d');
-    const hex = '#' + b.color.toString(16).padStart(6, '0');
     sCtx.fillStyle = hex; sCtx.fillRect(0, 0, 128, 512);
-    sCtx.save();
-    sCtx.translate(64, 256);
-    sCtx.rotate(-Math.PI / 2);
-    sCtx.fillStyle = b.titleColor;
-    sCtx.font = 'bold 26px -apple-system, sans-serif';
+    sCtx.save(); sCtx.translate(64, 256); sCtx.rotate(-Math.PI / 2);
+    sCtx.fillStyle = b.titleColor; sCtx.font = 'bold 24px -apple-system, sans-serif';
     sCtx.textAlign = 'center'; sCtx.textBaseline = 'middle';
-    sCtx.fillText(b.title, 0, -12);
-    sCtx.globalAlpha = 0.55;
-    sCtx.font = '17px -apple-system, sans-serif';
-    sCtx.fillText(b.author, 0, 16);
+    sCtx.fillText(b.title.length > 30 ? b.title.substring(0, 28) + '..' : b.title, 0, -10);
+    sCtx.globalAlpha = 0.6; sCtx.font = '16px -apple-system, sans-serif';
+    sCtx.fillText(b.author, 0, 14);
     sCtx.restore();
-
     const spineTex = new THREE.CanvasTexture(spineCvs);
-    const spineMat = new THREE.MeshStandardMaterial({ map: spineTex, roughness: 0.7, metalness: 0.05 });
+    const spineMat = new THREE.MeshStandardMaterial({ map: spineTex, roughness: 0.6, metalness: 0.05 });
+    // Spine faces: +x(right), -x(left), +y, -y, +z(front), -z(back)
+    const spineMesh = new THREE.Mesh(spineGeo, [coverMat, coverMat, coverMat, coverMat, spineMat, coverMat]);
+    spineMesh.position.set(0, 0, -b.d / 2 + bookCoverThick);
+    bookGroup.add(spineMesh);
 
-    // Face order: +x, -x, +y, -y, +z (spine front), -z
-    const mats = [bookBaseMat, bookBaseMat, bookBaseMat, bookBaseMat, spineMat, bookBaseMat];
-    const bookMesh = new THREE.Mesh(bookGeo, mats);
+    // ── Back cover ──
+    const backCoverGeo = new THREE.BoxGeometry(bookCoverThick, b.h, b.d);
+    const backCover = new THREE.Mesh(backCoverGeo, coverMat);
+    backCover.position.set(-b.w / 2 + bookCoverThick / 2, 0, 0);
+    bookGroup.add(backCover);
 
-    // Standing upright on base, slight lean for realism
+    // ── Page block (cream colored pages between covers) ──
+    const pageBlockW = b.w - bookCoverThick * 2 - 0.005;
+    const pageBlockH = b.h - 0.01;
+    const pageBlockD = b.d - bookCoverThick * 2 - 0.005;
+    const pageBlock = new THREE.Mesh(
+        new THREE.BoxGeometry(pageBlockW, pageBlockH, pageBlockD),
+        [pageEdgeMat, pageEdgeMat, pageEdgeMat, pageEdgeMat, pageEdgeMat, pageEdgeMat]
+    );
+    pageBlock.position.set(0, 0, 0);
+    bookGroup.add(pageBlock);
+
+    // ── Front Cover with canvas art (opens on hinge) ──
+    // The front cover pivots around its left edge (+x side of the book)
+    const coverW = bookCoverThick;
+    const frontCoverPivot = new THREE.Group();
+    // Pivot is at the right edge of the book (+x side = spine hinge)
+    frontCoverPivot.position.set(b.w / 2 - bookCoverThick / 2, 0, 0);
+    bookGroup.add(frontCoverPivot);
+
+    // Cover art canvas
+    const coverCvs = document.createElement('canvas');
+    coverCvs.width = 512; coverCvs.height = 700;
+    const cCtx = coverCvs.getContext('2d');
+    b.drawCover(cCtx, 512, 700);
+    const coverTex = new THREE.CanvasTexture(coverCvs);
+    const coverArtMat = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.5, metalness: 0.05 });
+
+    const frontCoverGeo = new THREE.BoxGeometry(b.d, b.h, coverW);
+    // Face order: +x, -x, +y, -y, +z (outer cover art), -z (inner)
+    const frontCover = new THREE.Mesh(frontCoverGeo, [coverMat, coverMat, coverMat, coverMat, coverArtMat, coverMat]);
+    // Offset so left edge of cover is at pivot (0,0,0)
+    frontCover.position.set(b.d / 2, 0, 0);
+    frontCoverPivot.add(frontCover);
+
+    // ── First Page (visible when book opens) — sits just inside front cover ──
+    const firstPageCvs = document.createElement('canvas');
+    firstPageCvs.width = 512; firstPageCvs.height = 700;
+    const fpCtx = firstPageCvs.getContext('2d');
+    drawFirstPage(fpCtx, 512, 700, b);
+    const firstPageTex = new THREE.CanvasTexture(firstPageCvs);
+    const firstPageMat = new THREE.MeshStandardMaterial({ map: firstPageTex, roughness: 0.85 });
+    const firstPageMesh = new THREE.Mesh(new THREE.PlaneGeometry(b.d - 0.02, b.h - 0.02), firstPageMat);
+    // Positioned on top of page block, facing +x (revealed when cover opens)
+    firstPageMesh.position.set(b.w / 2 - bookCoverThick - 0.001, 0, 0);
+    firstPageMesh.rotation.y = Math.PI / 2;
+    bookGroup.add(firstPageMesh);
+
+    // Position the book group on the rack
     const lean = (idx < 2) ? -0.06 : (idx > 3) ? 0.05 : (Math.random() - 0.5) * 0.03;
-    bookMesh.position.set(bookX + b.w / 2, rackBaseH + b.h / 2, 0);
-    bookMesh.rotation.z = lean;
-    bookMesh.castShadow = true; bookMesh.receiveShadow = true;
-    bookRackGroup.add(bookMesh);
+    bookGroup.position.set(bookX + b.w / 2, rackBaseH + b.h / 2, 0);
+    bookGroup.rotation.z = lean;
+    bookRackGroup.add(bookGroup);
 
-    bookMeshes.push(bookMesh);
-    bookRestingPositions.push(bookMesh.position.clone());
-    bookRestingRotations.push(bookMesh.rotation.clone());
+    // Collect references
+    bookGroups.push(bookGroup);
+    bookFrontCovers.push(frontCoverPivot);
+    bookMeshes.push(frontCover, backCover, pageBlock, spineMesh); // all hittable parts
+    bookRestingPositions.push(bookGroup.position.clone());
+    bookRestingRotations.push(bookGroup.rotation.clone());
 
     bookX += b.w + 0.02;
 });
 
+// Map from any hit mesh back to book index
+function getBookIndexFromMesh(mesh) {
+    for (let i = 0; i < bookGroups.length; i++) {
+        const group = bookGroups[i];
+        let found = false;
+        group.traverse(child => { if (child === mesh) found = true; });
+        if (found) return i;
+    }
+    return -1;
+}
+
 let isInspectingBook = false;
 let inspectedBookIdx = -1;
 let isDraggingBook = false;
+let bookOpenAmount = 0; // 0 = closed, 1 = fully open (PI * 0.75)
+let bookTargetOpen = 0;
 const bookInspectPos = new THREE.Vector3(0, 3, 5);
 const bookInspectRot = new THREE.Euler(0, 0, 0);
 
@@ -2396,6 +2705,7 @@ window.addEventListener('mousedown', (e) => {
     // Dismiss book on click outside
     if (isInspectingBook && intersectsBooks.length === 0) {
         isInspectingBook = false;
+        bookTargetOpen = 0; // close the book
         inspectedBookIdx = -1;
         document.getElementById('subtitle').innerText = defaultSubtitle;
         return;
@@ -2440,19 +2750,19 @@ window.addEventListener('mousedown', (e) => {
 
     if (intersectsBooks.length > 0 && !isInspectingCard && !isInspectingTablet && !isInspectingCoffee && !isZoomed) {
         const hitBook = intersectsBooks[0].object;
-        const hitIdx = bookMeshes.indexOf(hitBook);
+        const hitIdx = getBookIndexFromMesh(hitBook);
+        if (hitIdx === -1) return;
         if (!isInspectingBook) {
             isInspectingBook = true;
             inspectedBookIdx = hitIdx;
+            bookTargetOpen = 1; // open the book
+            bookOpenAmount = 0;
             const bDef = bookDefs[hitIdx];
             document.getElementById('subtitle').innerText = '"' + bDef.title + '" by ' + bDef.author + ' — Drag to rotate. Click outside to dismiss.';
-            // Compute inspect position in bookRackGroup local space → need world then to workstation local
             const camFwdB = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             const worldPosB = camera.position.clone().add(camFwdB.multiplyScalar(5.0));
-            // Books are children of bookRackGroup which is child of workstation
-            // Convert world → bookRackGroup local
             bookInspectPos.copy(bookRackGroup.worldToLocal(worldPosB.clone()));
-            // Face the spine (+z) toward camera — show spine front
+            // Show cover facing camera, then it opens
             bookInspectRot.set(0, 0, 0);
         } else if (hitIdx === inspectedBookIdx) {
             isDraggingBook = true;
@@ -2665,20 +2975,32 @@ function animate() {
         if (!isInspectingCoffee) coffeeInspectRot.set(-0.15, Math.PI, 0);
     }
 
-    // Animate Books
-    bookMeshes.forEach((bm, i) => {
+    // Animate Books — position/rotation for the group, cover open/close
+    bookGroups.forEach((bg, i) => {
         if (isInspectingBook && i === inspectedBookIdx) {
-            bm.position.lerp(bookInspectPos, 0.08);
-            const bq = new THREE.Quaternion().copy(bm.quaternion);
+            bg.position.lerp(bookInspectPos, 0.08);
+            const bq = new THREE.Quaternion().copy(bg.quaternion);
             const btq = new THREE.Quaternion().setFromEuler(bookInspectRot);
             bq.slerp(btq, 0.08);
-            bm.quaternion.copy(bq);
+            bg.quaternion.copy(bq);
         } else {
-            bm.position.lerp(bookRestingPositions[i], 0.08);
-            const bq = new THREE.Quaternion().copy(bm.quaternion);
+            bg.position.lerp(bookRestingPositions[i], 0.08);
+            const bq = new THREE.Quaternion().copy(bg.quaternion);
             const btq = new THREE.Quaternion().setFromEuler(bookRestingRotations[i]);
             bq.slerp(btq, 0.08);
-            bm.quaternion.copy(bq);
+            bg.quaternion.copy(bq);
+        }
+    });
+    // Animate book cover opening/closing
+    bookOpenAmount += (bookTargetOpen - bookOpenAmount) * 0.06;
+    if (inspectedBookIdx >= 0 && inspectedBookIdx < bookFrontCovers.length) {
+        // Rotate front cover pivot: 0 = closed, target = -PI*0.75 (open ~135°)
+        bookFrontCovers[inspectedBookIdx].rotation.y = -bookOpenAmount * Math.PI * 0.75;
+    }
+    // Close all other covers
+    bookFrontCovers.forEach((fc, i) => {
+        if (i !== inspectedBookIdx) {
+            fc.rotation.y += (0 - fc.rotation.y) * 0.08;
         }
     });
 
