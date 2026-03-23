@@ -121,20 +121,340 @@ workstation.add(desk);
 const screenCanvas = document.createElement('canvas');
 screenCanvas.width = 1024; screenCanvas.height = 512;
 const ctx = screenCanvas.getContext('2d');
-ctx.fillStyle = '#2d2a3e'; ctx.fillRect(0, 0, 1024, 512);
-ctx.fillStyle = '#1e1c2a'; ctx.fillRect(0, 0, 1024, 60);
-ctx.fillStyle = '#ffffff'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('elecctro OS', 40, 38);
-function roundRect(x, y, w, h, r, color) {
-    ctx.fillStyle = color; ctx.beginPath();
-    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-    ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-    ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-    ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y); ctx.fill();
+let monitorActiveTab = 0;
+const monitorTabW = 220, monitorTabGap = 3;
+
+const tabDefs = [
+    { label: 'Grant Management', url: 'research-portal.elecctro.io/grants' },
+    { label: 'Rater Admin', url: 'research-portal.elecctro.io/raters' },
+    { label: 'Data Management', url: 'research-portal.elecctro.io/data' },
+    { label: 'Coding / Digitization', url: 'research-portal.elecctro.io/coding' },
+];
+
+function drawMonitorScreen() {
+    const W = 1024, H = 512;
+    const taskH = 32, tabBarH = 34, addressH = 28;
+
+    // ── Clear ──
+    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, 0, W, H);
+
+    // ── Tab bar ──
+    ctx.fillStyle = '#2b2b3d'; ctx.fillRect(0, 0, W, tabBarH);
+    tabDefs.forEach((tab, i) => {
+        const tx = 8 + i * (monitorTabW + monitorTabGap);
+        const active = i === monitorActiveTab;
+        ctx.fillStyle = active ? '#1e1e2e' : '#35354a';
+        const tr = 6;
+        ctx.beginPath();
+        ctx.moveTo(tx + tr, 4); ctx.lineTo(tx + monitorTabW - tr, 4);
+        ctx.quadraticCurveTo(tx + monitorTabW, 4, tx + monitorTabW, 4 + tr);
+        ctx.lineTo(tx + monitorTabW, tabBarH); ctx.lineTo(tx, tabBarH);
+        ctx.lineTo(tx, 4 + tr); ctx.quadraticCurveTo(tx, 4, tx + tr, 4);
+        ctx.fill();
+        ctx.fillStyle = active ? '#fff' : '#888';
+        ctx.font = '13px -apple-system, sans-serif';
+        ctx.fillText(tab.label, tx + 10, tabBarH - 10);
+        ctx.fillStyle = '#666'; ctx.font = '12px sans-serif';
+        ctx.fillText('×', tx + monitorTabW - 18, tabBarH - 10);
+    });
+
+    // ── Address bar ──
+    const addrY = tabBarH;
+    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, addrY, W, addressH);
+    ctx.fillStyle = '#555'; ctx.font = '16px sans-serif';
+    ctx.fillText('←  →  ⟳', 12, addrY + 20);
+    ctx.fillStyle = '#2b2b3d';
+    ctx.beginPath(); ctx.roundRect(90, addrY + 4, W - 200, 20, 4); ctx.fill();
+    ctx.fillStyle = '#4caf50'; ctx.font = '12px monospace'; ctx.fillText('🔒', 98, addrY + 19);
+    ctx.fillStyle = '#aaa'; ctx.font = '12px -apple-system, sans-serif';
+    ctx.fillText('https://' + tabDefs[monitorActiveTab].url, 120, addrY + 19);
+    ctx.fillStyle = '#4a6fa5';
+    ctx.beginPath(); ctx.arc(W - 30, addrY + 14, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('E', W - 34, addrY + 18);
+
+    // ── Page content ──
+    const contentY = addrY + addressH;
+    const contentH = H - taskH - contentY;
+    ctx.fillStyle = '#f5f5f8'; ctx.fillRect(0, contentY, W, contentH);
+
+    if (monitorActiveTab === 0) drawGrantPage(contentY, contentH);
+    else if (monitorActiveTab === 1) drawRaterPage(contentY, contentH);
+    else if (monitorActiveTab === 2) drawDataPage(contentY, contentH);
+    else drawCodingPage(contentY, contentH);
+
+    // ── Taskbar ──
+    ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, H - taskH, W, taskH);
+    // Right side only — time + battery
+    const now = new Date();
+    const sgTime = now.toLocaleTimeString('en-SG', { timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', hour12: false });
+    const sgDate = now.toLocaleDateString('en-SG', { timeZone: 'Asia/Singapore', day: '2-digit', month: 'short', year: 'numeric' });
+    ctx.fillStyle = '#ccc'; ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(sgTime, W - 12, H - taskH + 15);
+    ctx.fillText(sgDate, W - 12, H - taskH + 28);
+    ctx.fillStyle = '#888'; ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+    const bx = W - 80, by = H - taskH + 9;
+    ctx.strokeRect(bx, by, 18, 10);
+    ctx.fillRect(bx + 18, by + 3, 2, 4);
+    ctx.fillStyle = '#4caf50'; ctx.fillRect(bx + 2, by + 2, 12, 6);
+    ctx.textAlign = 'left';
 }
-roundRect(40, 100, 300, 360, 16, '#3a3650');
-roundRect(360, 100, 620, 160, 16, '#f0c131');
-roundRect(360, 280, 290, 180, 16, '#3a3650');
-roundRect(670, 280, 310, 180, 16, '#44e878');
+
+// Helper: draw a mini bar chart
+function drawMiniBar(x, y, w, h, bars, maxVal) {
+    const bw = Math.floor((w - (bars.length - 1) * 3) / bars.length);
+    bars.forEach((b, i) => {
+        const bh = (b.val / maxVal) * (h - 14);
+        const bx = x + i * (bw + 3);
+        ctx.fillStyle = '#e8e8ee'; ctx.fillRect(bx, y, bw, h - 14);
+        ctx.fillStyle = b.color || '#4a6fa5'; ctx.fillRect(bx, y + (h - 14) - bh, bw, bh);
+        ctx.fillStyle = '#999'; ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(b.label, bx + bw / 2, y + h - 2); ctx.textAlign = 'left';
+    });
+}
+
+// Helper: draw notes section
+function drawNotes(x, y, w, title, notes) {
+    ctx.fillStyle = '#fffde7'; ctx.beginPath(); ctx.roundRect(x, y, w, 12 + notes.length * 14, 6); ctx.fill();
+    ctx.fillStyle = '#b8860b'; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.fillText(title, x + 8, y + 11);
+    notes.forEach((n, i) => {
+        ctx.fillStyle = '#555'; ctx.font = '10px -apple-system, sans-serif';
+        ctx.fillText('• ' + n, x + 8, y + 24 + i * 14);
+    });
+}
+
+function drawGrantPage(cy, ch) {
+    const W = 1024, sb = 160, mx = sb + 15;
+    // Sidebar
+    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, cy, sb, ch);
+    ctx.fillStyle = '#4a6fa5'; ctx.beginPath(); ctx.roundRect(8, cy + 8, sb - 16, 28, 6); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px -apple-system, sans-serif'; ctx.fillText('Grants', 22, cy + 27);
+    ['Protocols', 'Participants', 'Schedule', 'Milestones', 'Budget', 'Reports'].forEach((s, i) => {
+        ctx.fillStyle = '#bbb'; ctx.font = '11px -apple-system, sans-serif'; ctx.fillText(s, 22, cy + 58 + i * 24);
+    });
+
+    // Header
+    ctx.fillStyle = '#333'; ctx.font = 'bold 16px -apple-system, sans-serif';
+    ctx.fillText('Grant Portfolio Dashboard', mx, cy + 24);
+
+    // KPI row
+    const kpis = [
+        { label: 'Total Funding', val: '$1.055M', sub: '3 grants', color: '#4a6fa5' },
+        { label: 'Active Studies', val: '2', sub: 'NRF + MOH', color: '#4caf50' },
+        { label: 'Participants', val: '347', sub: '82% enrolled', color: '#9c27b0' },
+        { label: 'Milestones Due', val: '4', sub: 'this quarter', color: '#ff9800' },
+    ];
+    kpis.forEach((k, i) => {
+        const kx = mx + i * 198;
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(kx, cy + 34, 188, 52, 6); ctx.fill();
+        ctx.fillStyle = '#999'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(k.label, kx + 10, cy + 50);
+        ctx.fillStyle = k.color; ctx.font = 'bold 20px -apple-system, sans-serif'; ctx.fillText(k.val, kx + 10, cy + 74);
+        ctx.fillStyle = '#aaa'; ctx.font = '9px -apple-system, sans-serif'; ctx.fillText(k.sub, kx + 100, cy + 74);
+    });
+
+    // Grant list
+    const grants = [
+        { title: 'NRF-2024-ASD-001', desc: 'ASD Biomarker Discovery', budget: '$485K', spent: '62%', status: 'Active', color: '#4caf50' },
+        { title: 'MOH-2024-NEURO-037', desc: 'Neurocognitive Aging Study', budget: '$320K', spent: '45%', status: 'Active', color: '#4caf50' },
+        { title: 'NMRC-2025-COG-012', desc: 'Digital Cognitive Assessment', budget: '$250K', spent: '0%', status: 'Pending', color: '#ff9800' },
+    ];
+    grants.forEach((g, i) => {
+        const gy = cy + 96 + i * 42;
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(mx, gy, W - mx - 16, 36, 6); ctx.fill();
+        ctx.fillStyle = '#222'; ctx.font = 'bold 11px -apple-system, sans-serif'; ctx.fillText(g.title, mx + 10, gy + 15);
+        ctx.fillStyle = '#888'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(g.desc, mx + 180, gy + 15);
+        ctx.fillText('Budget: ' + g.budget + '  |  Spent: ' + g.spent, mx + 10, gy + 30);
+        ctx.fillStyle = g.color; ctx.beginPath(); ctx.roundRect(W - 90, gy + 6, 60, 18, 9); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.fillText(g.status, W - 82, gy + 19);
+    });
+
+    // Notes
+    drawNotes(mx, cy + ch - 65, W - mx - 16, 'Notes — Ed',
+        ['Q1 milestone report for NRF due end of month', 'NMRC approval expected mid-April', 'Budget reallocation needed for MOH travel costs']);
+}
+
+function drawRaterPage(cy, ch) {
+    const W = 1024, sb = 160, mx = sb + 15;
+    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, cy, sb, ch);
+    ctx.fillStyle = '#4a6fa5'; ctx.beginPath(); ctx.roundRect(8, cy + 8, sb - 16, 28, 6); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px -apple-system, sans-serif'; ctx.fillText('Raters', 22, cy + 27);
+    ['Certification', 'Training Log', 'Assignments', 'Drift Checks', 'Calibration'].forEach((s, i) => {
+        ctx.fillStyle = '#bbb'; ctx.font = '11px -apple-system, sans-serif'; ctx.fillText(s, 22, cy + 58 + i * 24);
+    });
+
+    ctx.fillStyle = '#333'; ctx.font = 'bold 16px -apple-system, sans-serif';
+    ctx.fillText('Rater Administration', mx, cy + 24);
+
+    // KPI row
+    const kpis = [
+        { label: 'Total Raters', val: '12', color: '#4a6fa5' },
+        { label: 'Certified', val: '9', color: '#4caf50' },
+        { label: 'Expiring Soon', val: '2', color: '#ff9800' },
+        { label: 'Drift Detected', val: '1', color: '#f44336' },
+    ];
+    kpis.forEach((k, i) => {
+        const kx = mx + i * 198;
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(kx, cy + 34, 188, 44, 6); ctx.fill();
+        ctx.fillStyle = '#999'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(k.label, kx + 10, kx === mx ? cy + 48 : cy + 48);
+        ctx.fillStyle = k.color; ctx.font = 'bold 18px -apple-system, sans-serif'; ctx.fillText(k.val, kx + 10, cy + 68);
+    });
+
+    // Rater table
+    const raters = [
+        { name: 'Dr. Sarah L.', scales: 'PANSS, MADRS, CGI', lastCal: '12 Mar', status: 'Certified', color: '#4caf50' },
+        { name: 'Dr. James W.', scales: 'PANSS, CGI', lastCal: '05 Mar', status: 'Certified', color: '#4caf50' },
+        { name: 'Dr. Amy T.', scales: 'MADRS, HAMD', lastCal: '10 Jan', status: 'Expiring', color: '#ff9800' },
+        { name: 'Dr. Kevin R.', scales: 'PANSS', lastCal: '22 Nov', status: 'Recertify', color: '#f44336' },
+    ];
+    // Table header
+    const ty = cy + 88;
+    ctx.fillStyle = '#eee'; ctx.fillRect(mx, ty, W - mx - 16, 18);
+    ctx.fillStyle = '#666'; ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.fillText('Rater', mx + 10, ty + 13); ctx.fillText('Scales', mx + 160, ty + 13);
+    ctx.fillText('Last Calibration', mx + 400, ty + 13); ctx.fillText('Status', W - 100, ty + 13);
+    raters.forEach((r, i) => {
+        const ry = ty + 20 + i * 26;
+        ctx.fillStyle = i % 2 === 0 ? '#fff' : '#fafafa'; ctx.fillRect(mx, ry, W - mx - 16, 24);
+        ctx.fillStyle = '#222'; ctx.font = '11px -apple-system, sans-serif'; ctx.fillText(r.name, mx + 10, ry + 16);
+        ctx.fillStyle = '#666'; ctx.fillText(r.scales, mx + 160, ry + 16);
+        ctx.fillText(r.lastCal, mx + 400, ry + 16);
+        ctx.fillStyle = r.color; ctx.font = 'bold 10px sans-serif'; ctx.fillText(r.status, W - 100, ry + 16);
+    });
+
+    // Notes
+    drawNotes(mx, cy + ch - 52, W - mx - 16, 'Notes — Ed',
+        ['Schedule recertification for Dr. Amy T. by end of April', 'Dr. Kevin R. drift review meeting on Monday']);
+}
+
+function drawDataPage(cy, ch) {
+    const W = 1024, sb = 160, mx = sb + 15;
+    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, cy, sb, ch);
+    ctx.fillStyle = '#4a6fa5'; ctx.beginPath(); ctx.roundRect(8, cy + 8, sb - 16, 28, 6); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px -apple-system, sans-serif'; ctx.fillText('Data Mgmt', 22, cy + 27);
+    ['Queries', 'Exports', 'Audit Trail', 'Cleaning', 'Requests', 'Archive'].forEach((s, i) => {
+        ctx.fillStyle = '#bbb'; ctx.font = '11px -apple-system, sans-serif'; ctx.fillText(s, 22, cy + 58 + i * 24);
+    });
+
+    ctx.fillStyle = '#333'; ctx.font = 'bold 16px -apple-system, sans-serif';
+    ctx.fillText('Data Management Dashboard', mx, cy + 24);
+
+    // KPI cards — top row
+    const kpis = [
+        { label: 'Records Entered', val: '12,847', sub: '+342 this week', color: '#4a6fa5' },
+        { label: 'Open Queries', val: '23', sub: '5 critical', color: '#ff9800' },
+        { label: 'Data Requests', val: '8 / 12', sub: 'delivered', color: '#4caf50' },
+        { label: 'Clean Rate', val: '97.3%', sub: 'target: 98%', color: '#9c27b0' },
+    ];
+    kpis.forEach((k, i) => {
+        const kx = mx + i * 198;
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(kx, cy + 34, 188, 52, 6); ctx.fill();
+        ctx.fillStyle = '#999'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(k.label, kx + 10, cy + 50);
+        ctx.fillStyle = k.color; ctx.font = 'bold 20px -apple-system, sans-serif'; ctx.fillText(k.val, kx + 10, cy + 74);
+        ctx.fillStyle = '#aaa'; ctx.font = '9px -apple-system, sans-serif'; ctx.fillText(k.sub, kx + 100, cy + 74);
+    });
+
+    // Weekly data entry chart
+    const chartX = mx, chartY = cy + 96;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(chartX, chartY, 390, 90, 6); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.fillText('Weekly Data Entry', chartX + 10, chartY + 14);
+    drawMiniBar(chartX + 10, chartY + 20, 370, 64, [
+        { label: 'Mon', val: 48, color: '#4a6fa5' }, { label: 'Tue', val: 62, color: '#4a6fa5' },
+        { label: 'Wed', val: 55, color: '#4a6fa5' }, { label: 'Thu', val: 71, color: '#4a6fa5' },
+        { label: 'Fri', val: 44, color: '#4a6fa5' }, { label: 'Sat', val: 12, color: '#90a4ae' },
+        { label: 'Sun', val: 8, color: '#90a4ae' },
+    ], 80);
+
+    // Query resolution
+    const qx = mx + 405, qy = chartY;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(qx, qy, 390, 90, 6); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.fillText('Query Status Breakdown', qx + 10, qy + 14);
+    drawMiniBar(qx + 10, qy + 20, 370, 64, [
+        { label: 'Open', val: 23, color: '#ff9800' }, { label: 'In Review', val: 15, color: '#4a6fa5' },
+        { label: 'Resolved', val: 187, color: '#4caf50' }, { label: 'Closed', val: 412, color: '#888' },
+    ], 420);
+
+    // Recent activity
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(mx, cy + 196, W - mx - 16, 68, 6); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.fillText('Recent Activity', mx + 10, cy + 210);
+    const rows = [
+        ['SUBJ-0142', 'Visit 3 CRF entered & verified', '10 min ago', '#4caf50'],
+        ['SUBJ-0098', 'Query #Q-2341 resolved — lab range confirmed', '25 min ago', '#4a6fa5'],
+        ['DR-REQ-08', 'Data request delivered to biostatistics team', '1 hr ago', '#9c27b0'],
+    ];
+    rows.forEach((r, i) => {
+        const ry = cy + 220 + i * 14;
+        ctx.fillStyle = r[3]; ctx.beginPath(); ctx.arc(mx + 16, ry + 2, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#444'; ctx.font = '10px monospace'; ctx.fillText(r[0], mx + 26, ry + 5);
+        ctx.fillStyle = '#666'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(r[1], mx + 130, ry + 5);
+        ctx.fillStyle = '#999'; ctx.textAlign = 'right'; ctx.fillText(r[2], W - 30, ry + 5); ctx.textAlign = 'left';
+    });
+
+    // Notes
+    drawNotes(mx, cy + ch - 65, W - mx - 16, 'Notes — Ed',
+        ['Prioritize critical queries for NRF study before Friday', 'Data request #DR-REQ-09 pending sponsor approval', 'Clean rate dipped — check Visit 4 PANSS entries']);
+}
+
+function drawCodingPage(cy, ch) {
+    const W = 1024, sb = 160, mx = sb + 15;
+    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, cy, sb, ch);
+    ctx.fillStyle = '#4a6fa5'; ctx.beginPath(); ctx.roundRect(8, cy + 8, sb - 16, 28, 6); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px -apple-system, sans-serif'; ctx.fillText('Coding', 22, cy + 27);
+    ['Digitization', 'Verification', 'Adjudication', 'Templates', 'History'].forEach((s, i) => {
+        ctx.fillStyle = '#bbb'; ctx.font = '11px -apple-system, sans-serif'; ctx.fillText(s, 22, cy + 58 + i * 24);
+    });
+
+    ctx.fillStyle = '#333'; ctx.font = 'bold 16px -apple-system, sans-serif';
+    ctx.fillText('Coding & Digitization Hub', mx, cy + 24);
+
+    // KPI row
+    const kpis = [
+        { label: 'Forms Digitized', val: '1,248', sub: '+86 this week', color: '#4a6fa5' },
+        { label: 'Pending Review', val: '34', sub: '12 urgent', color: '#ff9800' },
+        { label: 'Accuracy Rate', val: '99.1%', sub: 'double-entry', color: '#4caf50' },
+        { label: 'Avg. Turnaround', val: '2.3d', sub: 'target: 3d', color: '#9c27b0' },
+    ];
+    kpis.forEach((k, i) => {
+        const kx = mx + i * 198;
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(kx, cy + 34, 188, 52, 6); ctx.fill();
+        ctx.fillStyle = '#999'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(k.label, kx + 10, cy + 50);
+        ctx.fillStyle = k.color; ctx.font = 'bold 20px -apple-system, sans-serif'; ctx.fillText(k.val, kx + 10, cy + 74);
+        ctx.fillStyle = '#aaa'; ctx.font = '9px -apple-system, sans-serif'; ctx.fillText(k.sub, kx + 100, cy + 74);
+    });
+
+    // Active queue
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(mx, cy + 96, W - mx - 16, 110, 6); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.font = 'bold 11px -apple-system, sans-serif'; ctx.fillText('Active Queue', mx + 10, cy + 112);
+    // Table header
+    const ty = cy + 118;
+    ctx.fillStyle = '#f5f5f5'; ctx.fillRect(mx + 6, ty, W - mx - 28, 16);
+    ctx.fillStyle = '#888'; ctx.font = 'bold 9px -apple-system, sans-serif';
+    ctx.fillText('Form ID', mx + 12, ty + 12); ctx.fillText('Scale', mx + 160, ty + 12);
+    ctx.fillText('Coder', mx + 300, ty + 12); ctx.fillText('Progress', mx + 440, ty + 12); ctx.fillText('Status', W - 90, ty + 12);
+    const items = [
+        { id: 'PANSS-0142-V3', scale: 'PANSS (30 items)', coder: 'Ed', pct: 60, status: 'In Progress', color: '#4a6fa5' },
+        { id: 'MADRS-0098-V5', scale: 'MADRS (10 items)', coder: 'Unassigned', pct: 0, status: 'Ready', color: '#888' },
+        { id: 'CGI-0211-V2', scale: 'CGI-S (1 item)', coder: 'Ed', pct: 100, status: 'Done', color: '#4caf50' },
+        { id: 'PANSS-0087-V4', scale: 'PANSS (30 items)', coder: 'Sarah', pct: 35, status: 'In Progress', color: '#4a6fa5' },
+    ];
+    items.forEach((it, i) => {
+        const iy = ty + 18 + i * 18;
+        ctx.fillStyle = i % 2 === 0 ? '#fff' : '#fafafa'; ctx.fillRect(mx + 6, iy, W - mx - 28, 16);
+        ctx.fillStyle = '#222'; ctx.font = '10px monospace'; ctx.fillText(it.id, mx + 12, iy + 12);
+        ctx.fillStyle = '#666'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(it.scale, mx + 160, iy + 12);
+        ctx.fillText(it.coder, mx + 300, iy + 12);
+        // Progress bar
+        ctx.fillStyle = '#eee'; ctx.beginPath(); ctx.roundRect(mx + 440, iy + 3, 90, 8, 4); ctx.fill();
+        if (it.pct > 0) { ctx.fillStyle = it.color; ctx.beginPath(); ctx.roundRect(mx + 440, iy + 3, 90 * it.pct / 100, 8, 4); ctx.fill(); }
+        ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.fillText(it.pct + '%', mx + 535, iy + 11);
+        ctx.fillStyle = it.color; ctx.font = 'bold 9px sans-serif'; ctx.fillText(it.status, W - 90, iy + 12);
+    });
+
+    // Notes
+    drawNotes(mx, cy + ch - 52, W - mx - 16, 'Notes — Ed',
+        ['PANSS-0142-V3 needs second coder verification', 'New MADRS template uploaded — test before rolling out']);
+}
+
+drawMonitorScreen();
 
 const screenTex = new THREE.CanvasTexture(screenCanvas);
 screenTex.needsUpdate = true;
@@ -143,6 +463,8 @@ const screenMat = new THREE.MeshBasicMaterial({
     map: screenTex,
     color: 0xffffff
 });
+// Update clock every minute
+setInterval(() => { drawMonitorScreen(); screenTex.needsUpdate = true; }, 60000);
 
 // 2. Desktop Monitor Setup
 const monitorGroup = new THREE.Group();
@@ -290,7 +612,8 @@ mouseGroup.add(wheel);
 
 // 5. Desk Accessories — Lucky Coffee Orange Americano (clear plastic cup)
 const coffeeGroup = new THREE.Group();
-coffeeGroup.position.set(-3.2, 0.08, -0.4);
+coffeeGroup.position.set(3.2, 0.08, 1.0);
+coffeeGroup.rotation.y = Math.PI;
 workstation.add(coffeeGroup);
 
 const cupH = 0.72, cupTopR = 0.28, cupBotR = 0.20; // Large/Venti size
@@ -313,41 +636,11 @@ cupBot.rotation.x = -Math.PI / 2;
 cupBot.position.y = 0.005;
 coffeeGroup.add(cupBot);
 
-// Cup lid (flat dome on top)
-const lidMat = new THREE.MeshStandardMaterial({ color: 0xe8e4dc, roughness: 0.15 });
-const lid = new THREE.Mesh(new THREE.CylinderGeometry(cupTopR + 0.01, cupTopR + 0.005, 0.02, 32), lidMat);
-lid.position.y = cupH + 0.01;
-coffeeGroup.add(lid);
-// Lid rim
-const lidRimMat = new THREE.MeshStandardMaterial({ color: 0xddd8d0, roughness: 0.15 });
-const lidRim = new THREE.Mesh(new THREE.TorusGeometry(cupTopR + 0.01, 0.006, 8, 32), lidRimMat);
-lidRim.rotation.x = Math.PI / 2;
-lidRim.position.y = cupH + 0.02;
-coffeeGroup.add(lidRim);
-// Straw hole
-const strawHoleMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
-const strawHole = new THREE.Mesh(new THREE.CircleGeometry(0.025, 16), strawHoleMat);
-strawHole.rotation.x = -Math.PI / 2;
-strawHole.position.set(0.06, cupH + 0.022, 0);
-coffeeGroup.add(strawHole);
 
-// Straw — tall cylinder poking out at a slight angle
-const strawMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.4 }); // green straw
-const strawH = 0.55;
-const straw = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, strawH, 12), strawMat);
-straw.position.set(0.06, cupH + strawH / 2 + 0.01, 0);
-straw.rotation.z = -0.12; // slight tilt
-coffeeGroup.add(straw);
-// Straw bend (elbow piece)
-const strawBend = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.018, 8, 6, Math.PI * 0.35), strawMat);
-strawBend.position.set(0.06, cupH + strawH + 0.005, 0);
-strawBend.rotation.set(Math.PI / 2, 0, -0.5);
-coffeeGroup.add(strawBend);
-
-// Orange juice layer (bottom ~40% — opaque)
-const ojH = cupH * 0.40;
+// Orange juice layer (bottom ~45% — opaque, fuller)
+const ojH = cupH * 0.45;
 const ojBotR = cupBotR;
-const ojTopR = cupBotR + (cupTopR - cupBotR) * 0.40;
+const ojTopR = cupBotR + (cupTopR - cupBotR) * 0.45;
 const ojMat = new THREE.MeshStandardMaterial({
     color: 0xf5a623, roughness: 0.3, metalness: 0.0
 });
@@ -355,10 +648,10 @@ const ojLayer = new THREE.Mesh(new THREE.CylinderGeometry(ojTopR, ojBotR, ojH, 3
 ojLayer.position.y = ojH / 2 + 0.005;
 coffeeGroup.add(ojLayer);
 
-// Coffee layer (top ~35% — opaque)
-const coffeeH = cupH * 0.35;
+// Coffee layer (top ~45% — opaque, fills nearly to rim)
+const coffeeH = cupH * 0.45;
 const coffeeBotR = ojTopR;
-const coffeeTopR = cupBotR + (cupTopR - cupBotR) * 0.75;
+const coffeeTopR = cupBotR + (cupTopR - cupBotR) * 0.90;
 const coffeeMat = new THREE.MeshStandardMaterial({
     color: 0x3e1f0d, roughness: 0.4, metalness: 0.0
 });
@@ -367,7 +660,7 @@ coffeeLayer.position.y = ojH + coffeeH / 2 + 0.005;
 coffeeGroup.add(coffeeLayer);
 
 // Gradient blend zone between OJ and coffee (opaque)
-const blendH = cupH * 0.08;
+const blendH = cupH * 0.06;
 const blendBotR = ojTopR - 0.003;
 const blendTopR = coffeeBotR + 0.003;
 const blendMat = new THREE.MeshStandardMaterial({
@@ -377,18 +670,41 @@ const blendLayer = new THREE.Mesh(new THREE.CylinderGeometry(blendTopR, blendBot
 blendLayer.position.y = ojH + blendH / 2;
 coffeeGroup.add(blendLayer);
 
-// Ice cubes (transparent — scaled up for larger cup)
+// Ice cubes — lots of ice filling the top
 const iceMat = new THREE.MeshStandardMaterial({
     color: 0xddeeff, transparent: true, opacity: 0.5,
     roughness: 0.05, metalness: 0.1, depthWrite: false
 });
-const icePositions = [
-    { x: 0.05, z: 0.04, y: 0.58, rx: 0.3, ry: 0.5, s: 0.08 },
-    { x: -0.08, z: 0.02, y: 0.62, rx: 0.8, ry: 0.2, s: 0.07 },
-    { x: 0.02, z: -0.07, y: 0.56, rx: 0.1, ry: 1.1, s: 0.085 },
-    { x: -0.04, z: 0.08, y: 0.60, rx: 0.6, ry: 0.9, s: 0.065 },
-    { x: 0.08, z: -0.04, y: 0.63, rx: 1.2, ry: 0.4, s: 0.075 },
-];
+// Generate ice spread across full top surface
+const icePositions = [];
+const iceMaxR = cupTopR - 0.06; // keep cubes well inside the cup wall
+for (let ring = 0; ring < 3; ring++) {
+    const r = ring === 0 ? 0 : iceMaxR * (ring / 2);
+    const count = ring === 0 ? 1 : 6 + ring * 2;
+    const cubeSize = ring === 2 ? 0.045 : 0.06; // smaller cubes on outer ring
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i / count) + ring * 0.4;
+        // Jitter position slightly for natural look
+        const jx = (Math.random() - 0.5) * 0.02;
+        const jz = (Math.random() - 0.5) * 0.02;
+        let px = Math.cos(angle) * r + jx;
+        let pz = Math.sin(angle) * r + jz;
+        // Clamp to stay inside cup
+        const dist = Math.sqrt(px * px + pz * pz);
+        const maxDist = iceMaxR - cubeSize * 0.5;
+        if (dist > maxDist) {
+            px *= maxDist / dist;
+            pz *= maxDist / dist;
+        }
+        icePositions.push({
+            x: px, z: pz,
+            y: 0.64 + Math.random() * 0.04,
+            rx: Math.random() * 0.5, // gentler rotation so they sit more naturally
+            ry: Math.random() * Math.PI * 2,
+            s: cubeSize + Math.random() * 0.015
+        });
+    }
+}
 icePositions.forEach(ip => {
     const ice = new THREE.Mesh(new THREE.BoxGeometry(ip.s, ip.s * 0.8, ip.s), iceMat);
     ice.position.set(ip.x, ip.y, ip.z);
@@ -499,9 +815,9 @@ const frontTex = new THREE.CanvasTexture(frontCvs);
 const frontMat = new THREE.MeshBasicMaterial({ map: frontTex, transparent: true, side: THREE.FrontSide });
 const labelTopR = cupTopR + 0.004;
 const labelBotR = cupBotR + 0.004;
-// Front label — ~140° arc facing camera (camera at +X,+Z → theta ~0.75PI)
-// Centered at PI*0.75, so thetaStart = PI*0.75 - arc/2 = PI*0.36
-const frontGeo = new THREE.CylinderGeometry(labelTopR, labelBotR, cupH * 0.88, 32, 1, true, Math.PI * 0.36, Math.PI * 0.78);
+// Front label — ~140° arc facing camera (camera at +X,+Z → outward face at theta ~1.25PI)
+// Centered at PI*1.25, so thetaStart = PI*1.25 - arc/2 = PI*0.86
+const frontGeo = new THREE.CylinderGeometry(labelTopR, labelBotR, cupH * 0.88, 32, 1, true, Math.PI * 0.86, Math.PI * 0.78);
 const frontLabel = new THREE.Mesh(frontGeo, frontMat);
 frontLabel.position.y = cupH * 0.46;
 frontLabel.renderOrder = 11;
@@ -627,9 +943,9 @@ bCtx.fillText('Thank you for choosing Lucky Coffee!', 256, bcY + 82);
 
 const backTex = new THREE.CanvasTexture(backCvs);
 const backMat = new THREE.MeshBasicMaterial({ map: backTex, transparent: true, side: THREE.FrontSide });
-// Back label — ~140° arc on opposite side (centered at PI*1.75)
-// thetaStart = PI*1.75 - arc/2 = PI*1.36
-const backGeo = new THREE.CylinderGeometry(labelTopR, labelBotR, cupH * 0.88, 32, 1, true, Math.PI * 1.36, Math.PI * 0.78);
+// Back label — ~140° arc on opposite side (centered at PI*0.25)
+// thetaStart = PI*0.25 - arc/2 = PI*-0.14 → PI*1.86
+const backGeo = new THREE.CylinderGeometry(labelTopR, labelBotR, cupH * 0.88, 32, 1, true, Math.PI * 1.86, Math.PI * 0.78);
 const backLabel = new THREE.Mesh(backGeo, backMat);
 backLabel.position.y = cupH * 0.46;
 backLabel.renderOrder = 11;
@@ -644,6 +960,107 @@ coffeeHitBox.position.y = cupH / 2;
 coffeeGroup.add(coffeeHitBox);
 
 let isInspectingCoffee = false;
+
+// ─── 5c. Desktop Book Rack — simple bamboo bookend style (top-left of desk) ──
+// Scale ref: 1 unit ≈ 24cm. Simple rack: base + two side panels, no legs/back rail.
+const bookRackGroup = new THREE.Group();
+bookRackGroup.position.set(-3.0, 0.08, -0.6);
+bookRackGroup.rotation.y = 0;
+workstation.add(bookRackGroup);
+
+// Bamboo wood material
+const bambooMat = new THREE.MeshStandardMaterial({ color: 0xc8a96e, roughness: 0.55, metalness: 0.05 });
+
+// Dimensions
+const rackBaseW = 1.7, rackBaseH = 0.05, rackBaseD = 0.85; // base board
+const sideH = 0.85, sideThick = 0.05; // side panels — shorter than books
+
+// Base board — sits flat on desk
+const rackBase = new THREE.Mesh(new THREE.BoxGeometry(rackBaseW, rackBaseH, rackBaseD), bambooMat);
+rackBase.position.set(0, rackBaseH / 2, 0);
+rackBase.castShadow = true; rackBase.receiveShadow = true;
+bookRackGroup.add(rackBase);
+
+// Two side panels — simple rectangular bookends
+[-1, 1].forEach(side => {
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(sideThick, sideH, rackBaseD), bambooMat);
+    panel.position.set(side * (rackBaseW / 2 + sideThick / 2), sideH / 2, 0);
+    panel.castShadow = true; panel.receiveShadow = true;
+    bookRackGroup.add(panel);
+    // Optional cutout handle on the outer side panel (visual detail)
+    if (side === 1) {
+        const handleW = 0.28, handleH = 0.10;
+        const handleGeo = new THREE.BoxGeometry(sideThick + 0.01, handleH, handleW);
+        const handleMat = new THREE.MeshStandardMaterial({ color: 0xc8a96e, roughness: 0.55, metalness: 0.05 });
+        // Darker inset to simulate cutout
+        const cutout = new THREE.Mesh(handleGeo, new THREE.MeshStandardMaterial({ color: 0x8b7040, roughness: 0.7 }));
+        cutout.position.set(side * (rackBaseW / 2 + sideThick / 2), sideH * 0.55, 0);
+        bookRackGroup.add(cutout);
+    }
+});
+
+// Books — 6 books standing upright between the bookends
+const bookDefs = [
+    { title: "The Manager's Path", author: 'Fournier', color: 0x2c3e50, w: 0.14, h: 1.18, d: 0.76, titleColor: '#e8d44d' },
+    { title: 'Co-Intelligence', author: 'Mollick', color: 0xf0f0f0, w: 0.12, h: 1.16, d: 0.74, titleColor: '#1a73e8' },
+    { title: 'The Phoenix Project', author: 'Kim', color: 0xc0392b, w: 0.15, h: 1.20, d: 0.78, titleColor: '#fff' },
+    { title: 'Designing Data-Intensive Apps', author: 'Kleppmann', color: 0x1a1a2e, w: 0.16, h: 1.22, d: 0.80, titleColor: '#ddd' },
+    { title: 'Clinical Neuropsych of Emotion', author: 'Gainotti', color: 0x5b8c5a, w: 0.13, h: 1.15, d: 0.73, titleColor: '#fff' },
+];
+
+const bookMeshes = []; // for raycasting
+const bookRestingPositions = [];
+const bookRestingRotations = [];
+
+let bookX = -rackBaseW / 2 + 0.04;
+bookDefs.forEach((b, idx) => {
+    const bookGeo = new THREE.BoxGeometry(b.w, b.h, b.d);
+    const bookBaseMat = new THREE.MeshStandardMaterial({ color: b.color, roughness: 0.7, metalness: 0.05 });
+
+    // Canvas for spine text (+z face)
+    const spineCvs = document.createElement('canvas');
+    spineCvs.width = 128; spineCvs.height = 512;
+    const sCtx = spineCvs.getContext('2d');
+    const hex = '#' + b.color.toString(16).padStart(6, '0');
+    sCtx.fillStyle = hex; sCtx.fillRect(0, 0, 128, 512);
+    sCtx.save();
+    sCtx.translate(64, 256);
+    sCtx.rotate(-Math.PI / 2);
+    sCtx.fillStyle = b.titleColor;
+    sCtx.font = 'bold 26px -apple-system, sans-serif';
+    sCtx.textAlign = 'center'; sCtx.textBaseline = 'middle';
+    sCtx.fillText(b.title, 0, -12);
+    sCtx.globalAlpha = 0.55;
+    sCtx.font = '17px -apple-system, sans-serif';
+    sCtx.fillText(b.author, 0, 16);
+    sCtx.restore();
+
+    const spineTex = new THREE.CanvasTexture(spineCvs);
+    const spineMat = new THREE.MeshStandardMaterial({ map: spineTex, roughness: 0.7, metalness: 0.05 });
+
+    // Face order: +x, -x, +y, -y, +z (spine front), -z
+    const mats = [bookBaseMat, bookBaseMat, bookBaseMat, bookBaseMat, spineMat, bookBaseMat];
+    const bookMesh = new THREE.Mesh(bookGeo, mats);
+
+    // Standing upright on base, slight lean for realism
+    const lean = (idx < 2) ? -0.06 : (idx > 3) ? 0.05 : (Math.random() - 0.5) * 0.03;
+    bookMesh.position.set(bookX + b.w / 2, rackBaseH + b.h / 2, 0);
+    bookMesh.rotation.z = lean;
+    bookMesh.castShadow = true; bookMesh.receiveShadow = true;
+    bookRackGroup.add(bookMesh);
+
+    bookMeshes.push(bookMesh);
+    bookRestingPositions.push(bookMesh.position.clone());
+    bookRestingRotations.push(bookMesh.rotation.clone());
+
+    bookX += b.w + 0.02;
+});
+
+let isInspectingBook = false;
+let inspectedBookIdx = -1;
+let isDraggingBook = false;
+const bookInspectPos = new THREE.Vector3(0, 3, 5);
+const bookInspectRot = new THREE.Euler(0, 0, 0);
 
 const phone = new THREE.Mesh(roundedBox(0.5, 0.04, 1.0, 0.05, 4), bodyDarkMat);
 phone.position.set(2.6, 0.02, 0.2);
@@ -1710,8 +2127,8 @@ const tabRestingRot = new THREE.Euler(0, 0.15, 0);
 const tabInspectPos = new THREE.Vector3(0, 3, 5);
 const tabInspectRot = new THREE.Euler(-0.2, 0, 0);
 
-const coffeeRestingPos = new THREE.Vector3(-3.2, 0.08, -0.4);
-const coffeeRestingRot = new THREE.Euler(0, 0, 0);
+const coffeeRestingPos = new THREE.Vector3(3.2, 0.08, 1.0);
+const coffeeRestingRot = new THREE.Euler(0, Math.PI, 0);
 const coffeeInspectPos = new THREE.Vector3(0, 3, 5);
 const coffeeInspectRot = new THREE.Euler(-0.2, 0, 0);
 let isDraggingCoffee = false;
@@ -1974,6 +2391,15 @@ window.addEventListener('mousedown', (e) => {
     const intersectsCard = raycaster.intersectObjects([hitBox], false);
     const intersectsTablet = raycaster.intersectObjects([tabHitBox], false);
     const intersectsCoffee = raycaster.intersectObjects([coffeeHitBox], false);
+    const intersectsBooks = raycaster.intersectObjects(bookMeshes, false);
+
+    // Dismiss book on click outside
+    if (isInspectingBook && intersectsBooks.length === 0) {
+        isInspectingBook = false;
+        inspectedBookIdx = -1;
+        document.getElementById('subtitle').innerText = defaultSubtitle;
+        return;
+    }
 
     // Dismiss coffee on click outside
     if (isInspectingCoffee && intersectsCoffee.length === 0) {
@@ -1995,7 +2421,7 @@ window.addEventListener('mousedown', (e) => {
         return;
     }
 
-    if (intersectsTablet.length > 0 && !isInspectingCard && !isInspectingCoffee && !isZoomed) {
+    if (intersectsTablet.length > 0 && !isInspectingCard && !isInspectingCoffee && !isInspectingBook && !isZoomed) {
         isInspectingTablet = true;
         document.getElementById('subtitle').innerText = "Tap the screen to interact. Click outside to dismiss.";
         const camFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
@@ -2012,7 +2438,29 @@ window.addEventListener('mousedown', (e) => {
         return;
     }
 
-    if (intersectsCoffee.length > 0 && !isInspectingCard && !isInspectingTablet && !isZoomed) {
+    if (intersectsBooks.length > 0 && !isInspectingCard && !isInspectingTablet && !isInspectingCoffee && !isZoomed) {
+        const hitBook = intersectsBooks[0].object;
+        const hitIdx = bookMeshes.indexOf(hitBook);
+        if (!isInspectingBook) {
+            isInspectingBook = true;
+            inspectedBookIdx = hitIdx;
+            const bDef = bookDefs[hitIdx];
+            document.getElementById('subtitle').innerText = '"' + bDef.title + '" by ' + bDef.author + ' — Drag to rotate. Click outside to dismiss.';
+            // Compute inspect position in bookRackGroup local space → need world then to workstation local
+            const camFwdB = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            const worldPosB = camera.position.clone().add(camFwdB.multiplyScalar(5.0));
+            // Books are children of bookRackGroup which is child of workstation
+            // Convert world → bookRackGroup local
+            bookInspectPos.copy(bookRackGroup.worldToLocal(worldPosB.clone()));
+            // Face the spine (+z) toward camera — show spine front
+            bookInspectRot.set(0, 0, 0);
+        } else if (hitIdx === inspectedBookIdx) {
+            isDraggingBook = true;
+        }
+        return;
+    }
+
+    if (intersectsCoffee.length > 0 && !isInspectingCard && !isInspectingTablet && !isInspectingBook && !isZoomed) {
         if (!isInspectingCoffee) {
             isInspectingCoffee = true;
             document.getElementById('subtitle').innerText = "Drag to rotate. Click outside to dismiss.";
@@ -2020,11 +2468,8 @@ window.addEventListener('mousedown', (e) => {
             const camFwd3 = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             const worldPos3 = camera.position.clone().add(camFwd3.multiplyScalar(5.5));
             coffeeInspectPos.copy(workstation.worldToLocal(worldPos3.clone()));
-            // Convert camera rotation to workstation local space
-            const coffQ = new THREE.Quaternion().setFromEuler(camera.rotation);
-            const wsInvQ3 = new THREE.Quaternion().copy(workstation.quaternion).invert();
-            coffQ.premultiply(wsInvQ3);
-            coffeeInspectRot.setFromQuaternion(coffQ);
+            // Keep logo facing front (Y=PI), slight tilt toward camera
+            coffeeInspectRot.set(-0.15, Math.PI, 0);
         } else {
             isDraggingCoffee = true;
         }
@@ -2050,8 +2495,35 @@ window.addEventListener('mousedown', (e) => {
         }
     } else if (intersectsMonitor.length > 0) {
         if (!isInspectingCard) {
-            isZoomed = !isZoomed;
-            document.getElementById('subtitle').innerText = isZoomed ? "Click monitor to zoom out" : defaultSubtitle;
+            if (isZoomed) {
+                // Check if click is on a tab
+                const hit = intersectsMonitor.find(h => h.object === face);
+                if (hit && hit.uv) {
+                    const ux = hit.uv.x * 1024, uy = (1 - hit.uv.y) * 512;
+                    // Tab bar is top 34px
+                    if (uy < 34) {
+                        for (let ti = 0; ti < tabDefs.length; ti++) {
+                            const tx0 = 8 + ti * (monitorTabW + monitorTabGap);
+                            if (ux >= tx0 && ux <= tx0 + monitorTabW) {
+                                monitorActiveTab = ti;
+                                drawMonitorScreen();
+                                screenTex.needsUpdate = true;
+                                break;
+                            }
+                        }
+                        // Stay zoomed, don't toggle
+                    } else {
+                        isZoomed = false;
+                        document.getElementById('subtitle').innerText = defaultSubtitle;
+                    }
+                } else {
+                    isZoomed = false;
+                    document.getElementById('subtitle').innerText = defaultSubtitle;
+                }
+            } else {
+                isZoomed = true;
+                document.getElementById('subtitle').innerText = "Click tabs to switch. Click below to zoom out.";
+            }
         }
     } else {
         if (isZoomed) { isZoomed = false; document.getElementById('subtitle').innerText = defaultSubtitle; }
@@ -2087,6 +2559,14 @@ window.addEventListener('mousemove', (e) => {
         };
         cardInspectRot.y += deltaMove.x * 0.01;
         cardInspectRot.x += deltaMove.y * 0.01;
+    }
+    if (isDraggingBook && isInspectingBook) {
+        const dbm = {
+            x: e.offsetX - previousMousePosition.x,
+            y: e.offsetY - previousMousePosition.y
+        };
+        bookInspectRot.y += dbm.x * 0.01;
+        bookInspectRot.x += dbm.y * 0.01;
     }
     if (isDraggingCoffee && isInspectingCoffee) {
         const dm = {
@@ -2124,6 +2604,7 @@ window.addEventListener('mouseup', () => {
     }
     isDraggingCard = false;
     isDraggingCoffee = false;
+    isDraggingBook = false;
     isDraggingWorkstation = false;
 });
 
@@ -2181,8 +2662,25 @@ function animate() {
         const ctq = new THREE.Quaternion().setFromEuler(cRot);
         cq.slerp(ctq, 0.08);
         coffeeGroup.quaternion.copy(cq);
-        if (!isInspectingCoffee) coffeeInspectRot.set(-0.2, 0, 0);
+        if (!isInspectingCoffee) coffeeInspectRot.set(-0.15, Math.PI, 0);
     }
+
+    // Animate Books
+    bookMeshes.forEach((bm, i) => {
+        if (isInspectingBook && i === inspectedBookIdx) {
+            bm.position.lerp(bookInspectPos, 0.08);
+            const bq = new THREE.Quaternion().copy(bm.quaternion);
+            const btq = new THREE.Quaternion().setFromEuler(bookInspectRot);
+            bq.slerp(btq, 0.08);
+            bm.quaternion.copy(bq);
+        } else {
+            bm.position.lerp(bookRestingPositions[i], 0.08);
+            const bq = new THREE.Quaternion().copy(bm.quaternion);
+            const btq = new THREE.Quaternion().setFromEuler(bookRestingRotations[i]);
+            bq.slerp(btq, 0.08);
+            bm.quaternion.copy(bq);
+        }
+    });
 
     // Live timer refresh for TMT
     if (isInspectingTablet && tabState.currentScreen === 'trail' && tabState.trailStartTime > 0 && !tabState.trailComplete) {
