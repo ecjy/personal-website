@@ -1301,11 +1301,11 @@ bookDefs.forEach((b, idx) => {
     bookGroup.add(pageBlock);
 
     // ── Front Cover with canvas art (opens on hinge) ──
-    // The front cover pivots around its left edge (+x side of the book)
+    // The front cover pivots around the front edge (+Z side) of the +X face
     const coverW = bookCoverThick;
     const frontCoverPivot = new THREE.Group();
-    // Pivot is at the right edge of the book (+x side = spine hinge)
-    frontCoverPivot.position.set(b.w / 2 - bookCoverThick / 2, 0, 0);
+    // Pivot at front edge of the +X face — cover opens forward and outward
+    frontCoverPivot.position.set(b.w / 2 - bookCoverThick / 2, 0, b.d / 2 - bookCoverThick);
     bookGroup.add(frontCoverPivot);
 
     // Cover art canvas
@@ -1316,11 +1316,11 @@ bookDefs.forEach((b, idx) => {
     const coverTex = new THREE.CanvasTexture(coverCvs);
     const coverArtMat = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.5, metalness: 0.05 });
 
-    const frontCoverGeo = new THREE.BoxGeometry(b.d, b.h, coverW);
-    // Face order: +x, -x, +y, -y, +z (outer cover art), -z (inner)
-    const frontCover = new THREE.Mesh(frontCoverGeo, [coverMat, coverMat, coverMat, coverMat, coverArtMat, coverMat]);
-    // Offset so left edge of cover is at pivot (0,0,0)
-    frontCover.position.set(b.d / 2, 0, 0);
+    const frontCoverGeo = new THREE.BoxGeometry(coverW, b.h, b.d);
+    // Face order: +x (outer cover art), -x (inner), +y, -y, +z, -z
+    const frontCover = new THREE.Mesh(frontCoverGeo, [coverArtMat, coverMat, coverMat, coverMat, coverMat, coverMat]);
+    // Offset so cover extends from pivot toward -Z (back of book)
+    frontCover.position.set(0, 0, -(b.d / 2 - bookCoverThick));
     frontCoverPivot.add(frontCover);
 
     // ── First Page (visible when book opens) — sits just inside front cover ──

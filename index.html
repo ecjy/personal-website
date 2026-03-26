@@ -1280,32 +1280,32 @@ bookDefs.forEach((b, idx) => {
     const spineMat = new THREE.MeshStandardMaterial({ map: spineTex, roughness: 0.6, metalness: 0.05 });
     // Spine faces: +x(right), -x(left), +y, -y, +z(front), -z(back)
     const spineMesh = new THREE.Mesh(spineGeo, [coverMat, coverMat, coverMat, coverMat, spineMat, coverMat]);
-    spineMesh.position.set(0, 0, -b.d / 2 + bookCoverThick);
+    spineMesh.position.set(0, 0, b.d / 2 - bookCoverThick);
     bookGroup.add(spineMesh);
 
-    // ── Back cover ──
-    const backCoverGeo = new THREE.BoxGeometry(bookCoverThick, b.h, b.d);
+    // ── Back cover (shortened to not overlap spine) ──
+    const backCoverD = b.d - bookCoverThick * 2;
+    const backCoverGeo = new THREE.BoxGeometry(bookCoverThick, b.h, backCoverD);
     const backCover = new THREE.Mesh(backCoverGeo, coverMat);
-    backCover.position.set(-b.w / 2 + bookCoverThick / 2, 0, 0);
+    backCover.position.set(-b.w / 2 + bookCoverThick / 2, 0, -bookCoverThick);
     bookGroup.add(backCover);
 
     // ── Page block (cream colored pages between covers) ──
     const pageBlockW = b.w - bookCoverThick * 2 - 0.005;
     const pageBlockH = b.h - 0.01;
-    const pageBlockD = b.d - bookCoverThick * 2 - 0.005;
+    const pageBlockD = b.d - bookCoverThick * 4 - 0.01; // shorter depth to avoid overlapping spine
     const pageBlock = new THREE.Mesh(
         new THREE.BoxGeometry(pageBlockW, pageBlockH, pageBlockD),
         [pageEdgeMat, pageEdgeMat, pageEdgeMat, pageEdgeMat, pageEdgeMat, pageEdgeMat]
     );
-    pageBlock.position.set(0, 0, 0);
+    pageBlock.position.set(0, 0, -bookCoverThick);
     bookGroup.add(pageBlock);
 
-    // ── Front Cover with canvas art (opens on hinge) ──
-    // The front cover pivots around its left edge (+x side of the book)
+    // ── Front Cover with canvas art (opens on hinge at spine +Z edge) ──
     const coverW = bookCoverThick;
     const frontCoverPivot = new THREE.Group();
-    // Pivot is at the right edge of the book (+x side = spine hinge)
-    frontCoverPivot.position.set(b.w / 2 - bookCoverThick / 2, 0, 0);
+    // Pivot at spine edge (+Z side)
+    frontCoverPivot.position.set(b.w / 2 - bookCoverThick / 2, 0, b.d / 2 - bookCoverThick);
     bookGroup.add(frontCoverPivot);
 
     // Cover art canvas
@@ -1316,11 +1316,11 @@ bookDefs.forEach((b, idx) => {
     const coverTex = new THREE.CanvasTexture(coverCvs);
     const coverArtMat = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.5, metalness: 0.05 });
 
-    const frontCoverGeo = new THREE.BoxGeometry(b.d, b.h, coverW);
-    // Face order: +x, -x, +y, -y, +z (outer cover art), -z (inner)
-    const frontCover = new THREE.Mesh(frontCoverGeo, [coverMat, coverMat, coverMat, coverMat, coverArtMat, coverMat]);
-    // Offset so left edge of cover is at pivot (0,0,0)
-    frontCover.position.set(b.d / 2, 0, 0);
+    const frontCoverGeo = new THREE.BoxGeometry(coverW, b.h, backCoverD);
+    // Face order: +x (outer cover art), -x (inner), +y, -y, +z, -z
+    const frontCover = new THREE.Mesh(frontCoverGeo, [coverArtMat, coverMat, coverMat, coverMat, coverMat, coverMat]);
+    // Cover extends from pivot toward -Z (away from spine)
+    frontCover.position.set(0, 0, -backCoverD / 2);
     frontCoverPivot.add(frontCover);
 
     // ── First Page (visible when book opens) — sits just inside front cover ──
@@ -2755,15 +2755,15 @@ window.addEventListener('mousedown', (e) => {
         if (!isInspectingBook) {
             isInspectingBook = true;
             inspectedBookIdx = hitIdx;
-            bookTargetOpen = 1; // open the book
+            bookTargetOpen = 0; // keep closed — admire cover first
             bookOpenAmount = 0;
             const bDef = bookDefs[hitIdx];
-            document.getElementById('subtitle').innerText = '"' + bDef.title + '" by ' + bDef.author + ' — Drag to rotate. Click outside to dismiss.';
+            document.getElementById('subtitle').innerText = '"' + bDef.title + '" by ' + bDef.author + ' — Drag to rotate. Double-click to open.';
             const camFwdB = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             const worldPosB = camera.position.clone().add(camFwdB.multiplyScalar(5.0));
             bookInspectPos.copy(bookRackGroup.worldToLocal(worldPosB.clone()));
-            // Show cover facing camera, then it opens
-            bookInspectRot.set(0, 0, 0);
+            // Spine on the left, cover facing camera
+            bookInspectRot.set(0, -Math.PI / 2, 0);
         } else if (hitIdx === inspectedBookIdx) {
             isDraggingBook = true;
         }
@@ -2916,6 +2916,23 @@ window.addEventListener('mouseup', () => {
     isDraggingCoffee = false;
     isDraggingBook = false;
     isDraggingWorkstation = false;
+});
+
+// Double-click to open book
+window.addEventListener('dblclick', (e) => {
+    if (!isInspectingBook || inspectedBookIdx < 0) return;
+    const mouse = new THREE.Vector2(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        -(e.clientY / window.innerHeight) * 2 + 1
+    );
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(bookMeshes, false);
+    if (hits.length > 0) {
+        const hitIdx = getBookIndexFromMesh(hits[0].object);
+        if (hitIdx === inspectedBookIdx) {
+            bookTargetOpen = bookTargetOpen > 0 ? 0 : 1; // toggle open/close
+        }
+    }
 });
 
 // Add instruction initial text
