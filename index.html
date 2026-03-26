@@ -146,7 +146,7 @@ import * as THREE from 'three';
 import { RoomEnvironment }  from 'three/addons/environments/RoomEnvironment.js';
 
 // ─── Renderer ────────────────────────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, logarithmicDepthBuffer: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -228,71 +228,80 @@ workstation.add(desk);
 
 // Custom Screen Material
 const screenCanvas = document.createElement('canvas');
-screenCanvas.width = 1024; screenCanvas.height = 512;
+screenCanvas.width = 2048; screenCanvas.height = 1024;
 const ctx = screenCanvas.getContext('2d');
 let monitorActiveTab = 0;
-const monitorTabW = 220, monitorTabGap = 3;
+const monitorTabW = 190, monitorTabGap = 3;
 
 const tabDefs = [
     { label: 'Grant Management', url: 'research-portal.elecctro.io/grants' },
     { label: 'Rater Admin', url: 'research-portal.elecctro.io/raters' },
     { label: 'Data Management', url: 'research-portal.elecctro.io/data' },
     { label: 'Coding / Digitization', url: 'research-portal.elecctro.io/coding' },
+    { label: 'MACC.sg', url: 'macc.sg', external: true },
 ];
 
 function drawMonitorScreen() {
-    const W = 1024, H = 512;
-    const taskH = 32, tabBarH = 34, addressH = 28;
+    const W = 2048, H = 1024;
+    const taskH = 64, tabBarH = 68, addressH = 56;
 
     // ── Clear ──
-    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, W, H);
 
     // ── Tab bar ──
-    ctx.fillStyle = '#2b2b3d'; ctx.fillRect(0, 0, W, tabBarH);
+    ctx.fillStyle = '#2a2a42'; ctx.fillRect(0, 0, W, tabBarH);
     tabDefs.forEach((tab, i) => {
-        const tx = 8 + i * (monitorTabW + monitorTabGap);
+        const tx = 16 + i * (monitorTabW * 2 + monitorTabGap * 2);
+        const tw = monitorTabW * 2;
         const active = i === monitorActiveTab;
-        ctx.fillStyle = active ? '#1e1e2e' : '#35354a';
-        const tr = 6;
+        ctx.fillStyle = active ? '#1a1a2e' : '#35354a';
+        const tr = 12;
         ctx.beginPath();
-        ctx.moveTo(tx + tr, 4); ctx.lineTo(tx + monitorTabW - tr, 4);
-        ctx.quadraticCurveTo(tx + monitorTabW, 4, tx + monitorTabW, 4 + tr);
-        ctx.lineTo(tx + monitorTabW, tabBarH); ctx.lineTo(tx, tabBarH);
-        ctx.lineTo(tx, 4 + tr); ctx.quadraticCurveTo(tx, 4, tx + tr, 4);
+        ctx.moveTo(tx + tr, 8); ctx.lineTo(tx + tw - tr, 8);
+        ctx.quadraticCurveTo(tx + tw, 8, tx + tw, 8 + tr);
+        ctx.lineTo(tx + tw, tabBarH); ctx.lineTo(tx, tabBarH);
+        ctx.lineTo(tx, 8 + tr); ctx.quadraticCurveTo(tx, 8, tx + tr, 8);
         ctx.fill();
-        ctx.fillStyle = active ? '#fff' : '#888';
-        ctx.font = '13px -apple-system, sans-serif';
-        ctx.fillText(tab.label, tx + 10, tabBarH - 10);
-        ctx.fillStyle = '#666'; ctx.font = '12px sans-serif';
-        ctx.fillText('×', tx + monitorTabW - 18, tabBarH - 10);
+        ctx.fillStyle = active ? '#ffffff' : '#999';
+        ctx.font = 'bold 26px -apple-system, sans-serif';
+        ctx.fillText(tab.label, tx + 20, tabBarH - 18);
+        // External link indicator
+        if (tab.external) { ctx.fillStyle = '#4caf50'; ctx.font = '20px sans-serif'; ctx.fillText('↗', tx + tw - 50, tabBarH - 18); }
+        ctx.fillStyle = '#666'; ctx.font = '24px sans-serif';
+        ctx.fillText('×', tx + tw - 30, tabBarH - 16);
     });
 
     // ── Address bar ──
     const addrY = tabBarH;
-    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, addrY, W, addressH);
-    ctx.fillStyle = '#555'; ctx.font = '16px sans-serif';
-    ctx.fillText('←  →  ⟳', 12, addrY + 20);
+    ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, addrY, W, addressH);
+    ctx.fillStyle = '#666'; ctx.font = '32px sans-serif';
+    ctx.fillText('←  →  ⟳', 24, addrY + 40);
     ctx.fillStyle = '#2b2b3d';
-    ctx.beginPath(); ctx.roundRect(90, addrY + 4, W - 200, 20, 4); ctx.fill();
-    ctx.fillStyle = '#4caf50'; ctx.font = '12px monospace'; ctx.fillText('🔒', 98, addrY + 19);
-    ctx.fillStyle = '#aaa'; ctx.font = '12px -apple-system, sans-serif';
-    ctx.fillText('https://' + tabDefs[monitorActiveTab].url, 120, addrY + 19);
+    ctx.beginPath(); ctx.roundRect(180, addrY + 8, W - 400, 40, 8); ctx.fill();
+    ctx.fillStyle = '#4caf50'; ctx.font = '22px monospace'; ctx.fillText('🔒', 196, addrY + 36);
+    ctx.fillStyle = '#bbb'; ctx.font = '24px -apple-system, sans-serif';
+    ctx.fillText('https://' + tabDefs[monitorActiveTab].url, 240, addrY + 38);
     ctx.fillStyle = '#4a6fa5';
-    ctx.beginPath(); ctx.arc(W - 30, addrY + 14, 10, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('E', W - 34, addrY + 18);
+    ctx.beginPath(); ctx.arc(W - 60, addrY + 28, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('E', W - 68, addrY + 36);
 
     // ── Page content ──
     const contentY = addrY + addressH;
     const contentH = H - taskH - contentY;
     ctx.fillStyle = '#f5f5f8'; ctx.fillRect(0, contentY, W, contentH);
 
-    if (monitorActiveTab === 0) drawGrantPage(contentY, contentH);
-    else if (monitorActiveTab === 1) drawRaterPage(contentY, contentH);
-    else if (monitorActiveTab === 2) drawDataPage(contentY, contentH);
-    else drawCodingPage(contentY, contentH);
+    if (monitorActiveTab === 4) drawMACCPage(contentY, contentH);
+    else {
+        ctx.save(); ctx.scale(2, 2);
+        if (monitorActiveTab === 0) drawGrantPage(contentY / 2, contentH / 2);
+        else if (monitorActiveTab === 1) drawRaterPage(contentY / 2, contentH / 2);
+        else if (monitorActiveTab === 2) drawDataPage(contentY / 2, contentH / 2);
+        else drawCodingPage(contentY / 2, contentH / 2);
+        ctx.restore();
+    }
 
     // ── Taskbar ──
-    ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, H - taskH, W, taskH);
+    ctx.fillStyle = '#141428'; ctx.fillRect(0, H - taskH, W, taskH);
     // Right side only — time + battery
     const now = new Date();
     const sgTime = now.toLocaleTimeString('en-SG', { timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', hour12: false });
@@ -563,6 +572,69 @@ function drawCodingPage(cy, ch) {
         ['PANSS-0142-V3 needs second coder verification', 'New MADRS template uploaded — test before rolling out']);
 }
 
+// ── MACC.sg page (native 2x resolution) ──
+function drawMACCPage(cy, ch) {
+    const W = 2048;
+    // Hero banner
+    ctx.fillStyle = '#0a2540'; ctx.fillRect(0, cy, W, ch * 0.45);
+    // Accent gradient bar
+    const grd = ctx.createLinearGradient(0, cy, W, cy);
+    grd.addColorStop(0, '#635bff'); grd.addColorStop(0.5, '#00d4aa'); grd.addColorStop(1, '#0a84ff');
+    ctx.fillStyle = grd; ctx.fillRect(0, cy, W, 6);
+    // Logo / Title
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 64px -apple-system, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('MACC', 80, cy + 40);
+    ctx.fillStyle = '#00d4aa'; ctx.font = 'bold 64px -apple-system, sans-serif';
+    ctx.fillText('.sg', 280, cy + 40);
+    // Subtitle
+    ctx.fillStyle = '#94a3b8'; ctx.font = '28px -apple-system, sans-serif';
+    ctx.fillText('Memory, Aging & Cognition Centre — National University Health System', 80, cy + 120);
+    // Description
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '24px -apple-system, sans-serif';
+    ctx.fillText('Advancing research in dementia, cerebrovascular disease, and cognitive health', 80, cy + 170);
+    ctx.fillText('through clinical trials, neuroimaging, and digital biomarkers.', 80, cy + 200);
+    // Stats row
+    const statsY = cy + 260;
+    const stats = [
+        { n: '38+', l: 'Publications' }, { n: '813', l: 'Citations' },
+        { n: '15', l: 'h-index' }, { n: '4', l: 'Active Trials' }
+    ];
+    stats.forEach((s, i) => {
+        const sx = 80 + i * 460;
+        ctx.fillStyle = '#00d4aa'; ctx.font = 'bold 48px -apple-system, sans-serif';
+        ctx.fillText(s.n, sx, statsY);
+        ctx.fillStyle = '#64748b'; ctx.font = '22px -apple-system, sans-serif';
+        ctx.fillText(s.l, sx, statsY + 42);
+    });
+    // Content area
+    const contentTop = cy + ch * 0.45;
+    ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, contentTop, W, ch * 0.55);
+    // Research areas
+    ctx.fillStyle = '#1e293b'; ctx.font = 'bold 32px -apple-system, sans-serif';
+    ctx.fillText('Research Focus Areas', 80, contentTop + 50);
+    const areas = [
+        { title: 'Cerebrovascular Disease', desc: 'Microinfarcts, white matter hyperintensities, brain atrophy', color: '#ef4444' },
+        { title: 'AI & Digital Biomarkers', desc: 'Deep learning, retinal imaging, spatial navigation', color: '#3b82f6' },
+        { title: 'Stroke & Cognition', desc: 'Post-stroke dementia, STROKOG collaboration', color: '#8b5cf6' },
+        { title: 'Clinical Assessment', desc: 'Neuropsychological testing, lifestyle interventions', color: '#10b981' },
+    ];
+    areas.forEach((a, i) => {
+        const ax = 80 + (i % 2) * 960, ay = contentTop + 90 + Math.floor(i / 2) * 100;
+        ctx.fillStyle = a.color; ctx.beginPath(); ctx.roundRect(ax, ay, 880, 80, 12); ctx.fill();
+        ctx.globalAlpha = 0.15; ctx.fillStyle = '#000'; ctx.fillRect(ax, ay, 880, 80); ctx.globalAlpha = 1;
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 26px -apple-system, sans-serif';
+        ctx.fillText(a.title, ax + 24, ay + 32);
+        ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = '20px -apple-system, sans-serif';
+        ctx.fillText(a.desc, ax + 24, ay + 60);
+    });
+    // Visit button
+    ctx.fillStyle = '#635bff'; ctx.beginPath(); ctx.roundRect(80, contentTop + ch * 0.55 - 100, 300, 56, 12); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 26px -apple-system, sans-serif';
+    ctx.fillText('Visit macc.sg  ↗', 120, contentTop + ch * 0.55 - 64);
+    ctx.textAlign = 'left';
+}
+
 drawMonitorScreen();
 
 const screenTex = new THREE.CanvasTexture(screenCanvas);
@@ -570,7 +642,8 @@ screenTex.needsUpdate = true;
 screenTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 const screenMat = new THREE.MeshBasicMaterial({
     map: screenTex,
-    color: 0xffffff
+    color: 0xffffff,
+    toneMapped: false
 });
 // Update clock every minute
 setInterval(() => { drawMonitorScreen(); screenTex.needsUpdate = true; }, 60000);
@@ -2274,10 +2347,10 @@ const PAPERS_CLINICAL = [
 
 // ── Folder configs ───────────────────────────────────────────────────────────
 const FOLDER_CONFIGS = [
-  { label: 'Cerebrovascular Disease', color: 0x8b3a3a, tabColor: '#8b3a3a', folderShade: 0xc4937a, papers: PAPERS_CVD },
-  { label: 'AI & Digital Biomarkers',  color: 0x2c5f8a, tabColor: '#2c5f8a', folderShade: 0x7a9bb8, papers: PAPERS_AI },
-  { label: 'Stroke & Cognition',       color: 0x5a3d7a, tabColor: '#5a3d7a', folderShade: 0x9a82b0, papers: PAPERS_STROKE },
-  { label: 'Clinical Assessment',      color: 0x2e6e4a, tabColor: '#2e6e4a', folderShade: 0x6ea888, papers: PAPERS_CLINICAL },
+  { label: 'Cerebrovascular Disease', papers: PAPERS_CVD, manilaBase: '#8b6914', manilaEdge: '#6e520f' },
+  { label: 'AI & Digital Biomarkers',  papers: PAPERS_AI,  manilaBase: '#3a6e8c', manilaEdge: '#2b5670' },
+  { label: 'Stroke & Cognition',       papers: PAPERS_STROKE, manilaBase: '#6b4f7a', manilaEdge: '#553d63' },
+  { label: 'Clinical Assessment',      papers: PAPERS_CLINICAL, manilaBase: '#3d7a55', manilaEdge: '#2d6040' },
 ];
 
 // ── Reader UI functions ──────────────────────────────────────────────────────
@@ -2301,7 +2374,7 @@ function buildPubPaper(p) {
       '<span class="pp-date-pipe">|</span>' +
       '<span class="pp-date-seg"><span class="pp-date-label acc">Accepted:</span><span class="pp-date-val">&nbsp;' + p.accepted + '</span></span>' +
     '</div>' +
-    '<div class="pp-doi-row">DOI: ' + p.doi + '</div>' +
+    '<div class="pp-doi-row">DOI: <a href="https://doi.org/' + p.doi + '" target="_blank" style="color:inherit;text-decoration:underline;cursor:pointer">' + p.doi + '</a></div>' +
     '<div class="pp-jbar" style="--jc:' + p.color + '">' +
       '<span class="pp-art-type">Research Article</span>' +
       '<span class="pp-jname-wrap"><span class="pp-jname">' + p.journal + '</span><span class="pp-jsub">' + p.jsub + '</span></span>' +
@@ -2350,6 +2423,11 @@ function pubNavigate(dir) { pubGoTo(pubCur + dir); }
 
 pubPrevBtn.onclick = function() { pubNavigate(-1); };
 pubNextBtn.onclick = function() { pubNavigate(1); };
+pubReader.addEventListener('dblclick', function(e) {
+  if (pubPapers[pubCur] && pubPapers[pubCur].doi) {
+    window.open('https://doi.org/' + pubPapers[pubCur].doi, '_blank');
+  }
+});
 document.addEventListener('keydown', function(e) {
   if (pubReader.classList.contains('hidden')) return;
   if (e.key === 'ArrowRight') pubNavigate(1);
@@ -2458,10 +2536,11 @@ function createFolder(config, index) {
   var paperTextures = [];
   var texturesGenerated = false;
 
-  // Back panel
-  var backMat = new THREE.MeshStandardMaterial({ color: config.folderShade, roughness: 0.60, metalness: 0.04 });
+  // Back panel — manila colored
+  var baseColor = new THREE.Color(config.manilaBase);
+  var backMat = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.75, metalness: 0.0, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 });
   var back = new THREE.Mesh(new THREE.BoxGeometry(FW, cardThick, FD), backMat);
-  back.position.y = -0.03;
+  back.position.y = -0.05;
   back.castShadow = true; back.receiveShadow = true;
   group.add(back);
 
@@ -2470,7 +2549,7 @@ function createFolder(config, index) {
   [[0xfafaf5,0],[0xfff9f0,1],[0xeef3ff,2]].forEach(function(pair) {
     var m = new THREE.MeshStandardMaterial({ color: pair[0], roughness: 0.95 });
     var mesh = new THREE.Mesh(new THREE.BoxGeometry(PW_F, 0.008, PD_F), m);
-    mesh.position.set(0, -0.03 + cardThick/2 + 0.008 + pair[1] * 0.009, 0);
+    mesh.position.set(0, -0.05 + cardThick/2 + 0.008 + pair[1] * 0.009, 0);
     mesh.visible = false;
     group.add(mesh);
     paperEdges.push(mesh);
@@ -2481,47 +2560,69 @@ function createFolder(config, index) {
   flapPivot.position.set(-FW/2, 0, 0);
   group.add(flapPivot);
 
-  // Front cover canvas — manila folder style with category badge
+  // Front cover canvas — realistic manila folder with crisp black label
   var coverCvs = document.createElement('canvas');
-  coverCvs.width = 540; coverCvs.height = 790;
+  coverCvs.width = 1200; coverCvs.height = 1720;
   var cctx = coverCvs.getContext('2d');
-  // Manila gradient
-  var bg = cctx.createLinearGradient(0, 0, 0, 790);
-  bg.addColorStop(0, '#e8d5a8');
-  bg.addColorStop(1, '#d4bc8a');
-  cctx.fillStyle = bg; cctx.fillRect(0, 0, 540, 790);
-  // Spine strip
-  cctx.fillStyle = 'rgba(0,0,0,0.08)'; cctx.fillRect(0, 0, 24, 790);
-  // Tab badge
-  cctx.fillStyle = config.tabColor;
-  cctx.beginPath(); cctx.roundRect(40, 30, 460, 60, 8); cctx.fill();
-  cctx.fillStyle = '#ffffff'; cctx.font = 'bold 24px Arial'; cctx.textAlign = 'center'; cctx.textBaseline = 'middle';
-  cctx.fillText(config.label, 270, 60);
-  // Count
-  cctx.fillStyle = 'rgba(255,255,255,0.6)'; cctx.font = '18px Arial';
-  cctx.fillText(config.papers.length + ' papers', 270, 90);
-  // Year
-  cctx.fillStyle = 'rgba(0,0,0,0.15)'; cctx.font = 'bold 120px Arial Black, Arial';
-  cctx.fillText('2026', 270, 450);
-  // Label bottom
-  cctx.fillStyle = 'rgba(0,0,0,0.25)'; cctx.font = '16px Arial';
-  cctx.fillText('Eddie Chong  ·  Publications', 270, 740);
+  var CW = 1200, CH = 1720;
+  // Base manila color from config
+  var bg = cctx.createLinearGradient(0, 0, CW * 0.3, CH);
+  bg.addColorStop(0, config.manilaEdge);
+  bg.addColorStop(0.15, config.manilaBase);
+  bg.addColorStop(0.85, config.manilaBase);
+  bg.addColorStop(1, config.manilaEdge);
+  cctx.fillStyle = bg; cctx.fillRect(0, 0, CW, CH);
+  // Paper fiber texture (horizontal + random)
+  for (var gi = 0; gi < 6000; gi++) {
+    var ga = Math.random() * 0.03;
+    cctx.fillStyle = gi % 3 === 0 ? 'rgba(255,255,255,' + ga + ')' : 'rgba(0,0,0,' + ga + ')';
+    cctx.fillRect(Math.random() * CW, Math.random() * CH, Math.random() * 6 + 1, 1);
+  }
+  // Fold crease line along left edge (hinge)
+  cctx.strokeStyle = 'rgba(0,0,0,0.15)'; cctx.lineWidth = 5;
+  cctx.beginPath(); cctx.moveTo(44, 0); cctx.lineTo(44, CH); cctx.stroke();
+  cctx.strokeStyle = 'rgba(255,255,255,0.1)'; cctx.lineWidth = 3;
+  cctx.beginPath(); cctx.moveTo(49, 0); cctx.lineTo(49, CH); cctx.stroke();
+  // Subtle shadow along top edge (depth illusion)
+  var topShadow = cctx.createLinearGradient(0, 0, 0, 30);
+  topShadow.addColorStop(0, 'rgba(0,0,0,0.08)'); topShadow.addColorStop(1, 'rgba(0,0,0,0)');
+  cctx.fillStyle = topShadow; cctx.fillRect(0, 0, CW, 30);
+  // Printed label — black text, crisp, like a real typed folder label
+  // Label background strip (slightly lighter)
+  cctx.fillStyle = 'rgba(255,255,255,0.25)';
+  cctx.fillRect(70, 80, CW - 140, 160);
+  cctx.strokeStyle = 'rgba(0,0,0,0.12)'; cctx.lineWidth = 2;
+  cctx.strokeRect(70, 80, CW - 140, 160);
+  // Category name — large, black, bold
+  cctx.fillStyle = '#000000'; cctx.font = 'bold 56px -apple-system, Helvetica Neue, sans-serif';
+  cctx.textAlign = 'left'; cctx.textBaseline = 'middle';
+  cctx.fillText(config.label, 100, 145);
+  // Paper count — smaller, black
+  cctx.fillStyle = '#222222'; cctx.font = '34px -apple-system, sans-serif';
+  cctx.fillText(config.papers.length + ' publications', 100, 210);
+  // Horizontal ruled lines (like a real folder label area)
+  cctx.strokeStyle = 'rgba(0,0,0,0.06)'; cctx.lineWidth = 1;
+  for (var rl = 300; rl < CH - 200; rl += 80) {
+    cctx.beginPath(); cctx.moveTo(70, rl); cctx.lineTo(CW - 70, rl); cctx.stroke();
+  }
+  // Author/institution at bottom
+  cctx.fillStyle = 'rgba(0,0,0,0.35)'; cctx.font = '28px -apple-system, sans-serif';
+  cctx.textAlign = 'center';
+  cctx.fillText('Eddie Chong Jun Yi  ·  MACC, NUS', CW / 2, CH - 100);
+  cctx.fillStyle = 'rgba(0,0,0,0.2)'; cctx.font = '24px -apple-system, sans-serif';
+  cctx.fillText('2024 – 2026', CW / 2, CH - 60);
 
   var coverTex = new THREE.CanvasTexture(coverCvs);
-  var coverMat = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.58, metalness: 0.04 });
-  var flapMesh = new THREE.Mesh(new THREE.BoxGeometry(FW, cardThick, FD), new THREE.MeshStandardMaterial({ color: config.folderShade, roughness: 0.55, metalness: 0.04 }));
+  coverTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  // Apply cover texture directly to flap mesh top face — no separate plane
+  var edgeColor = new THREE.Color(config.manilaEdge);
+  var flapSideMat = new THREE.MeshStandardMaterial({ color: edgeColor, roughness: 0.75, metalness: 0.0, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+  var flapTopMat = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.72, metalness: 0.0, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+  // BoxGeometry face order: +x, -x, +y (top), -y (bottom), +z, -z
+  var flapMesh = new THREE.Mesh(new THREE.BoxGeometry(FW, cardThick, FD), [flapSideMat, flapSideMat, flapTopMat, flapSideMat, flapSideMat, flapSideMat]);
   flapMesh.position.set(FW/2, 0, 0);
   flapMesh.castShadow = true;
   flapPivot.add(flapMesh);
-
-  // Cover label on top
-  var coverLabel = new THREE.Mesh(
-    new THREE.PlaneGeometry(FW * 0.92, FD * 0.92),
-    coverMat
-  );
-  coverLabel.rotation.x = -Math.PI/2;
-  coverLabel.position.set(FW/2, cardThick/2 + 0.002, 0);
-  flapPivot.add(coverLabel);
 
   // Paper base (bottom visible when open)
   var paperBase = new THREE.Mesh(
@@ -2529,7 +2630,7 @@ function createFolder(config, index) {
     new THREE.MeshBasicMaterial({ color: 0xfaf8f2, side: THREE.FrontSide })
   );
   paperBase.rotation.x = -Math.PI/2;
-  paperBase.position.set(0, -0.03 + cardThick/2 + 0.035, 0);
+  paperBase.position.set(0, -0.05 + cardThick/2 + 0.035, 0);
   paperBase.visible = false;
   group.add(paperBase);
 
@@ -2539,13 +2640,13 @@ function createFolder(config, index) {
     new THREE.MeshBasicMaterial({ color: 0xfaf8f2, side: THREE.FrontSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 })
   );
   paperTop.rotation.x = -Math.PI/2;
-  paperTop.position.set(0, -0.03 + cardThick/2 + 0.036, 0);
+  paperTop.position.set(0, -0.05 + cardThick/2 + 0.036, 0);
   paperTop.visible = false;
   group.add(paperTop);
 
   // Flip pivot
   var flipPivot = new THREE.Group();
-  flipPivot.position.set(-PW_F/2, -0.03 + cardThick/2 + 0.036, 0);
+  flipPivot.position.set(-PW_F/2, -0.05 + cardThick/2 + 0.036, 0);
   flipPivot.visible = false;
   group.add(flipPivot);
 
@@ -2643,14 +2744,48 @@ function enterFolderSelectMode() {
   folderSelectMode = true;
   isInspectingFolder = false;
   inspectedFolderIdx = -1;
-  // Spread folders diagonally in front of camera
-  folders.forEach(function(f, i) {
-    f.targetPos.set(-1.5 + i * 1.0, i * 0.15, -1.0 + i * 0.15);
-    f.targetRot.set(0, 0.15, 0);
+  // Compute camera vectors in world space
+  var camForward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
+  var camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+  var camUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+  var center = camera.position.clone().add(camForward.clone().multiplyScalar(9));
+  // Compute rotation so folder top faces camera
+  var camQ = new THREE.Quaternion().setFromEuler(camera.rotation);
+  var tiltQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  camQ.multiply(tiltQ);
+  var wsInvQ = new THREE.Quaternion().copy(folderStackGroup.getWorldQuaternion(new THREE.Quaternion())).invert();
+  camQ.premultiply(wsInvQ);
+  var fanRadius = 1.8;
+  var fanSpread = Math.PI * 0.6; // semi-circle arc (~108 degrees)
+  // Sort by resting Y (stack height) so table order matches fan-out order:
+  // bottom of stack → left, top of stack → right
+  var sorted = folders.map(function(f, i) { return { f: f, idx: i }; });
+  sorted.sort(function(a, b) { return a.f.restingPos.y - b.f.restingPos.y; });
+  var n = sorted.length;
+  sorted.forEach(function(entry, rank) {
+    var f = entry.f;
+    // Angle along the arc: centered, spread evenly
+    var angle = -fanSpread / 2 + (n > 1 ? rank * fanSpread / (n - 1) : 0);
+    var hOff = Math.sin(angle) * fanRadius;
+    var vOff = (Math.cos(angle) - 1) * fanRadius * 0.12;
+    // Depth: left (rank 0) furthest from camera, right (rank n-1) closest
+    var dOff = (n - 1 - rank) * 0.14;
+    // Compute world position, then convert to local space
+    var worldPos = center.clone()
+      .add(camRight.clone().multiplyScalar(hOff))
+      .add(camUp.clone().multiplyScalar(vOff))
+      .add(camForward.clone().multiplyScalar(dOff));
+    f.targetPos.copy(folderStackGroup.worldToLocal(worldPos));
+    // Per-folder rotation: tilt each folder along the arc
+    var perFolderQ = new THREE.Quaternion().copy(camQ);
+    var tiltAxis = new THREE.Vector3(0, 0, 1).applyQuaternion(camQ);
+    var arcTilt = new THREE.Quaternion().setFromAxisAngle(tiltAxis, -angle * 0.15);
+    perFolderQ.premultiply(arcTilt);
+    f.targetRot.setFromQuaternion(perFolderQ);
     f.isOpen = false;
     f.flapTarget = 0;
   });
-  document.getElementById('subtitle').innerText = "Select a folder to inspect. Click outside to dismiss.";
+  document.getElementById('subtitle').innerText = "Click a folder to open. Click outside to dismiss.";
 }
 
 function exitFolderSelectMode(pickedIdx) {
@@ -2664,14 +2799,18 @@ function exitFolderSelectMode(pickedIdx) {
 
 function cycleFolderToTop(pickedIdx) {
   if (pickedIdx < 0 || pickedIdx >= folders.length) return;
-  // Rebuild the stack: picked on top, others below
-  var stackY = 0;
+  // Sort non-picked folders by their current stack Y to preserve order
+  var others = [];
   folders.forEach(function(f, i) {
-    if (i !== pickedIdx) {
-      f.restingPos.set(0, stackY, 0);
-      f.targetPos.copy(f.restingPos);
-      stackY += 0.06;
-    }
+    if (i !== pickedIdx) others.push(f);
+  });
+  others.sort(function(a, b) { return a.restingPos.y - b.restingPos.y; });
+  // Reassign Y positions: others keep their relative order, picked goes on top
+  var stackY = 0;
+  others.forEach(function(f) {
+    f.restingPos.set(0, stackY, 0);
+    f.targetPos.copy(f.restingPos);
+    stackY += 0.06;
   });
   folders[pickedIdx].restingPos.set(0, stackY, 0);
   folders[pickedIdx].targetPos.copy(folders[pickedIdx].restingPos);
@@ -4050,11 +4189,17 @@ window.addEventListener('mousedown', (e) => {
             folderSelectMode = false;
             var fld = folders[hitFolderIdx];
             fld.ensureTextures();
-            // Position in front of camera
+            // Position in front of camera, folder facing user
             var camFwdF = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            var worldPosF = camera.position.clone().add(camFwdF.multiplyScalar(5.0));
+            var worldPosF = camera.position.clone().add(camFwdF.multiplyScalar(7.0));
             folderInspectPos.copy(folderStackGroup.worldToLocal(worldPosF.clone()));
-            folderInspectRot.set(0.1, 0, 0);
+            // Compute rotation so folder faces camera (same as fan-out)
+            var cQ = new THREE.Quaternion().setFromEuler(camera.rotation);
+            var tQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+            cQ.multiply(tQ);
+            var wIQ = new THREE.Quaternion().copy(folderStackGroup.getWorldQuaternion(new THREE.Quaternion())).invert();
+            cQ.premultiply(wIQ);
+            folderInspectRot.setFromQuaternion(cQ);
             fld.targetPos.copy(folderInspectPos);
             fld.targetRot.copy(folderInspectRot);
             // Dismiss other folders back to rest
@@ -4188,15 +4333,19 @@ window.addEventListener('mousedown', (e) => {
                 // Check if click is on a tab
                 const hit = intersectsMonitor.find(h => h.object === face);
                 if (hit && hit.uv) {
-                    const ux = hit.uv.x * 1024, uy = (1 - hit.uv.y) * 512;
-                    // Tab bar is top 34px
-                    if (uy < 34) {
+                    const ux = hit.uv.x * 2048, uy = (1 - hit.uv.y) * 1024;
+                    // Tab bar is top 68px
+                    if (uy < 68) {
                         for (let ti = 0; ti < tabDefs.length; ti++) {
-                            const tx0 = 8 + ti * (monitorTabW + monitorTabGap);
-                            if (ux >= tx0 && ux <= tx0 + monitorTabW) {
-                                monitorActiveTab = ti;
-                                drawMonitorScreen();
-                                screenTex.needsUpdate = true;
+                            const tx0 = 16 + ti * (monitorTabW * 2 + monitorTabGap * 2);
+                            if (ux >= tx0 && ux <= tx0 + monitorTabW * 2) {
+                                if (tabDefs[ti].external) {
+                                    window.open('https://' + tabDefs[ti].url, '_blank');
+                                } else {
+                                    monitorActiveTab = ti;
+                                    drawMonitorScreen();
+                                    screenTex.needsUpdate = true;
+                                }
                                 break;
                             }
                         }

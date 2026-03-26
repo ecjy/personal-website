@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:doi.org)",
+      "WebFetch(domain:alz-journals.onlinelibrary.wiley.com)",
+      "WebFetch(domain:www.nature.com)",
+      "WebFetch(domain:www.ahajournals.org)",
+      "WebFetch(domain:academic.oup.com)",
+      "WebFetch(domain:linkinghub.elsevier.com)",
+      "WebFetch(domain:jamanetwork.com)",
+      "WebFetch(domain:www.thelancet.com)",
+      "WebFetch(domain:www.neurology.org)",
+      "WebFetch(domain:api.crossref.org)",
+      "WebFetch(domain:pubmed.ncbi.nlm.nih.gov)",
+      "WebFetch(domain:scholar.google.com)",
+      "WebFetch(domain:api.semanticscholar.org)",
+      "WebFetch(domain:api.openalex.org)",
+      "WebFetch(domain:www.ebi.ac.uk)"
+    ]
+  }
+}
