@@ -72,13 +72,13 @@
   .pp-jname-wrap { text-align: right; }
   .pp-jname { font-family: Georgia, 'Times New Roman', serif; font-size: 13px; font-weight: bold; font-style: italic; color: var(--jc); display: block; }
   .pp-jsub { font-family: Arial, sans-serif; font-size: 7.5px; color: #999; font-style: normal; display: block; text-align: right; margin-top: 1px; }
-  .pp-main { padding: 10px 14px 8px; }
-  .pp-title { font-family: Georgia, 'Times New Roman', serif; font-size: 15px; font-weight: bold; color: #111; line-height: 1.38; margin-bottom: 8px; }
-  .pp-authors { font-size: 9.5px; font-weight: 700; color: #1a3a8a; line-height: 1.6; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; }
-  .pp-cols { display: grid; grid-template-columns: 130px 1fr; gap: 10px; margin-top: 8px; }
-  .pp-left { font-size: 7.5px; color: #444; line-height: 1.45; }
-  .pp-aff { margin-bottom: 5px; }
-  .pp-aff sup { font-size: 6.5px; color: #888; }
+  .pp-main { padding: 6px 14px 6px; }
+  .pp-title { font-family: Georgia, 'Times New Roman', serif; font-size: 13px; font-weight: bold; color: #111; line-height: 1.35; margin-bottom: 5px; }
+  .pp-authors { font-size: 7.5px; font-weight: 700; color: #1a3a8a; line-height: 1.45; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #e0e0e0; }
+  .pp-cols { display: grid; grid-template-columns: 130px 1fr; gap: 8px; margin-top: 6px; }
+  .pp-left { font-size: 6.5px; color: #444; line-height: 1.4; }
+  .pp-aff { margin-bottom: 3px; }
+  .pp-aff sup { font-size: 5.5px; color: #888; }
   .pp-col-div { border: none; border-top: 1px solid #e0e0e0; margin: 7px 0; }
   .pp-sec-lbl { font-size: 8px; font-weight: 700; color: #222; margin-bottom: 3px; }
   .pp-corr-txt { font-size: 7.5px; color: #555; line-height: 1.45; }
@@ -794,7 +794,7 @@ mouseGroup.add(wheel);
 
 // 5. Desk Accessories — Lucky Coffee Orange Americano (clear plastic cup)
 const coffeeGroup = new THREE.Group();
-coffeeGroup.position.set(3.2, 0.08, 1.0);
+coffeeGroup.position.set(3.2, 0.08, 1.9);
 coffeeGroup.rotation.y = Math.PI;
 workstation.add(coffeeGroup);
 
@@ -1886,25 +1886,27 @@ const PAPERS_AI = [
     journal: 'Human Brain Mapping',
     jsub: 'WILEY',
     doi: '10.1002/hbm.70276',
-    volume: 'Hum Brain Mapp. 2025;46(12):e70276',
-    received: '20 February 2025', revised: '25 June 2025', accepted: '10 July 2025',
+    volume: 'Hum Brain Mapp. 2025; 46:e70276',
+    received: '3 January 2025', revised: '26 May 2025', accepted: '19 June 2025',
     title: 'Mind the Gap: Does Brain Age Improve Alzheimer\'s Disease Prediction?',
-    authors: 'Trevor Wei Kiat Tan<sup>1</sup> &nbsp;|&nbsp; Kim-Ngan Nguyen<sup>1</sup> &nbsp;|&nbsp; Chen Zhang<sup>1</sup> &nbsp;|&nbsp; Ru Kong<sup>1</sup> &nbsp;|&nbsp; Susan F Cheng<sup>1</sup> &nbsp;|&nbsp; Fang Ji<sup>2</sup> &nbsp;|&nbsp; Joanna Su Xian Chong<sup>2,3</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>2,3</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>4</sup> &nbsp;|&nbsp; Csaba Orban<sup>1</sup> &nbsp;|&nbsp; Michael W L Chee<sup>5</sup> &nbsp;|&nbsp; Christopher Chen<sup>2,3</sup> &nbsp;|&nbsp; Juan Helen Zhou<sup>2,5</sup> &nbsp;|&nbsp; B T Thomas Yeo<sup>1</sup>',
+    authors: 'Trevor Wei Kiat Tan<sup>1,2,3,4,5,\u2020</sup> &nbsp;|&nbsp; Kim-Ngan Nguyen<sup>1,\u2020</sup> &nbsp;|&nbsp; Chen Zhang<sup>1,2,3,4</sup> &nbsp;|&nbsp; Ru Kong<sup>1,2,3,4</sup> &nbsp;|&nbsp; Susan F. Cheng<sup>1,2,5</sup> &nbsp;|&nbsp; Fang Ji<sup>1,2</sup> &nbsp;|&nbsp; Joanna Su Xian Chong<sup>1,2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>6,7</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>8</sup> &nbsp;|&nbsp; Csaba Orban<sup>1,2,3,4</sup> &nbsp;|&nbsp; Michael W. L. Chee<sup>1,3</sup> &nbsp;|&nbsp; Christopher Chen<sup>6,7,9</sup> &nbsp;|&nbsp; Juan Helen Zhou<sup>1,2,5</sup> &nbsp;|&nbsp; B. T. Thomas Yeo<sup>1,2,3,4,5,10</sup> &nbsp;|&nbsp; The Alzheimer\'s Disease Neuroimaging Initiative &nbsp;|&nbsp; The Australian Imaging Biomarkers and Lifestyle Study of Aging',
     affiliations: [
-      'Department of Electrical and Computer Engineering, National University of Singapore',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
+      'Centre for Sleep and Cognition & Centre for Translational MR Research, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
+      'Department of Electrical and Computer Engineering, National University of Singapore, Singapore',
+      'Department of Medicine, Healthy Longevity Translational Research Programme, Human Potential Translational Research Programme & Institute for Digital Medicine (WisDM), Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
+      'N.1 Institute for Health, National University of Singapore, Singapore',
+      'Integrative Sciences and Engineering Programme (ISEP), National University of Singapore, Singapore',
+      'Memory, Aging and Cognition Centre, National University Health System, Singapore',
+      'Department of Psychological Medicine, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
       'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Centre for Sleep and Cognition, National University of Singapore',
+      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
+      'Martinos Center for Biomedical Imaging, Massachusetts General Hospital, Charlestown, Massachusetts, USA',
     ],
-    correspondence: 'B T Thomas Yeo, NUS. Email: thomas.yeo@nus.edu.sg',
+    correspondence: 'B. T. Thomas Yeo. Email: thomas.yeo@nus.edu.sg',
     abstract: [
-      { h: 'BACKGROUND', t: 'The brain age gap may provide incremental predictive value for Alzheimer\'s disease conversion beyond established biomarkers.' },
-      { h: 'METHODS', t: 'Large-scale brain age models trained on 53,542 participants were compared with direct predictive approaches across multiple datasets.' },
-      { h: 'RESULTS', t: 'Summarizing brain age with a single scalar (brain age gap) led to poor prediction performance. While higher-dimensional features improved results, direct predictive models still demonstrated superior performance.' },
-      { h: 'CONCLUSIONS', t: 'Using chronological age as a pretraining target might be suboptimal for predicting specific health outcomes; task-specific models are preferable.' },
+      { h: 'ABSTRACT', t: 'Brain age is widely regarded as a powerful marker of general brain health. Brain age models are typically trained on large datasets to predict chronological age, which may offer advantages in predicting specific health outcomes, much like the success of fine-tuning large language models for specific applications. However, it is also well accepted that machine learning models trained to directly predict specific outcomes (i.e., direct models) often outperform those trained on surrogate objectives. Therefore, despite their much larger training data, it is unclear whether brain age models outperform direct models in predicting specific brain health outcomes. Here, we compare large-scale brain age models (pretrained on 53,542 participants) and direct models for predicting specific health outcomes related to Alzheimer\'s disease (AD) dementia. Using anatomical T1 scans from three continents (N=1,848), we find that summarizing brain age with a single scalar (i.e., brain age gap) led to poor prediction performance. Using higher-dimensional intermediate representations of brain age models led to better prediction, but was still worse than direct models without finetuning. Using intermediate representations of finetuned brain age models was necessary to achieve similar performance to direct models. Overall, our results do not discount brain age as a useful marker of general brain health but suggest that using chronological age as a pretraining target might be suboptimal for predicting specific health outcomes.' },
     ],
-    keywords: 'brain age, Alzheimers disease, neuroimaging, prediction, machine learning',
+    keywords: 'brain age, Alzheimer\'s disease, neuroimaging, prediction, machine learning',
   },
   {
     color: '#be0000',
@@ -2406,7 +2408,7 @@ const pubCounter = document.getElementById('pub-counter');
 
 function buildPubPaper(p) {
   const affsHTML = p.affiliations.map((a, i) => '<div class="pp-aff"><sup>' + (i+1) + '</sup> ' + a + '</div>').join('');
-  const absHTML = p.abstract.map(s => '<p class="pp-abs-p"><b>' + s.h + ': </b>' + s.t + '</p>').join('');
+  const absHTML = p.abstract.map(s => '<p class="pp-abs-p">' + (s.h && s.h !== 'ABSTRACT' ? '<b>' + s.h + ': </b>' : '') + s.t + '</p>').join('');
   return '<div class="pub-paper">' +
     '<div class="pp-dates">' +
       '<span class="pp-date-seg"><span class="pp-date-label rcv">Received:</span><span class="pp-date-val">&nbsp;' + p.received + '</span></span>' +
@@ -2764,7 +2766,7 @@ function createFolder(config, index) {
 
 // ── Create and position folders ──────────────────────────────────────────────
 const folderStackGroup = new THREE.Group();
-folderStackGroup.position.set(3.2, 0.08, -0.3);
+folderStackGroup.position.set(2.9, 0.18, -0.3);
 workstation.add(folderStackGroup);
 
 // Small fixed offsets per folder for a natural messy stack look
