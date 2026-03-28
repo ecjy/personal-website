@@ -8,6 +8,68 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { overflow: hidden; background: #edeae4; font-family: system-ui, -apple-system, sans-serif; }
   canvas { display: block; }
+
+  /* ── Intro screen ─────────────────────────────────────────────────────────── */
+  #intro {
+    position: fixed; inset: 0; z-index: 100;
+    background: #0d0d0f;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  #intro-inner {
+    max-width: 560px; width: 90%;
+    color: #e8e6e0;
+    text-align: left;
+  }
+
+  #intro-eyebrow {
+    font: 500 11px/1 system-ui, sans-serif;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: #555; margin-bottom: 28px;
+  }
+
+  #intro-name {
+    font: 300 48px/1.1 system-ui, sans-serif;
+    color: #f0ede8; margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  #intro-name strong { font-weight: 700; }
+
+  #intro-role {
+    font: 400 15px/1.5 system-ui, sans-serif;
+    color: #5a7a9a; margin-bottom: 40px;
+    letter-spacing: 0.01em;
+  }
+
+  #intro-divider {
+    width: 40px; height: 1px; background: #2a2a2e; margin-bottom: 32px;
+  }
+
+  #intro-body {
+    font: 400 14px/1.75 system-ui, sans-serif;
+    color: #6b6b70; margin-bottom: 16px;
+  }
+
+  #intro-note {
+    font: 400 12px/1.7 system-ui, sans-serif;
+    color: #3d3d42; margin-bottom: 52px;
+  }
+
+  #intro-btn {
+    display: inline-block;
+    padding: 13px 36px;
+    background: transparent;
+    border: 1px solid #2e2e33;
+    color: #c8c5bf;
+    font: 500 13px/1 system-ui, sans-serif;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s, border-color 0.25s, color 0.25s;
+    border-radius: 2px;
+  }
+  #intro-btn:hover {
+    background: #1a1a1e; border-color: #444; color: #f0ede8;
+  }
   #label {
     position: fixed; bottom: 50px; left: 24px;
     font: 800 16px/1 'Inter', system-ui, sans-serif;
@@ -115,8 +177,30 @@
 </style>
 </head>
 <body>
+
+<!-- ── Intro screen ──────────────────────────────────────────────────────── -->
+<div id="intro">
+  <div id="intro-inner">
+    <p id="intro-eyebrow">Interactive Portfolio</p>
+    <h1 id="intro-name"><strong>Eddie</strong> Chong</h1>
+    <p id="intro-role">Project Manager · Memory, Aging &amp; Cognition Centre<br>National University Health System, Singapore</p>
+    <div id="intro-divider"></div>
+    <p id="intro-body">
+      What follows is a 3D simulation of my research workstation —
+      a space where I spend most of my working hours across clinical
+      neuropsychology, data analysis, and study coordination.
+    </p>
+    <p id="intro-note">
+      All study names, participant data, and statistics shown are
+      fictional or anonymised for confidentiality. Tools and assessments
+      depicted are representative of real clinical research workflows.
+    </p>
+    <button type="button" id="intro-btn">Understood</button>
+  </div>
+</div>
+
 <div id="label">WORKSTATION</div>
-<div id="subtitle">Elecctro-style 3D replica — Three.js</div>
+<div id="subtitle">Click tabs to switch. Click below to zoom out.</div>
 
 <!-- Publication Reader Overlay -->
 <div id="pub-reader" class="hidden">
@@ -144,6 +228,16 @@
 <script type="module">
 import * as THREE from 'three';
 import { RoomEnvironment }  from 'three/addons/environments/RoomEnvironment.js';
+
+// ─── Intro dismiss ───────────────────────────────────────────────────────────
+function dismissIntro() {
+    const el = document.getElementById('intro');
+    if (!el) return;
+    el.style.transition = 'opacity 0.8s ease';
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 900);
+}
 
 // ─── Renderer ────────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, logarithmicDepthBuffer: true });
@@ -5659,6 +5753,9 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// ─── Intro button ─────────────────────────────────────────────────────────────
+document.getElementById('intro-btn').addEventListener('click', dismissIntro);
 </script>
 </body>
 </html>
