@@ -259,7 +259,11 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture
 
 // ─── Isometric-style Camera ─────────────────────────────────────────────────
 // Perspective camera with narrow FOV pushed far back = near-isometric
-const camera = new THREE.PerspectiveCamera(16, window.innerWidth / window.innerHeight, 0.1, 200);
+const isMobile = window.innerWidth < 768;
+const camera = new THREE.PerspectiveCamera(
+    isMobile ? 38 : 16,
+    window.innerWidth / window.innerHeight, 0.1, 200
+);
 camera.position.set(15, 12, 15);
 camera.lookAt(0, 0, 0);
 
@@ -4939,8 +4943,8 @@ const coffeeInspectPos = new THREE.Vector3(0, 3, 5);
 const coffeeInspectRot = new THREE.Euler(-0.2, 0, 0);
 let isDraggingCoffee = false;
 
-// Default isometric view
-const defaultCamPos = new THREE.Vector3(15, 12, 15);
+// Default isometric view — pull back further on mobile
+const defaultCamPos = new THREE.Vector3(isMobile ? 22 : 15, isMobile ? 18 : 12, isMobile ? 22 : 15);
 const defaultCamTarget = new THREE.Vector3(0, 0, 0);
 
 // Target view when zooming into the screen
@@ -5750,6 +5754,7 @@ animate();
 // ─── Resize ──────────────────────────────────────────────────────────────────
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
+    camera.fov = window.innerWidth < 768 ? 38 : 16;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
