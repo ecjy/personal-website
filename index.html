@@ -84,6 +84,27 @@
     display: block;
   }
   #intro-device strong { color: #8888cc; font-weight: 600; }
+  #intro-phone-block {
+    display: none;
+    margin-top: 28px;
+    padding: 20px 22px;
+    background: #0f0f18;
+    border: 1px solid #2a1a1a;
+    border-left: 2px solid #8a2a2a;
+    border-radius: 3px;
+    text-align: left;
+  }
+  #intro-phone-block p {
+    margin: 0 0 8px;
+    font: 400 12px/1.7 system-ui, sans-serif;
+    color: #7a4a4a;
+  }
+  #intro-phone-block strong { color: #cc7777; font-weight: 600; }
+  #intro-phone-block .phone-icon {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
   #label {
     position: fixed; bottom: 50px; left: 24px;
     font: 800 16px/1 'Inter', system-ui, sans-serif;
@@ -215,6 +236,12 @@
       mobile and Safari may have limited performance.
     </p>
     <button type="button" id="intro-btn">Understood</button>
+    <div id="intro-phone-block">
+      <span class="phone-icon">📵</span>
+      <p><strong>Phone not supported.</strong></p>
+      <p>This portfolio contains an interactive 3D workstation that requires a <strong>PC or laptop</strong> to experience properly.</p>
+      <p>Please revisit on a desktop or laptop browser — <strong>Chrome</strong> or <strong>Firefox</strong> recommended.</p>
+    </div>
   </div>
 </div>
 
@@ -353,7 +380,7 @@ const monitorTabW = 190, monitorTabGap = 3;
 const tabDefs = [
     { label: 'Grant Management', url: 'research-portal.elecctro.io/grants' },
     { label: 'Rater Admin', url: 'research-portal.elecctro.io/raters' },
-    { label: 'Data Management', url: 'research-portal.elecctro.io/data' },
+    { label: 'Data Management', url: 'macc.qualtrics.com/Q/MyProjectsSection' },
     { label: 'R Analysis', url: 'rstudio.macc.sg/session/analysis_EJY' },
     { label: 'MACC.sg', url: 'macc.sg', external: true },
 ];
@@ -897,71 +924,228 @@ function drawRaterPage(cy, ch) {
 }
 
 function drawDataPage(cy, ch) {
-    const W = 1024, sb = 160, mx = sb + 15;
-    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0, cy, sb, ch);
-    ctx.fillStyle = '#4a6fa5'; ctx.beginPath(); ctx.roundRect(8, cy + 8, sb - 16, 28, 6); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px -apple-system, sans-serif'; ctx.fillText('Data Mgmt', 22, cy + 27);
-    ['Queries', 'Exports', 'Audit Trail', 'Cleaning', 'Requests', 'Archive'].forEach((s, i) => {
-        ctx.fillStyle = '#bbb'; ctx.font = '11px -apple-system, sans-serif'; ctx.fillText(s, 22, cy + 58 + i * 24);
-    });
+    const W = 1024, sb = 148, mx = sb + 12;
+    const C = {
+        qBlue: '#1d4ed8', qDark: '#1e3a5f', qBg: '#f3f6fb', card: '#ffffff',
+        fg: '#111827', sub: '#6b7280', border: '#e5e7eb', green: '#16a34a',
+        greenBg: '#dcfce7', orange: '#d97706', orangeBg: '#fef3c7',
+        blue: '#2563eb', blueBg: '#dbeafe', purple: '#7c3aed', purpleBg: '#ede9fe',
+        amber: '#f59e0b', teal: '#0d9488', slate: '#475569',
+    };
 
-    ctx.fillStyle = '#333'; ctx.font = 'bold 16px -apple-system, sans-serif';
-    ctx.fillText('Data Management Dashboard', mx, cy + 24);
+    // ── Sidebar ─────────────────────────────────────────────────────────────
+    ctx.fillStyle = C.qDark; ctx.fillRect(0, cy, sb, ch);
 
-    // KPI cards — top row
-    const kpis = [
-        { label: 'Records Entered', val: '12,847', sub: '+342 this week', color: '#4a6fa5' },
-        { label: 'Open Queries', val: '23', sub: '5 critical', color: '#ff9800' },
-        { label: 'Data Requests', val: '8 / 12', sub: 'delivered', color: '#4caf50' },
-        { label: 'Clean Rate', val: '97.3%', sub: 'target: 98%', color: '#9c27b0' },
+    // Qualtrics-style logo bar
+    ctx.fillStyle = C.qBlue; ctx.beginPath(); ctx.roundRect(8, cy + 7, sb - 16, 24, 5); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 8px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Q  Qualtrics XM', sb / 2, cy + 23); ctx.textAlign = 'left';
+
+    const nav = [
+        { label: 'Home',           active: false },
+        { label: 'Projects',       active: true  },
+        { label: 'Workflows',      active: false },
+        { label: 'Contacts',       active: false },
+        { label: 'Data & Analysis',active: false },
+        { label: 'Reports',        active: false },
     ];
-    kpis.forEach((k, i) => {
-        const kx = mx + i * 198;
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(kx, cy + 34, 188, 52, 6); ctx.fill();
-        ctx.fillStyle = '#999'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(k.label, kx + 10, cy + 50);
-        ctx.fillStyle = k.color; ctx.font = 'bold 20px -apple-system, sans-serif'; ctx.fillText(k.val, kx + 10, cy + 74);
-        ctx.fillStyle = '#aaa'; ctx.font = '9px -apple-system, sans-serif'; ctx.fillText(k.sub, kx + 100, cy + 74);
+    nav.forEach((n, i) => {
+        const ny = cy + 42 + i * 24;
+        if (n.active) {
+            ctx.fillStyle = C.qBlue + 'aa';
+            ctx.beginPath(); ctx.roundRect(5, ny - 2, sb - 10, 20, 4); ctx.fill();
+            ctx.fillStyle = '#fff';
+        } else { ctx.fillStyle = '#93c5fd'; }
+        ctx.font = (n.active ? 'bold ' : '') + '9px -apple-system, sans-serif';
+        ctx.fillText(n.label, 14, ny + 12);
     });
 
-    // Weekly data entry chart
-    const chartX = mx, chartY = cy + 96;
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(chartX, chartY, 390, 90, 6); ctx.fill();
-    ctx.fillStyle = '#444'; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.fillText('Weekly Data Entry', chartX + 10, chartY + 14);
-    drawMiniBar(chartX + 10, chartY + 20, 370, 64, [
-        { label: 'Mon', val: 48, color: '#4a6fa5' }, { label: 'Tue', val: 62, color: '#4a6fa5' },
-        { label: 'Wed', val: 55, color: '#4a6fa5' }, { label: 'Thu', val: 71, color: '#4a6fa5' },
-        { label: 'Fri', val: 44, color: '#4a6fa5' }, { label: 'Sat', val: 12, color: '#90a4ae' },
-        { label: 'Sun', val: 8, color: '#90a4ae' },
-    ], 80);
+    // Divider + settings
+    ctx.strokeStyle = '#2d4a72'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(8, cy + 194); ctx.lineTo(sb - 8, cy + 194); ctx.stroke();
+    ctx.fillStyle = '#64748b'; ctx.font = '9px -apple-system, sans-serif';
+    ['Settings', 'Help & Feedback', 'Admin'].forEach((s, i) => { ctx.fillText(s, 14, cy + 206 + i * 18); });
 
-    // Query resolution
-    const qx = mx + 405, qy = chartY;
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(qx, qy, 390, 90, 6); ctx.fill();
-    ctx.fillStyle = '#444'; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.fillText('Query Status Breakdown', qx + 10, qy + 14);
-    drawMiniBar(qx + 10, qy + 20, 370, 64, [
-        { label: 'Open', val: 23, color: '#ff9800' }, { label: 'In Review', val: 15, color: '#4a6fa5' },
-        { label: 'Resolved', val: 187, color: '#4caf50' }, { label: 'Closed', val: 412, color: '#888' },
-    ], 420);
+    // User avatar
+    ctx.fillStyle = C.qBlue; ctx.beginPath(); ctx.arc(18, cy + ch - 14, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 6px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('EJ', 18, cy + ch - 10); ctx.textAlign = 'left';
+    ctx.fillStyle = '#94a3b8'; ctx.font = '8px -apple-system, sans-serif';
+    ctx.fillText('E.J.Y. Chong', 30, cy + ch - 16);
+    ctx.fillStyle = '#64748b'; ctx.font = '7px -apple-system, sans-serif';
+    ctx.fillText('ejy.chong@macc.sg', 30, cy + ch - 7);
 
-    // Recent activity
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(mx, cy + 196, W - mx - 16, 68, 6); ctx.fill();
-    ctx.fillStyle = '#444'; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.fillText('Recent Activity', mx + 10, cy + 210);
-    const rows = [
-        ['SUBJ-0142', 'Visit 3 CRF entered & verified', '10 min ago', '#4caf50'],
-        ['SUBJ-0098', 'Query #Q-2341 resolved — lab range confirmed', '25 min ago', '#4a6fa5'],
-        ['DR-REQ-08', 'Data request delivered to biostatistics team', '1 hr ago', '#9c27b0'],
+    // ── Main content background ─────────────────────────────────────────────
+    ctx.fillStyle = C.qBg; ctx.fillRect(sb, cy, W - sb, ch);
+
+    // ── Top header bar ──────────────────────────────────────────────────────
+    ctx.fillStyle = C.card; ctx.fillRect(sb, cy, W - sb, 34);
+    ctx.strokeStyle = C.border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sb, cy + 34); ctx.lineTo(W, cy + 34); ctx.stroke();
+
+    // Breadcrumb
+    ctx.fillStyle = C.sub; ctx.font = '9px -apple-system, sans-serif';
+    ctx.fillText('Projects', mx, cy + 14);
+    ctx.fillStyle = '#bbb'; ctx.fillText(' / ', mx + 44, cy + 14);
+    ctx.fillStyle = C.fg; ctx.font = 'bold 9px -apple-system, sans-serif';
+    ctx.fillText('MACC Data Management', mx + 52, cy + 14);
+    // Page title row
+    ctx.fillStyle = C.fg; ctx.font = 'bold 14px -apple-system, sans-serif';
+    ctx.fillText('MACC Data Management', mx, cy + 29);
+
+    // Create button
+    ctx.fillStyle = C.qBlue; ctx.beginPath(); ctx.roundRect(W - 108, cy + 7, 96, 20, 5); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('+ Create Project', W - 60, cy + 21); ctx.textAlign = 'left';
+
+    // ── SECTION 1 — Data Request Forms ──────────────────────────────────────
+    let sy = cy + 42;
+
+    ctx.fillStyle = C.fg; ctx.font = 'bold 11px -apple-system, sans-serif';
+    ctx.fillText('Data Request Forms', mx, sy + 11);
+    ctx.fillStyle = C.sub; ctx.font = '9px -apple-system, sans-serif';
+    ctx.fillText('Study-specific data access requests submitted through secure Qualtrics forms', mx, sy + 22);
+
+    sy += 28;
+
+    const reqForms = [
+        { study: 'BEACON', color: '#3b82f6', responses: 47, total: 50, modified: 'Mar 27, 2026', fields: 18, type: 'Data Request' },
+        { study: 'STRIDE', color: '#f59e0b', responses: 38, total: 45, modified: 'Mar 25, 2026', fields: 21, type: 'Data Request' },
+        { study: 'CANVAS', color: '#22c55e', responses: 12, total: 20, modified: 'Mar 20, 2026', fields: 15, type: 'Data Request' },
+        { study: 'ENCORE', color: '#a855f7', responses: 9,  total: 18, modified: 'Mar 18, 2026', fields: 16, type: 'Data Request' },
     ];
-    rows.forEach((r, i) => {
-        const ry = cy + 220 + i * 14;
-        ctx.fillStyle = r[3]; ctx.beginPath(); ctx.arc(mx + 16, ry + 2, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#444'; ctx.font = '10px monospace'; ctx.fillText(r[0], mx + 26, ry + 5);
-        ctx.fillStyle = '#666'; ctx.font = '10px -apple-system, sans-serif'; ctx.fillText(r[1], mx + 130, ry + 5);
-        ctx.fillStyle = '#999'; ctx.textAlign = 'right'; ctx.fillText(r[2], W - 30, ry + 5); ctx.textAlign = 'left';
+    const cardW = 206, cardH = 68;
+    reqForms.forEach((f, i) => {
+        const fx = mx + i * (cardW + 8);
+        ctx.fillStyle = C.card; ctx.beginPath(); ctx.roundRect(fx, sy, cardW, cardH, 6); ctx.fill();
+        ctx.strokeStyle = C.border; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.roundRect(fx, sy, cardW, cardH, 6); ctx.stroke();
+        // Top accent
+        ctx.fillStyle = f.color; ctx.beginPath(); ctx.roundRect(fx, sy, cardW, 3, [6, 6, 0, 0]); ctx.fill();
+        // Survey icon area
+        ctx.fillStyle = f.color + '22'; ctx.beginPath(); ctx.roundRect(fx + 8, sy + 10, 22, 22, 4); ctx.fill();
+        ctx.fillStyle = f.color; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('📋', fx + 19, sy + 25); ctx.textAlign = 'left';
+        // Title
+        ctx.fillStyle = C.fg; ctx.font = 'bold 10px -apple-system, sans-serif';
+        ctx.fillText(f.study + ' ' + f.type, fx + 36, sy + 20);
+        // Status badge
+        ctx.fillStyle = C.greenBg; ctx.beginPath(); ctx.roundRect(fx + cardW - 52, sy + 10, 44, 14, 3); ctx.fill();
+        ctx.fillStyle = C.green; ctx.font = 'bold 8px -apple-system, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Active', fx + cardW - 30, sy + 20); ctx.textAlign = 'left';
+        // Response progress
+        ctx.fillStyle = C.sub; ctx.font = '9px -apple-system, sans-serif';
+        ctx.fillText(f.responses + ' / ' + f.total + ' responses', fx + 8, sy + 42);
+        ctx.fillStyle = '#e5e7eb'; ctx.fillRect(fx + 8, sy + 47, cardW - 16, 5);
+        const pct = f.responses / f.total;
+        ctx.fillStyle = f.color; ctx.fillRect(fx + 8, sy + 47, (cardW - 16) * pct, 5);
+        // Footer
+        ctx.fillStyle = '#9ca3af'; ctx.font = '8px -apple-system, sans-serif';
+        ctx.fillText(f.fields + ' fields  ·  ' + f.modified, fx + 8, sy + 62);
     });
 
-    // Notes
-    drawNotes(mx, cy + ch - 65, W - mx - 16, 'Notes — Ed',
-        ['Prioritize critical queries for NRF study before Friday', 'Data request #DR-REQ-09 pending sponsor approval', 'Clean rate dipped — check Visit 4 PANSS entries']);
+    sy += cardH + 10;
+
+    // ── SECTION 2 — Assessment Data Collection ───────────────────────────────
+    ctx.fillStyle = C.fg; ctx.font = 'bold 11px -apple-system, sans-serif';
+    ctx.fillText('Assessment Data Collection', mx, sy + 11);
+    ctx.fillStyle = C.sub; ctx.font = '9px -apple-system, sans-serif';
+    ctx.fillText('Standardised neuropsychological battery surveys — live data collection', mx, sy + 22);
+    sy += 28;
+
+    // Table header
+    const tW = W - mx - 12;
+    ctx.fillStyle = '#f1f5f9'; ctx.beginPath(); ctx.roundRect(mx, sy, tW, 18, [4, 4, 0, 0]); ctx.fill();
+    ctx.strokeStyle = C.border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(mx, sy, tW, 18, [4, 4, 0, 0]); ctx.stroke();
+    ctx.fillStyle = C.sub; ctx.font = 'bold 8px -apple-system, sans-serif';
+    ['SURVEY NAME', 'STUDY', 'RESPONSES', 'COMPLETION', 'LAST MODIFIED', 'STATUS'].forEach((h, i) => {
+        const hx = [mx + 10, mx + 266, mx + 370, mx + 456, mx + 582, mx + 690];
+        ctx.fillText(h, hx[i], sy + 12);
+    });
+    sy += 18;
+
+    const surveys = [
+        { name: 'QDRS – Quick Dementia Rating System', study: 'BEACON', sc: '#3b82f6', resp: 241, rate: 98, mod: 'Today' },
+        { name: 'MoCA / PACC-5 Composite Battery',    study: 'STRIDE', sc: '#f59e0b', resp: 189, rate: 95, mod: 'Yesterday' },
+        { name: 'RBANS – Cognitive Battery',           study: 'BEACON', sc: '#3b82f6', resp: 198, rate: 97, mod: 'Mar 26' },
+        { name: 'ADAS-COG 13-item Scale',              study: 'STRIDE', sc: '#f59e0b', resp: 156, rate: 94, mod: 'Mar 25' },
+        { name: 'CDR + Sum of Boxes',                  study: 'CANVAS', sc: '#22c55e', resp: 88,  rate: 99, mod: 'Mar 22' },
+    ];
+    surveys.forEach((sv, i) => {
+        const ry = sy + i * 22;
+        ctx.fillStyle = i % 2 === 0 ? C.card : '#f8fafc';
+        ctx.fillRect(mx, ry, tW, 22);
+        ctx.strokeStyle = C.border; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(mx, ry + 22); ctx.lineTo(mx + tW, ry + 22); ctx.stroke();
+
+        ctx.fillStyle = C.blue; ctx.font = '9px -apple-system, sans-serif';
+        ctx.fillText(sv.name, mx + 10, ry + 14);
+
+        ctx.fillStyle = sv.sc + '33'; ctx.beginPath(); ctx.roundRect(mx + 264, ry + 5, 44, 12, 3); ctx.fill();
+        ctx.fillStyle = sv.sc; ctx.font = 'bold 7px -apple-system, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(sv.study, mx + 286, ry + 14); ctx.textAlign = 'left';
+
+        ctx.fillStyle = C.fg; ctx.font = '9px -apple-system, sans-serif';
+        ctx.fillText(sv.resp.toString(), mx + 375, ry + 14);
+
+        ctx.fillStyle = '#e5e7eb'; ctx.fillRect(mx + 454, ry + 7, 72, 5);
+        ctx.fillStyle = sv.rate >= 97 ? C.green : sv.rate >= 94 ? C.blue : C.amber;
+        ctx.fillRect(mx + 454, ry + 7, 72 * sv.rate / 100, 5);
+        ctx.fillStyle = C.sub; ctx.font = '8px -apple-system, sans-serif';
+        ctx.fillText(sv.rate + '%', mx + 532, ry + 14);
+
+        ctx.fillStyle = C.sub; ctx.font = '9px -apple-system, sans-serif';
+        ctx.fillText(sv.mod, mx + 582, ry + 14);
+
+        ctx.fillStyle = C.greenBg; ctx.beginPath(); ctx.roundRect(mx + 688, ry + 5, 42, 12, 3); ctx.fill();
+        ctx.fillStyle = C.green; ctx.font = 'bold 8px -apple-system, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Active', mx + 709, ry + 14); ctx.textAlign = 'left';
+    });
+    // Table bottom border
+    ctx.strokeStyle = C.border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(mx, sy, tW, surveys.length * 22, [0, 0, 4, 4]); ctx.stroke();
+    sy += surveys.length * 22 + 10;
+
+    // ── SECTION 3 — Automated Data Queries ──────────────────────────────────
+    if (sy + 16 < cy + ch) {
+        ctx.fillStyle = C.fg; ctx.font = 'bold 11px -apple-system, sans-serif';
+        ctx.fillText('Automated Data Queries', mx, sy + 11);
+        ctx.fillStyle = C.sub; ctx.font = '9px -apple-system, sans-serif';
+        ctx.fillText('Scheduled Qualtrics Workflows — pull, clean and route assessment data automatically', mx, sy + 22);
+        sy += 28;
+
+        const wfs = [
+            { name: 'Daily Response Export → REDCap',       trigger: 'Daily 08:00 SGT',         runs: 89, last: 'Today 08:00',  ok: true  },
+            { name: 'Missing Data Alert → PI Email',        trigger: 'On submit (conditional)',  runs: 34, last: 'Mar 27',       ok: true  },
+            { name: 'BEACON Weekly Report → SharePoint',   trigger: 'Weekly Mon 09:00',         runs: 12, last: 'Mar 24',       ok: true  },
+            { name: 'VDB Score Threshold Flag',             trigger: 'On submit',                runs: 18, last: 'Mar 26',       ok: false },
+        ];
+        const wfw = (tW - 8) / 2;
+        wfs.forEach((wf, i) => {
+            const wx = mx + (i % 2) * (wfw + 8);
+            const wy = sy + Math.floor(i / 2) * 32;
+            ctx.fillStyle = C.card; ctx.beginPath(); ctx.roundRect(wx, wy, wfw, 28, 5); ctx.fill();
+            ctx.strokeStyle = C.border; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.roundRect(wx, wy, wfw, 28, 5); ctx.stroke();
+
+            ctx.fillStyle = '#eff6ff'; ctx.beginPath(); ctx.roundRect(wx + 5, wy + 5, 18, 18, 3); ctx.fill();
+            ctx.fillStyle = C.blue; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('⚡', wx + 14, wy + 17); ctx.textAlign = 'left';
+
+            ctx.fillStyle = C.fg; ctx.font = 'bold 9px -apple-system, sans-serif';
+            ctx.fillText(wf.name, wx + 28, wy + 13);
+            ctx.fillStyle = C.sub; ctx.font = '8px -apple-system, sans-serif';
+            ctx.fillText(wf.trigger + '  ·  ' + wf.runs + ' runs  ·  Last: ' + wf.last, wx + 28, wy + 23);
+
+            const sc = wf.ok ? C.green : C.orange;
+            const sBg = wf.ok ? C.greenBg : C.orangeBg;
+            const sLabel = wf.ok ? 'Running' : 'Paused';
+            ctx.fillStyle = sBg; ctx.beginPath(); ctx.roundRect(wx + wfw - 58, wy + 8, 50, 13, 3); ctx.fill();
+            ctx.fillStyle = sc; ctx.font = 'bold 8px -apple-system, sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(sLabel, wx + wfw - 33, wy + 18); ctx.textAlign = 'left';
+        });
+    }
 }
 
 function drawCodingPage(cy, ch) {
@@ -5778,8 +5962,21 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ─── Intro button ─────────────────────────────────────────────────────────────
-document.getElementById('intro-btn').addEventListener('click', dismissIntro);
+// ─── Intro button — phone gate ────────────────────────────────────────────────
+(function () {
+    const isPhone = window.innerWidth < 600 ||
+        /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isPhone) {
+        const btn   = document.getElementById('intro-btn');
+        const block = document.getElementById('intro-phone-block');
+        // Hide the Understood button and show the block message
+        btn.style.display   = 'none';
+        block.style.display = 'block';
+    } else {
+        document.getElementById('intro-btn').addEventListener('click', dismissIntro);
+    }
+})();
 </script>
 </body>
 </html>
