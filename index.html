@@ -185,7 +185,76 @@
   .pp-abs-p b { color: #000; }
   .pp-kw-lbl { font-size: 8px; font-weight: 700; letter-spacing: 0.07em; color: #333; margin-top: 8px; margin-bottom: 3px; }
   .pp-kw { font-size: 7.5px; font-style: italic; color: #555; line-height: 1.55; }
+  .pp-highlights { font-size: 7.5px; color: #2a2a2a; line-height: 1.55; margin: 3px 0 0 14px; padding: 0; }
+  .pp-highlights li { margin-bottom: 3px; }
   .pp-foot { margin-top: 10px; padding: 6px 14px; border-top: 2px solid var(--jc); display: flex; justify-content: space-between; font-size: 7.5px; color: #888; background: #fafafa; }
+
+  /* ── Brain journal layout ─────────────────────────────────────────────── */
+  .brain-layout { font-family: 'Times New Roman', Georgia, serif; background: #fff; }
+  .brain-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 14px; background: #fff; border-bottom: 1px solid #dde8f2;
+    font-family: Arial, sans-serif; font-size: 7.5px; color: #2060a0;
+  }
+  .brain-topbar .brain-vol-right { color: #555; font-size: 7px; }
+  .brain-header {
+    background: #c8dff0; padding: 10px 14px 8px;
+    display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #4a90c4;
+  }
+  .brain-logo-text {
+    font-family: Arial Black, Arial, sans-serif; font-size: 26px; font-weight: 900;
+    color: #1a4a80; letter-spacing: -0.01em; line-height: 1; flex-shrink: 0;
+  }
+  .brain-logo-sub {
+    font-family: Arial, sans-serif; font-size: 7px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: #1a4a80; margin-top: 2px;
+  }
+  .brain-art-badge {
+    font-family: Arial, sans-serif; font-size: 8px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: #1a4a80; border: 1.5px solid #1a4a80; padding: 2px 7px;
+    border-radius: 2px; margin-left: 4px; white-space: nowrap;
+  }
+  .brain-body { padding: 10px 16px 12px; }
+  .brain-title {
+    font-family: Arial, sans-serif; font-size: 15px; font-weight: 700;
+    color: #1a3a7a; line-height: 1.3; margin: 0 0 7px;
+  }
+  .brain-authors {
+    font-family: Arial, sans-serif; font-size: 8px; color: #1a3a7a;
+    line-height: 1.55; margin-bottom: 6px; padding-bottom: 6px;
+    border-bottom: 1px solid #c8dff0;
+  }
+  .brain-commentary {
+    font-family: Arial, sans-serif; font-size: 7.5px; font-style: italic;
+    color: #333; margin-bottom: 8px; line-height: 1.5;
+  }
+  .brain-abstract-box {
+    background: #fef9e7; border-left: 3px solid #d4a017;
+    padding: 9px 12px; margin-bottom: 10px; border-radius: 0 3px 3px 0;
+  }
+  .brain-abs-p {
+    font-family: Arial, sans-serif; font-size: 7.8px; color: #1a1a1a;
+    line-height: 1.62; margin: 0 0 6px; text-align: justify;
+  }
+  .brain-abs-p:last-child { margin-bottom: 0; }
+  .brain-kw-line {
+    font-family: Arial, sans-serif; font-size: 7.5px; color: #222;
+    margin-bottom: 10px; line-height: 1.5;
+  }
+  .brain-kw-line b { color: #000; }
+  .brain-affs {
+    border-top: 1px solid #c8dff0; padding-top: 8px; margin-top: 6px;
+  }
+  .brain-aff {
+    font-family: Arial, sans-serif; font-size: 7px; color: #444;
+    line-height: 1.45; margin-bottom: 3px;
+  }
+  .brain-aff sup { font-size: 5.5px; color: #1a4a80; font-weight: 700; }
+  .brain-footer {
+    border-top: 1px solid #dde8f2; margin-top: 10px; padding-top: 7px;
+    font-family: Arial, sans-serif; font-size: 6.5px; color: #777; line-height: 1.5;
+  }
   .pub-reader-nav {
     display: flex; align-items: center; justify-content: space-between;
     padding: 8px 16px; background: #f0f0f0; border-top: 1px solid #ddd; flex-shrink: 0;
@@ -2187,47 +2256,152 @@ const bookDefs = [
     },
 ];
 
-// Helper: draw a first page with title and personal note
+// Helper: draw a first page styled as personal handwritten notebook notes
 function drawFirstPage(ctx, W, H, book) {
-    ctx.fillStyle = '#faf8f2'; ctx.fillRect(0, 0, W, H);
-    // Subtle page border
-    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2;
-    ctx.strokeRect(W * 0.08, H * 0.05, W * 0.84, H * 0.90);
-    // Title
-    ctx.fillStyle = '#222'; ctx.font = 'bold 38px Georgia, serif';
-    ctx.textAlign = 'center';
-    const titleLines = book.title.split(/(?<=\s)/);
-    // Word wrap title
-    let words = book.title.split(' '), lines = [], line = '';
-    for (const w of words) {
-        if (ctx.measureText(line + w).width > W * 0.7) { lines.push(line.trim()); line = w + ' '; }
-        else line += w + ' ';
+    const HW = `'Segoe Script','Apple Chancery','Bradley Hand',cursive`;
+
+    // ── Paper background ──────────────────────────────────────────────────
+    ctx.fillStyle = '#fdf8ef'; ctx.fillRect(0, 0, W, H);
+
+    // Very faint paper grain (scattered dots)
+    ctx.fillStyle = 'rgba(180,160,120,0.06)';
+    for (let i = 0; i < 320; i++) {
+        const gx = (Math.sin(i * 127.3) * 0.5 + 0.5) * W;
+        const gy = (Math.cos(i * 84.7)  * 0.5 + 0.5) * H;
+        ctx.fillRect(gx, gy, 2, 2);
     }
-    if (line.trim()) lines.push(line.trim());
-    lines.forEach((l, i) => ctx.fillText(l, W/2, H * 0.14 + i * 42));
-    const titleEndY = H * 0.14 + lines.length * 42;
-    // Author
-    ctx.fillStyle = '#666'; ctx.font = '24px -apple-system, sans-serif';
-    ctx.fillText(book.author, W/2, titleEndY + 20);
-    // Separator
-    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(W * 0.25, titleEndY + 40); ctx.lineTo(W * 0.75, titleEndY + 40); ctx.stroke();
-    // Personal note — handwriting style
-    ctx.textAlign = 'left';
-    const noteLines = book.firstPage.split('\n');
-    let ny = titleEndY + 70;
-    noteLines.forEach(nl => {
-        if (nl.startsWith('Why') || nl.startsWith('Key')) {
-            ctx.fillStyle = '#c0392b'; ctx.font = 'bold italic 20px Georgia, serif';
-        } else {
-            ctx.fillStyle = '#444'; ctx.font = '19px Georgia, serif';
-        }
-        ctx.fillText(nl, W * 0.14, ny);
-        ny += 26;
+
+    // Ruled lines (light blue, college-ruled style)
+    const ruleSpacing = 31;
+    ctx.strokeStyle = '#c9d9f0'; ctx.lineWidth = 0.9;
+    for (let ry = 72; ry < H - 30; ry += ruleSpacing) {
+        ctx.beginPath(); ctx.moveTo(W * 0.13, ry); ctx.lineTo(W * 0.93, ry); ctx.stroke();
+    }
+
+    // Red margin line
+    ctx.strokeStyle = '#f0b0b0'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(W * 0.18, 36); ctx.lineTo(W * 0.18, H - 30); ctx.stroke();
+
+    // Dog-eared top-right corner
+    const fold = 28;
+    ctx.fillStyle = '#ede8dc';
+    ctx.beginPath();
+    ctx.moveTo(W - fold, 0); ctx.lineTo(W, 0); ctx.lineTo(W, fold); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#d5cec0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W - fold, 0); ctx.lineTo(W, fold); ctx.stroke();
+
+    // ── Title (large, handwritten) ────────────────────────────────────────
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = `bold italic 36px ${HW}`;
+    let words = book.title.split(' '), titleLines = [], tl = '';
+    for (const w of words) {
+        const test = tl ? tl + ' ' + w : w;
+        if (ctx.measureText(test).width > W * 0.68 && tl) { titleLines.push(tl); tl = w; }
+        else tl = test;
+    }
+    if (tl) titleLines.push(tl);
+
+    titleLines.forEach((l, i) => {
+        const ty = 62 + i * 40;
+        ctx.save();
+        ctx.translate(W / 2, ty);
+        ctx.rotate(Math.sin(i * 3.1) * 0.008);
+        ctx.fillStyle = '#1a237e';
+        ctx.fillText(l, 0, 0);
+        ctx.restore();
     });
-    // Page number
-    ctx.fillStyle = '#bbb'; ctx.font = '14px serif'; ctx.textAlign = 'center';
-    ctx.fillText('— i —', W/2, H * 0.95);
+    const titleBot = 62 + titleLines.length * 40;
+
+    // Author — smaller, indigo italic
+    ctx.font = `italic 19px ${HW}`;
+    ctx.fillStyle = '#5c6bc0';
+    ctx.fillText('— ' + book.author + ' —', W / 2, titleBot + 18);
+    ctx.restore();
+
+    // ── Wavy hand-drawn separator ─────────────────────────────────────────
+    const sepY = titleBot + 40;
+    ctx.save();
+    ctx.strokeStyle = '#1a237e'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    const x0 = W * 0.20, x1 = W * 0.82;
+    ctx.moveTo(x0, sepY);
+    for (let x = x0; x <= x1; x += 6) {
+        const p = (x - x0) / (x1 - x0);
+        ctx.lineTo(x, sepY + Math.sin(p * Math.PI * 7) * 2.2);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Small star doodle in left margin
+    ctx.save();
+    ctx.translate(W * 0.10, sepY - 2);
+    ctx.strokeStyle = '#e53935'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    for (let a = 0; a < 5; a++) {
+        const ang = (a * 4 * Math.PI / 5) - Math.PI / 2;
+        a === 0 ? ctx.moveTo(Math.cos(ang)*9, Math.sin(ang)*9)
+                : ctx.lineTo(Math.cos(ang)*9, Math.sin(ang)*9);
+    }
+    ctx.closePath(); ctx.stroke();
+    ctx.restore();
+
+    // ── Handwritten notes ─────────────────────────────────────────────────
+    const noteLines = book.firstPage.split('\n');
+    const leftX = W * 0.21;
+    let ny = sepY + 28;
+
+    noteLines.forEach((nl, idx) => {
+        if (!nl.trim()) { ny += 14; return; }
+
+        const isHeader = nl.startsWith('Why') || nl.startsWith('Key');
+
+        if (isHeader) {
+            ctx.save();
+            ctx.translate(leftX, ny);
+            ctx.rotate(Math.sin(idx * 2.1) * 0.010);
+            ctx.fillStyle = '#c62828';
+            ctx.font = `bold italic 19px ${HW}`;
+            ctx.textAlign = 'left';
+            ctx.fillText(nl, 0, 0);
+            // Hand-drawn underline (slightly wavy)
+            const tw = ctx.measureText(nl).width;
+            ctx.strokeStyle = '#c62828'; ctx.lineWidth = 1.3;
+            ctx.beginPath(); ctx.moveTo(0, 5);
+            for (let ux = 0; ux <= tw; ux += 5)
+                ctx.lineTo(ux, 5 + Math.sin(ux * 0.4) * 1.2);
+            ctx.stroke();
+            ctx.restore();
+            ny += 34;
+        } else {
+            // Dash bullet in margin
+            ctx.save();
+            ctx.fillStyle = '#1a237e';
+            ctx.font = `18px ${HW}`;
+            ctx.textAlign = 'left';
+            ctx.fillText('–', leftX - 14, ny + Math.sin(idx * 1.9) * 1.5);
+            ctx.restore();
+
+            // Note text with per-line y-wobble and tiny angle
+            ctx.save();
+            const wobbleY = Math.sin(idx * 2.7) * 1.8;
+            const wobbleR = Math.sin(idx * 1.3) * 0.008;
+            ctx.translate(leftX, ny + wobbleY);
+            ctx.rotate(wobbleR);
+            ctx.fillStyle = idx % 5 === 3 ? '#283593' : '#1a237e'; // slight ink variation
+            ctx.font = `18px ${HW}`;
+            ctx.textAlign = 'left';
+            ctx.fillText(nl, 0, 0);
+            ctx.restore();
+            ny += 31;
+        }
+    });
+
+    // ── Page number ───────────────────────────────────────────────────────
+    ctx.fillStyle = '#b0a898';
+    ctx.font = `italic 14px ${HW}`;
+    ctx.textAlign = 'center';
+    ctx.fillText('— i —', W / 2, H - 18);
 }
 
 const bookMeshes = []; // for raycasting (hit the whole book group's children)
@@ -2383,72 +2557,79 @@ const PAPERS_CVD = [
     journal: "Alzheimer's & Dementia",
     jsub: "THE JOURNAL OF THE ALZHEIMER'S ASSOCIATION",
     doi: '10.1002/alz.71264',
-    volume: "Alzheimers Dement. 2026;22(3):e71264",
+    volume: "Alzheimers Dement. 2026;22:e71264",
     received: '6 October 2025', revised: '21 January 2026', accepted: '5 February 2026',
     title: 'Evolution of cortical cerebral microinfarcts on 3T MRI: risk factors and clinical relevance',
     authors: 'Jiannan Huang<sup>1</sup> &nbsp;|&nbsp; Christopher Chen<sup>2,3</sup> &nbsp;|&nbsp; Wei Ying Tan<sup>1</sup> &nbsp;|&nbsp; Jiangbo Cui<sup>2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>2,3</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>4</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,3</sup>',
     affiliations: [
       'Saw Swee Hock School of Public Health, National University of Singapore and National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore',
+      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
       'Memory Aging and Cognition Centre, National University Health System, Singapore',
       'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
     ],
-    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, NUS. Email: saimahilal@nus.edu.sg',
+    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, National University of Singapore, Tahir Foundation Building (MD1), 12 Science Drive 2, #10-03U, Singapore 117549. Email: saimahilal@nus.edu.sg',
+    funding: 'National University of Singapore, Grant/Award Number: A-8000336-00-00; National Medical Research Council, Grant/Award Numbers: NMRC/CG/NUHS/2010, NMRC/CG/013/2013, NMRC/CIRG/1485/2018, CliniciansScientistAward A-8003721-00-00; Ministry of Education Singapore, Grant/Award Number: A-8003143-00-00',
     abstract: [
-      { h: 'INTRODUCTION', t: 'Cortical cerebral microinfarcts (CMIs) are associated with cognitive dysfunction and dementia, while their evolution on sequential MRI remains unclear.' },
-      { h: 'METHODS', t: 'The study enrolled 490 patients (mean age 72.5 years) from a memory-clinic cohort with 5-year follow-up. Cortical CMIs were graded at baseline and year 2.' },
-      { h: 'RESULTS', t: 'Forty-one (8.4%) patients showed incident cortical CMIs at year 2. Baseline cortical CMIs and large cortical infarcts showed the strongest association with incident CMIs.' },
+      { h: 'INTRODUCTION', t: 'Cortical cerebral microinfarcts (CMIs) are associated with cognitive dysfunction and dementia, while their evolution on sequential magnetic resonance imaging (MRI) remains unclear.' },
+      { h: 'METHODS', t: 'The study enrolled 490 patients (72.5 ± 7.9 years) from a memory-clinic cohort, with 5-year follow-up. Cortical CMIs were graded at baseline and year 2 to identify incident lesions and other evolutionary patterns. Cognitive function was assessed annually. Clinical events, including dementia, stroke, and mortality, were recorded with time to event.' },
+      { h: 'RESULTS', t: 'Forty-one (8.4%) patients showed incident cortical CMIs at year 2. Additionally, 12 had CMIs becoming invisible, and six showed CMIs incorporated into new large infarctions. Baseline cortical CMIs and large cortical infarcts showed the strongest association with incident CMIs. Incident cortical CMIs were associated with cognitive decline, white matter hyperintensity progression, and incident dementia, independent of prevalent lesions.' },
       { h: 'DISCUSSION', t: 'Cortical CMI evolution may reflect dynamic changes in brain vascular pathology and represent a potential target for interventions aimed at preserving cognitive function.' },
     ],
     keywords: 'cerebral small vessel disease, cognitive dysfunction, dementia, epidemiology, neuroimaging',
+    highlights: [
+      'In a memory-clinic cohort, the annual incidence of cortical microinfarcts was 4.2%.',
+      'Cortical microinfarcts could become invisible or incorporated into large infarctions.',
+    ],
   },
   {
     color: '#1a3a7a',
     journal: 'Hypertension Research',
     jsub: 'JAPANESE SOCIETY OF HYPERTENSION',
     doi: '10.1038/s41440-025-02435-1',
-    volume: 'Hypertens Res. 2026;49(3):890-903',
-    received: '22 July 2025', revised: '18 November 2025', accepted: '2 December 2025',
+    volume: 'Hypertens Res. Published online 5 November 2025',
+    received: '30 June 2025', revised: '25 September 2025', accepted: '15 October 2025',
+    published: '5 November 2025',
     title: 'Visit-to-visit blood pressure variability, brain MRI measures, and cognition in non-demented older adults',
-    authors: 'Jiangbo Cui<sup>1,2</sup> &nbsp;|&nbsp; Caroline Robert<sup>1</sup> &nbsp;|&nbsp; An Qi Toh<sup>1</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>1,3</sup> &nbsp;|&nbsp; Joyce R Chong<sup>1</sup> &nbsp;|&nbsp; Yuan Cai<sup>1</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>4</sup> &nbsp;|&nbsp; Mitchell K P Lai<sup>1,3</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,3,5</sup> &nbsp;|&nbsp; Christopher Chen<sup>1,3</sup>',
+    authors: 'Jiangbo Cui<sup>1,2</sup> &nbsp;·&nbsp; Caroline Robert<sup>1,2</sup> &nbsp;·&nbsp; An Qi Toh<sup>1,2</sup> &nbsp;·&nbsp; Eddie J. Y. Chong<sup>1,2</sup> &nbsp;·&nbsp; Joyce R. Chong<sup>1,2</sup> &nbsp;·&nbsp; Yuan Cai<sup>3</sup> &nbsp;·&nbsp; Narayanaswamy Venketasubramanian<sup>4</sup> &nbsp;·&nbsp; Mitchell K. P. Lai<sup>1,2</sup> &nbsp;·&nbsp; Saima Hilal<sup>1,2,5</sup> &nbsp;·&nbsp; Christopher Chen<sup>1,2</sup>',
     affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Psychological Medicine, Yong Loo Lin School of Medicine, NUS',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
+      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore, Singapore',
+      'Memory Aging and Cognition Centre, National University Health System, Singapore, Singapore',
+      'Division of Neurology, Department of Medicine and Therapeutics, Faculty of Medicine, The Chinese University of Hong Kong, Hong Kong SAR, China',
+      'Raffles Neuroscience Centre, Raffles Hospital, Singapore, Singapore',
+      'Saw Swee Hock School of Public Health, National University of Singapore and National University Health System, Singapore, Singapore',
     ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
+    correspondence: 'Christopher Chen. Email: phcclh@nus.edu.sg',
+    supplementary: 'The online version contains supplementary material available at https://doi.org/10.1038/s41440-025-02435-1',
     abstract: [
-      { h: 'OBJECTIVE', t: 'Visit-to-visit blood pressure variability (BPV) has emerged as an independent risk factor for cardiovascular and cerebrovascular disease.' },
-      { h: 'METHODS', t: 'Longitudinal data from 362 cognitively intact older adults were analysed with MRI markers of cerebrovascular disease and brain atrophy.' },
-      { h: 'RESULTS', t: 'Higher systolic BPV was associated with worse cognitive outcomes. The relationship between SBPV and cognition was partially mediated by structural brain changes, with mediation proportions of 17–24% for cerebrovascular disease and 14–35% for brain atrophy.' },
-      { h: 'CONCLUSIONS', t: 'BPV is a modifiable risk factor for cerebrovascular disease and cognitive decline, independent of mean blood pressure.' },
+      { h: '', t: 'Blood pressure variability (BPV) may be a potentially modifiable risk factor for dementia. However, longitudinal studies investigating the associations between BPV, cerebrovascular disease (CeVD), and brain atrophy remain limited. Importantly, it is unclear whether these brain structural changes mediate the relationship between BPV and cognition, and whether such mediation effects are independent of preexisting brain pathology. This study included 362 non-demented individuals who underwent at least two neuropsychological assessments or brain magnetic resonance imaging (MRI). BPV was calculated as variation independent of mean. MRI markers of CeVD (i.e., white matter hyperintensity [WMH], lacunes, cerebral microbleeds [CMBs], intracranial stenosis, and cortical infarcts) and brain atrophy (i.e., white matter volume [WMV], gray matter volume [GMV], and lateral ventricular volume [VV]), were evaluated. Plasma p-tau181 was measured as a marker of amyloid pathology. Higher systolic BPV (SBPV) was associated with worse cognitive outcomes. SBPV was associated with WMH, cortical infarcts, and VV at the final brain MRI. These results were consistent in longitudinal analyses. The association between SBPV and cognition was partially mediated by CeVD and brain atrophy, with mediation proportion ranging from 17 to 24% for CeVD and 14 to 35% for brain atrophy. Preexisting CeVD and amyloid pathology had minimal influence on these mediation effects. SBPV showed stronger effects than other BPV indices on cognition, CeVD, and brain atrophy.' },
     ],
-    keywords: 'blood pressure variability, brain atrophy, cerebrovascular disease, cognition',
+    keywords: 'Blood pressure variability · Brain atrophy · Cerebrovascular disease · Cognition',
   },
   {
-    color: '#4a0e28',
+    layout: 'brain',
+    color: '#1a4a80',
     journal: 'Brain',
     jsub: 'OXFORD UNIVERSITY PRESS',
     doi: '10.1093/brain/awaf301',
-    volume: 'Brain. 2025;148(11):3924-3934',
-    received: '10 March 2025', revised: '5 June 2025', accepted: '20 June 2025',
+    volume: 'BRAIN 2025: 148; 3924\u20133934',
+    received: 'March 05, 2025', revised: 'June 24, 2025', accepted: 'July 20, 2025',
+    published: 'August 12, 2025',
     title: 'Synergistic effect between cortical cerebral microinfarcts and brain atrophy on cognitive decline',
-    authors: 'Jiannan Huang<sup>1</sup> &nbsp;|&nbsp; Wei Ying Tan<sup>1</sup> &nbsp;|&nbsp; Jiangbo Cui<sup>2</sup> &nbsp;|&nbsp; Shin Hui On<sup>2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>2,3</sup> &nbsp;|&nbsp; Christopher Chen<sup>2,3</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,3</sup>',
+    authors: 'Jiannan Huang,<sup>1</sup> Wei Ying Tan,<sup>1</sup> Jiangbo Cui,<sup>2</sup> Shin Hui On,<sup>2,3</sup> Eddie Jun Yi Chong,<sup>2,3</sup> Christopher Chen<sup>2,3</sup> and Saima Hilal<sup>1,2,3</sup>',
+    commentary: 'See Sol\u00e9-Guardia <i>et al.</i> (https://doi.org/10.1093/brain/awaf377) for a scientific commentary on this article.',
     affiliations: [
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
+      'Saw Swee Hock School of Public Health, National University of Singapore and National University Health System, Singapore 117549, Singapore',
+      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore 117600, Singapore',
+      'Memory Aging and Cognition Centre, National University Health System, Singapore 117599, Singapore',
     ],
-    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, NUS. Email: saimahilal@nus.edu.sg',
     abstract: [
-      { h: 'BACKGROUND', t: 'Whether cortical cerebral microinfarcts (CMIs) and global brain atrophy interact synergistically in driving cognitive decline remains unknown.' },
-      { h: 'METHODS', t: 'This longitudinal study examined 475 patients (mean age 72.7 years) from a memory clinic cohort over 5 years using 3-T MRI and neuropsychological assessments.' },
-      { h: 'RESULTS', t: 'Cortical CMIs were associated with greater decrease over 2 years in total brain volume. Patients with high brain volume loss and cortical microinfarcts exhibited significantly lower cognitive scores in executive function, memory, language, and visuospatial function.' },
-      { h: 'CONCLUSIONS', t: 'CMIs and neurodegeneration are mutually reinforcing pathological processes with implications for multi-target treatment strategies.' },
+      { h: '', t: 'Cortical cerebral microinfarcts are associated with brain atrophy in cross-sectional studies, with further investigation using longitudinal datasets being warranted. Moreover, little is known about their combined impact on cognition. This study aimed to establish the association between cortical cerebral microinfarcts and brain volume loss over time and explore whether they synergistically contribute to cognitive decline.' },
+      { h: '', t: 'A total of 475 patients, aged 72.7 \u00b1 7.9 years, were enrolled from a memory clinic cohort, who underwent neuroimaging and neuropsychological assessments at least twice over 5 years. Cortical cerebral microinfarcts and other cerebrovascular disease were assessed using 3-T MRI. Brain volumes were calculated semi-automatically using FreeSurfer. Cognitive function was assessed using a neuropsychological test battery including six domains. Linear mixed-effect models were utilized to examine the association between cortical cerebral microinfarcts and brain volume loss and their interaction on cognitive decline. Estimated marginal means were derived to plot global cognitive trajectories.' },
+      { h: '', t: 'Cortical cerebral microinfarcts were associated with a greater decrease over 2 years in total brain volume [\u03b2 = \u22121.94 (\u22123.07, \u22120.82) at Year 2, P-interaction with time < 0.001], grey matter volume [\u03b2 = \u22121.00 (\u22121.69, \u22120.30) at Year 2, P-interaction = 0.002] and white matter volume [\u03b2 = \u22120.95 (\u22121.54, \u22120.35) at Year 2, P-interaction < 0.001]. Brain volume loss was more pronounced in patients with multiple microinfarcts. Patients with high brain volume loss and cortical cerebral microinfarcts, particularly multiple microinfarcts, exhibited significantly lower global cognitive scores [single microinfarct: \u03b2 = \u22121.83 (\u22122.68, \u22120.97) at Year 5, P-interaction with time < 0.001; multiple microinfarcts: \u03b2 = \u22123.13 (\u22124.21, \u22122.05) at Year 5, P-interaction < 0.001]. The synergistic effects were more significant in the domains of executive function, memory, language and visuospatial function. Global cognitive trajectories revealed greater cognitive decline in patients with high brain volume loss and single or multiple microinfarcts, with the latter showing the steepest slope.' },
+      { h: '', t: 'This study established a longitudinal association between cortical cerebral microinfarcts and brain atrophy progression, with higher microinfarct burden associated with more pronounced brain volume loss. Furthermore, cortical cerebral microinfarcts and brain atrophy showed synergistic effects on cognitive decline. These findings highlight the importance of investigating the role of mixed pathologies in the development of cognitive impairment and dementia in future research.' },
     ],
-    keywords: 'brain volume, cerebral small vessel disease, cognitive dysfunction, dementia, neuroimaging',
+    keywords: 'brain atrophy \u00b7 cerebrovascular disease \u00b7 cerebral microinfarcts \u00b7 cognitive decline \u00b7 longitudinal',
+    footer: 'Received March 05, 2025. Revised June 24, 2025. Accepted July 20, 2025. Advance access publication August 12, 2025\n\u00a9 The Author(s) 2025. Published by Oxford University Press on behalf of the Guarantors of Brain.\nThis is an Open Access article distributed under the terms of the Creative Commons Attribution License (https://creativecommons.org/licenses/by/4.0/), which permits unrestricted reuse, distribution, and reproduction in any medium, provided the original work is properly cited.',
   },
   {
     color: '#0d47a1',
@@ -3209,9 +3390,57 @@ const pubPrevBtn = document.getElementById('pub-prev-btn');
 const pubNextBtn = document.getElementById('pub-next-btn');
 const pubCounter = document.getElementById('pub-counter');
 
+function buildBrainPaper(p) {
+  const affsHTML = p.affiliations.map((a, i) =>
+    '<div class="brain-aff"><sup>' + (i+1) + '</sup> ' + a + '</div>'
+  ).join('');
+  const absHTML = p.abstract.map(s =>
+    '<p class="brain-abs-p">' + s.t + '</p>'
+  ).join('');
+  const commentaryHTML = p.commentary
+    ? '<p class="brain-commentary">' + p.commentary + '</p>'
+    : '';
+  const footerLines = (p.footer || '').split('\n').map(l =>
+    '<div>' + l + '</div>'
+  ).join('');
+  return '<div class="pub-paper brain-layout">' +
+    '<div class="brain-topbar">' +
+      '<span style="color:#2060a0;font-family:Arial,sans-serif;font-size:7.5px">https://doi.org/' + p.doi + '</span>' +
+      '<span class="brain-vol-right">' + p.volume + ' &nbsp;|&nbsp; 3924</span>' +
+    '</div>' +
+    '<div class="brain-header">' +
+      '<div>' +
+        '<div class="brain-logo-text">BRAIN</div>' +
+        '<div class="brain-logo-sub">A Journal of Neurology</div>' +
+      '</div>' +
+      '<div class="brain-art-badge">Original Article</div>' +
+    '</div>' +
+    '<div class="brain-body">' +
+      '<h1 class="brain-title">' + p.title + '</h1>' +
+      '<p class="brain-authors">' + p.authors + '</p>' +
+      commentaryHTML +
+      '<div class="brain-abstract-box">' + absHTML + '</div>' +
+      '<p class="brain-kw-line"><b>Keywords</b> ' + p.keywords + '</p>' +
+      '<div class="brain-affs">' + affsHTML + '</div>' +
+      '<div class="brain-footer">' + footerLines + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
 function buildPubPaper(p) {
+  if (p.layout === 'brain') return buildBrainPaper(p);
   const affsHTML = p.affiliations.map((a, i) => '<div class="pp-aff"><sup>' + (i+1) + '</sup> ' + a + '</div>').join('');
   const absHTML = p.abstract.map(s => '<p class="pp-abs-p">' + (s.h && s.h !== 'ABSTRACT' ? '<b>' + s.h + ': </b>' : '') + s.t + '</p>').join('');
+  const fundingHTML = p.funding ? '<hr class="pp-col-div"><div class="pp-sec-lbl">Funding information</div><div class="pp-corr-txt">' + p.funding + '</div>' : '';
+  const highlightsHTML = p.highlights && p.highlights.length
+    ? '<div class="pp-kw-lbl" style="margin-top:10px">HIGHLIGHTS</div><ul class="pp-highlights">' + p.highlights.map(h => '<li>' + h + '</li>').join('') + '</ul>'
+    : '';
+  const pubDateHTML = p.published
+    ? '<span class="pp-date-pipe">|</span><span class="pp-date-seg"><span class="pp-date-label acc">Published online:</span><span class="pp-date-val">&nbsp;' + p.published + '</span></span>'
+    : '';
+  const suppHTML = p.supplementary
+    ? '<div class="pp-corr-txt" style="margin-top:6px;padding-top:6px;border-top:1px solid #ddd"><b>Supplementary information</b> ' + p.supplementary + '</div>'
+    : '';
   return '<div class="pub-paper">' +
     '<div class="pp-dates">' +
       '<span class="pp-date-seg"><span class="pp-date-label rcv">Received:</span><span class="pp-date-val">&nbsp;' + p.received + '</span></span>' +
@@ -3219,6 +3448,7 @@ function buildPubPaper(p) {
       '<span class="pp-date-seg"><span class="pp-date-label rev">Revised:</span><span class="pp-date-val">&nbsp;' + p.revised + '</span></span>' +
       '<span class="pp-date-pipe">|</span>' +
       '<span class="pp-date-seg"><span class="pp-date-label acc">Accepted:</span><span class="pp-date-val">&nbsp;' + p.accepted + '</span></span>' +
+      pubDateHTML +
     '</div>' +
     '<div class="pp-doi-row">DOI: <a href="https://doi.org/' + p.doi + '" target="_blank" style="color:inherit;text-decoration:underline;cursor:pointer">' + p.doi + '</a></div>' +
     '<div class="pp-jbar" style="--jc:' + p.color + '">' +
@@ -3229,10 +3459,11 @@ function buildPubPaper(p) {
       '<h1 class="pp-title">' + p.title + '</h1>' +
       '<p class="pp-authors">' + p.authors + '</p>' +
       '<div class="pp-cols">' +
-        '<div class="pp-left">' + affsHTML + '<hr class="pp-col-div"><div class="pp-sec-lbl">Correspondence</div><div class="pp-corr-txt">' + p.correspondence + '</div></div>' +
+        '<div class="pp-left">' + suppHTML + affsHTML + '<hr class="pp-col-div"><div class="pp-sec-lbl">Correspondence</div><div class="pp-corr-txt">' + p.correspondence + '</div>' + fundingHTML + '</div>' +
         '<div class="pp-right"><div class="pp-abs-box" style="--jc:' + p.color + '">' +
           '<div class="pp-abs-head">Abstract</div>' + absHTML +
           '<div class="pp-kw-lbl">KEYWORDS</div><div class="pp-kw">' + p.keywords + '</div>' +
+          highlightsHTML +
         '</div></div>' +
       '</div>' +
       '<div class="pp-foot" style="--jc:' + p.color + '"><span>' + p.volume + '</span><span>Page 1 of 12</span></div>' +
@@ -3804,19 +4035,23 @@ const tc = tabCanvas.getContext('2d');
 
 // Track interactive state
 const MOCA_WORDS = ['FACE', 'VELVET', 'CHURCH', 'DAISY', 'RED'];
+const DELAYED_DISTRACTORS = ['HAND','NOSE','EYE','SILK','COTTON','TEMPLE','SCHOOL','ROSE','TULIP','BLUE','GREEN','WHITE','ARM','LINEN','LILY'];
 const tabState = {
-    currentScreen: 'home', // 'home', 'recall', 'qdrs', 'trail', 'clock'
+    currentScreen: 'home', // 'home', 'recall', 'qdrs', 'trail', 'clock', 'delayed'
+    trailPhase: 'intro',   // 'intro', 'trial', 'trial_done', 'real'
     trailPart: 'A',        // 'A' or 'B'
     trailDots: [],
     trailConnected: [],
     trailStartTime: 0,
     trailEndTime: 0,
     trailComplete: false,
+    trailFirstReady: false, // true once user taps circle 1 in real test
     // Clock drawing
     clockPhase: 'draw',       // 'draw', 'numbers', 'hands', 'score'
     clockStrokes: [],          // array of [{x,y}] strokes
     clockCurrentStroke: null,  // current drawing stroke
     clockScore: null,          // {circle, numbers, hands}
+    clockCircleDetected: false, // true once a valid circle is drawn in draw phase
     clockIsDrawing: false,
     // Number drag-and-drop
     clockTrayNums: [],         // shuffled numbers in the tray (not yet placed)
@@ -3835,6 +4070,10 @@ const tabState = {
     qdrsDomainIdx: 0,
     qdrsPhase: 'intro', // 'intro', 'questions', 'done'
     qdrsSubmitted: false,
+    // Delayed recall
+    delayedPhase: 'idle',   // 'idle', 'selecting', 'score'
+    delayedWords: [],        // shuffled 20-word array shown to user
+    delayedSelected: new Set(), // words user has tapped
 };
 
 // Assessment screens
@@ -3896,6 +4135,8 @@ function drawTabletScreen() {
         drawTrailMaking(W, H);
     } else if (tabState.currentScreen === 'clock') {
         drawClockDrawing(W, H);
+    } else if (tabState.currentScreen === 'delayed') {
+        drawDelayedRecall(W, H);
     }
     tabScrTex.needsUpdate = true;
 }
@@ -3915,10 +4156,11 @@ function drawHomeScreen(W, H) {
     tc.fillText('ASSESSMENTS', 36, 200);
 
     const cards = [
-        { label: 'Immediate Recall', sub: 'MoCA — Verbal Memory',        color: '#059669', icon: '🧠', screen: 'recall' },
-        { label: 'QDRS',             sub: 'Quick Dementia Rating System', color: '#7c3aed', icon: '📋', screen: 'qdrs'   },
-        { label: 'Trail Making',     sub: 'TMT-A / TMT-B',               color: '#2563eb', icon: '✏️', screen: 'trail'  },
-        { label: 'Clock Drawing',    sub: 'CDT — Visuospatial',          color: '#d97706', icon: '🕐', screen: 'clock'  },
+        { label: 'Immediate Recall', sub: 'MoCA — Verbal Memory',        color: '#059669', icon: '🧠', screen: 'recall'   },
+        { label: 'QDRS',             sub: 'Quick Dementia Rating System', color: '#7c3aed', icon: '📋', screen: 'qdrs'     },
+        { label: 'Trail Making',     sub: 'TMT-A / TMT-B',               color: '#2563eb', icon: '✏️', screen: 'trail'    },
+        { label: 'Clock Drawing',    sub: 'CDT — Visuospatial',          color: '#d97706', icon: '🕐', screen: 'clock'    },
+        { label: 'Delayed Recall',   sub: 'Recognition Memory — 5 of 20',color: '#0891b2', icon: '🔍', screen: 'delayed'  },
     ];
 
     // ── Grouped card container ───────────────────────────────────────────────
@@ -4303,10 +4545,31 @@ function drawQDRS(W, H) {
     tc.fillText(d === 9 ? 'Submit' : 'Next ›', W - cardPad - 95, qy + 36);
 }
 
+function resetTrail() {
+    tabState.trailPhase = 'intro';
+    tabState.trailPart = 'A';
+    tabState.trailDots = [];
+    tabState.trailConnected = [];
+    tabState.trailComplete = false;
+    tabState.trailStartTime = 0;
+    tabState.trailEndTime = 0;
+    tabState.trailFirstReady = false;
+}
+
+function initTrailTrial(part) {
+    const pts = part === 'A'
+        ? [[180,460],[600,370],[690,760],[220,920],[570,1110]]
+        : [[200,460],[590,370],[690,760],[220,920],[580,1110]];
+    const labels = part === 'A' ? ['1','2','3','4','5'] : ['1','A','2','B','3'];
+    tabState.trailDots = pts.map(([x,y], i) => ({ x, y, label: labels[i] }));
+    tabState.trailConnected = new Array(pts.length - 1).fill(false);
+    tabState.trailComplete = false;
+    tabState.trailStartTime = 1; // mark as "started" so no start-tap logic
+}
+
 function initTrailDots(part) {
     tabState.trailPart = part;
     tabState.trailComplete = false;
-    tabState.trailStartTime = 0;
     tabState.trailEndTime = 0;
     // Generate non-crossing path with unpredictable layout:
     // 1. Scatter random points with minimum spacing
@@ -4344,104 +4607,309 @@ function initTrailDots(part) {
 
 function drawTrailMaking(W, H) {
     const part = tabState.trailPart;
+    const phase = tabState.trailPhase;
     const isB = part === 'B';
     const color = isB ? '#5856d6' : '#007aff';
 
-    // Nav bar
-    drawNavBar(W, `Trail Making — Part ${part}`, 'TMT-A / TMT-B', color);
-
-    // Instructions
-    tc.fillStyle = '#4b5563'; tc.font = '20px -apple-system, sans-serif'; tc.textAlign = 'center';
-    if (isB) {
-        tc.fillText('Alternate: 1 → A → 2 → B → 3 → C → …', W/2, 152);
-    } else {
-        tc.fillText('Connect numbers in order: 1 → 2 → 3 → …', W/2, 152);
-    }
-    if (tabState.trailStartTime === 0 && !tabState.trailComplete) {
-        tc.fillStyle = '#d97706'; tc.font = 'bold 18px -apple-system, sans-serif';
-        tc.fillText('Tap the highlighted ① to start — go as fast as you can!', W/2, 180);
-    }
-
-    // Generate dots if needed
-    if (tabState.trailDots.length === 0) initTrailDots(part);
-
-    // Completion screen
-    if (tabState.trailComplete) {
-        const elapsed = ((tabState.trailEndTime - tabState.trailStartTime) / 1000).toFixed(1);
-        // All connections drawn
+    // ── Shared helper: draw dots + connections ────────────────────────────────
+    function drawDots(isTrial) {
         tc.strokeStyle = color; tc.lineWidth = 3; tc.setLineDash([]);
         for (let i = 0; i < tabState.trailDots.length - 1; i++) {
-            const a = tabState.trailDots[i], b = tabState.trailDots[i+1];
-            tc.beginPath(); tc.moveTo(a.x, a.y); tc.lineTo(b.x, b.y); tc.stroke();
+            if (tabState.trailConnected[i]) {
+                const a = tabState.trailDots[i], b = tabState.trailDots[i+1];
+                tc.beginPath(); tc.moveTo(a.x, a.y); tc.lineTo(b.x, b.y); tc.stroke();
+            }
         }
-        tabState.trailDots.forEach(dot => {
-            tc.beginPath(); tc.arc(dot.x, dot.y, 32, 0, Math.PI*2);
-            tc.fillStyle = color; tc.fill();
-            tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif';
+        const nextIdx = tabState.trailConnected.indexOf(false);
+        const noneConnected = !tabState.trailConnected.some(Boolean);
+        const isDone = tabState.trailConnected.every(Boolean);
+        tabState.trailDots.forEach((dot, i) => {
+            const connected = i > 0 && tabState.trailConnected[i-1];
+            const isNextDot = i === nextIdx + 1 || (nextIdx === -1 && i === tabState.trailDots.length - 1);
+            const isStart = i === 0 && noneConnected; // dot 1 before anything is tapped
+            const isLetter = /^[A-Z]$/.test(dot.label);
+            tc.beginPath(); tc.arc(dot.x, dot.y, 32, 0, Math.PI * 2);
+            tc.fillStyle = connected || isDone ? color
+                : isStart ? '#f0c020'                                             // yellow for circle 1
+                : isNextDot ? (isB && isLetter ? '#ede9ff' : '#e3f2ff')
+                : '#f2f2f7';
+            tc.fill();
+            tc.strokeStyle = connected || isDone ? (isB ? '#3634a3' : '#0055cc')
+                : isStart ? '#d4a010'
+                : color;
+            tc.lineWidth = isStart ? 3 : 2; tc.stroke();
+            tc.fillStyle = connected || isDone ? '#fff' : isStart ? '#7a5000' : '#1c1c1e';
+            tc.font = 'bold 22px -apple-system, sans-serif';
             tc.textAlign = 'center'; tc.textBaseline = 'middle';
             tc.fillText(dot.label, dot.x, dot.y);
         });
         tc.textBaseline = 'alphabetic';
+    }
 
-        // Result overlay — clean card
-        tc.fillStyle = 'rgba(250,250,252,0.96)';
-        tc.beginPath(); tc.roundRect(60, 440, W - 120, 360, 20); tc.fill();
-        tc.strokeStyle = color + '30'; tc.lineWidth = 1.5;
-        tc.beginPath(); tc.roundRect(60, 440, W - 120, 360, 20); tc.stroke();
+    // ── Helper: small inline demo circles ────────────────────────────────────
+    function drawDemoCircle(x, y, label, filled) {
+        tc.beginPath(); tc.arc(x, y, 22, 0, Math.PI * 2);
+        tc.fillStyle = filled ? color : '#e3f2ff'; tc.fill();
+        tc.strokeStyle = color; tc.lineWidth = 2; tc.stroke();
+        tc.fillStyle = filled ? '#fff' : '#1c1c1e';
+        tc.font = 'bold 17px -apple-system, sans-serif';
+        tc.textAlign = 'center'; tc.textBaseline = 'middle';
+        tc.fillText(label, x, y);
+        tc.textBaseline = 'alphabetic';
+    }
+    function drawArrow(x1, y1, x2, y2) {
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const r = 26;
+        const sx = x1 + Math.cos(angle) * r, sy = y1 + Math.sin(angle) * r;
+        const ex = x2 - Math.cos(angle) * r, ey = y2 - Math.sin(angle) * r;
+        tc.strokeStyle = '#9ca3af'; tc.lineWidth = 2; tc.setLineDash([6, 4]);
+        tc.beginPath(); tc.moveTo(sx, sy); tc.lineTo(ex, ey); tc.stroke();
+        tc.setLineDash([]);
+        // arrowhead
+        tc.fillStyle = '#9ca3af';
+        tc.beginPath();
+        tc.moveTo(ex, ey);
+        tc.lineTo(ex - 10 * Math.cos(angle - 0.4), ey - 10 * Math.sin(angle - 0.4));
+        tc.lineTo(ex - 10 * Math.cos(angle + 0.4), ey - 10 * Math.sin(angle + 0.4));
+        tc.closePath(); tc.fill();
+    }
+
+    // ── INTRO ─────────────────────────────────────────────────────────────────
+    if (phase === 'intro') {
+        drawNavBar(W, `Trail Making — Part ${part}`, 'TMT-A / TMT-B', color);
+
+        // Big instruction card
+        tc.fillStyle = '#ffffff';
+        tc.beginPath(); tc.roundRect(32, 140, W - 64, isB ? 760 : 700, 22); tc.fill();
+        tc.strokeStyle = color + '25'; tc.lineWidth = 1.5;
+        tc.beginPath(); tc.roundRect(32, 140, W - 64, isB ? 760 : 700, 22); tc.stroke();
+
+        // Icon
+        tc.fillStyle = color + '15';
+        tc.beginPath(); tc.arc(W/2, 218, 42, 0, Math.PI * 2); tc.fill();
+        tc.font = '38px sans-serif'; tc.textAlign = 'center';
+        tc.fillText('✏️', W/2, 232);
 
         tc.fillStyle = '#111827'; tc.font = 'bold 30px -apple-system, sans-serif'; tc.textAlign = 'center';
-        tc.fillText(`Part ${part} Complete`, W/2, 498);
-        // Time pill
-        tc.fillStyle = color + '14'; tc.beginPath(); tc.arc(W/2, 590, 70, 0, Math.PI*2); tc.fill();
-        tc.strokeStyle = color; tc.lineWidth = 2.5; tc.beginPath(); tc.arc(W/2, 590, 70, 0, Math.PI*2); tc.stroke();
-        tc.fillStyle = color; tc.font = 'bold 52px -apple-system, sans-serif';
-        tc.fillText(`${elapsed}s`, W/2, 608);
-        tc.fillStyle = '#6b7280'; tc.font = '19px -apple-system, sans-serif';
-        tc.fillText('completion time', W/2, 648);
+        tc.fillText(isB ? 'Alternating Numbers & Letters' : 'Connect Numbers In Order', W/2, 302);
 
-        // Next button
-        const nextLabel = isB ? 'Next Test  ›' : 'Start Part B  ›';
-        const nextColor = isB ? '#059669' : '#5856d6';
-        tc.fillStyle = nextColor;
-        tc.beginPath(); tc.roundRect(W/2 - 150, 686, 300, 58, 29); tc.fill();
-        tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
-        tc.fillText(nextLabel, W/2, 722);
-        return;
-    }
+        if (!isB) {
+            // Part A explanation
+            tc.fillStyle = '#4b5563'; tc.font = '20px -apple-system, sans-serif';
+            tc.fillText('Tap each circle in numerical order,', W/2, 348);
+            tc.fillText('as fast as you can.', W/2, 376);
 
-    // Live timer
-    if (tabState.trailStartTime > 0) {
-        const elapsed = ((Date.now() - tabState.trailStartTime) / 1000).toFixed(1);
-        tc.fillStyle = color; tc.font = 'bold 24px -apple-system, sans-serif'; tc.textAlign = 'right';
-        tc.fillText(`${elapsed}s`, W - 40, 170);
-        tc.textAlign = 'center';
-    }
+            // Visual demo: 1 → 2 → 3 → 4 → 5
+            const demoY = 460, demoXs = [120, 240, 360, 480, 600, 720];
+            [1,2,3,4,5].forEach((n, i) => {
+                if (i > 0) drawArrow(demoXs[i-1], demoY, demoXs[i], demoY);
+                drawDemoCircle(demoXs[i], demoY, String(n), i === 0);
+            });
 
-    // Draw connections
-    tc.strokeStyle = color; tc.lineWidth = 3; tc.setLineDash([]);
-    for (let i = 0; i < tabState.trailDots.length - 1; i++) {
-        if (tabState.trailConnected[i]) {
-            const a = tabState.trailDots[i], b = tabState.trailDots[i+1];
-            tc.beginPath(); tc.moveTo(a.x, a.y); tc.lineTo(b.x, b.y); tc.stroke();
+            tc.fillStyle = '#6b7280'; tc.font = '19px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Start at ① and work your way to ⑤, ⑥… all the way to 25.', W/2, 528);
+
+            // Rules box
+            tc.fillStyle = '#f0f9ff';
+            tc.beginPath(); tc.roundRect(60, 558, W - 120, 116, 14); tc.fill();
+            tc.strokeStyle = color + '40'; tc.lineWidth = 1;
+            tc.beginPath(); tc.roundRect(60, 558, W - 120, 116, 14); tc.stroke();
+            tc.fillStyle = '#1e40af'; tc.font = 'bold 17px -apple-system, sans-serif'; tc.textAlign = 'left';
+            tc.fillText('Rules:', 82, 590);
+            tc.fillStyle = '#374151'; tc.font = '18px -apple-system, sans-serif';
+            tc.fillText('• Tap each circle one at a time, in order.', 82, 618);
+            tc.fillText('• The timer starts when you press Begin.', 82, 644);
+            tc.fillText('• Go as fast as you can without making mistakes.', 82, 670);
+        } else {
+            // Part B explanation
+            tc.fillStyle = '#4b5563'; tc.font = '20px -apple-system, sans-serif';
+            tc.fillText('Alternate between numbers and letters:', W/2, 348);
+
+            // Visual demo: 1 → A → 2 → B → 3
+            const demoY = 440, labels = ['1','A','2','B','3'];
+            const demoXs = [100, 220, 340, 460, 580];
+            labels.forEach((lbl, i) => {
+                if (i > 0) drawArrow(demoXs[i-1], demoY, demoXs[i], demoY);
+                drawDemoCircle(demoXs[i], demoY, lbl, i === 0);
+            });
+
+            tc.fillStyle = '#6b7280'; tc.font = '19px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Number → Letter → Number → Letter…', W/2, 504);
+            tc.fillText('1 → A → 2 → B → 3 → C → … → 13', W/2, 532);
+
+            // Rules box
+            tc.fillStyle = '#f5f3ff';
+            tc.beginPath(); tc.roundRect(60, 560, W - 120, 140, 14); tc.fill();
+            tc.strokeStyle = color + '40'; tc.lineWidth = 1;
+            tc.beginPath(); tc.roundRect(60, 560, W - 120, 140, 14); tc.stroke();
+            tc.fillStyle = '#4c1d95'; tc.font = 'bold 17px -apple-system, sans-serif'; tc.textAlign = 'left';
+            tc.fillText('Rules:', 82, 592);
+            tc.fillStyle = '#374151'; tc.font = '18px -apple-system, sans-serif';
+            tc.fillText('• Always alternate: number, then letter, then number…', 82, 620);
+            tc.fillText('• Tap 1, A, 2, B, 3, C, 4, D … in that order.', 82, 648);
+            tc.fillText('• The timer starts when you press Begin.', 82, 676);
+            tc.fillText('• Go as fast as you can.', 82, 704);
         }
+
+        // Practice button
+        const btnY = isB ? 920 : 710;
+        tc.fillStyle = color;
+        tc.beginPath(); tc.roundRect(W/2 - 180, btnY, 360, 64, 32); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Start Practice (5 circles) →', W/2, btnY + 38);
+        tabState._trailIntroBtnY = btnY;
+
+    // ── TRIAL ─────────────────────────────────────────────────────────────────
+    } else if (phase === 'trial') {
+        drawNavBar(W, `Practice — Part ${part}`, 'Connect all 5 circles', color);
+
+        if (tabState.trailDots.length === 0) initTrailTrial(part);
+
+        const nextIdx = tabState.trailConnected.indexOf(false);
+        const done = tabState.trailConnected.every(Boolean);
+
+        if (done) {
+            // Show all dots connected, then a success overlay
+            drawDots(true);
+            tc.fillStyle = 'rgba(250,250,252,0.95)';
+            tc.beginPath(); tc.roundRect(60, 460, W - 120, 340, 22); tc.fill();
+            tc.strokeStyle = '#34c75940'; tc.lineWidth = 1.5;
+            tc.beginPath(); tc.roundRect(60, 460, W - 120, 340, 22); tc.stroke();
+
+            tc.fillStyle = '#059669'; tc.font = 'bold 32px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Well done! ✓', W/2, 526);
+            tc.fillStyle = '#374151'; tc.font = '20px -apple-system, sans-serif';
+            if (isB) {
+                tc.fillText('Remember: alternate numbers and letters.', W/2, 566);
+            } else {
+                tc.fillText('In the real test there are 25 circles.', W/2, 566);
+            }
+
+            // Timer warning box
+            tc.fillStyle = '#fef3c7';
+            tc.beginPath(); tc.roundRect(80, 594, W - 160, 82, 14); tc.fill();
+            tc.strokeStyle = '#d97706'; tc.lineWidth = 1.5;
+            tc.beginPath(); tc.roundRect(80, 594, W - 160, 82, 14); tc.stroke();
+            tc.fillStyle = '#92400e'; tc.font = 'bold 17px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText(`⚠️  The timer starts the moment you press Begin`, W/2, 626);
+            tc.fillStyle = '#b45309'; tc.font = '16px -apple-system, sans-serif';
+            tc.fillText('Only press it when you are ready to go!', W/2, 656);
+
+            tc.fillStyle = color;
+            tc.beginPath(); tc.roundRect(W/2 - 170, 700, 340, 64, 32); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
+            tc.fillText(`Begin Part ${part} →`, W/2, 738);
+        } else {
+            const noneYet = !tabState.trailConnected.some(Boolean);
+            const connected = tabState.trailConnected.filter(Boolean).length;
+
+            if (noneYet) {
+                // Emphasise: tap the yellow 1, then immediately tap 2
+                tc.fillStyle = '#fef3c7';
+                tc.beginPath(); tc.roundRect(28, 130, W - 56, 76, 16); tc.fill();
+                tc.strokeStyle = '#d97706'; tc.lineWidth = 1.5;
+                tc.beginPath(); tc.roundRect(28, 130, W - 56, 76, 16); tc.stroke();
+                tc.fillStyle = '#92400e'; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'center';
+                tc.fillText('Tap the yellow  ①  to begin — then tap  ②  right away', W/2, 158);
+                tc.fillStyle = '#b45309'; tc.font = '16px -apple-system, sans-serif';
+                tc.fillText('Keep going in order until you reach the last circle.', W/2, 196);
+            } else {
+                const nextDot = tabState.trailDots[nextIdx + 1];
+                tc.fillStyle = color + '18';
+                tc.beginPath(); tc.roundRect(W/2 - 280, 133, 560, 32, 16); tc.fill();
+                tc.fillStyle = color; tc.font = 'bold 16px -apple-system, sans-serif'; tc.textAlign = 'center';
+                tc.fillText(`Good! Now tap  ${nextDot ? nextDot.label : '?'}  next  (${connected} of 4 done)`, W/2, 154);
+            }
+
+            drawDots(true);
+        }
+
+    // ── REAL ──────────────────────────────────────────────────────────────────
+    } else if (phase === 'real') {
+        drawNavBar(W, `Trail Making — Part ${part}`, 'TMT-A / TMT-B', color);
+
+        tc.fillStyle = '#4b5563'; tc.font = '20px -apple-system, sans-serif'; tc.textAlign = 'center';
+        if (isB) {
+            tc.fillText('Alternate: 1 → A → 2 → B → 3 → C → …', W/2, 152);
+        } else {
+            tc.fillText('Connect numbers in order: 1 → 2 → 3 → …', W/2, 152);
+        }
+
+        if (tabState.trailDots.length === 0) initTrailDots(part);
+
+        if (tabState.trailComplete) {
+            const elapsed = ((tabState.trailEndTime - tabState.trailStartTime) / 1000).toFixed(1);
+            tc.strokeStyle = color; tc.lineWidth = 3; tc.setLineDash([]);
+            for (let i = 0; i < tabState.trailDots.length - 1; i++) {
+                const a = tabState.trailDots[i], b = tabState.trailDots[i+1];
+                tc.beginPath(); tc.moveTo(a.x, a.y); tc.lineTo(b.x, b.y); tc.stroke();
+            }
+            tabState.trailDots.forEach(dot => {
+                tc.beginPath(); tc.arc(dot.x, dot.y, 32, 0, Math.PI*2);
+                tc.fillStyle = color; tc.fill();
+                tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif';
+                tc.textAlign = 'center'; tc.textBaseline = 'middle';
+                tc.fillText(dot.label, dot.x, dot.y);
+            });
+            tc.textBaseline = 'alphabetic';
+
+            tc.fillStyle = 'rgba(250,250,252,0.96)';
+            tc.beginPath(); tc.roundRect(60, 440, W - 120, 360, 20); tc.fill();
+            tc.strokeStyle = color + '30'; tc.lineWidth = 1.5;
+            tc.beginPath(); tc.roundRect(60, 440, W - 120, 360, 20); tc.stroke();
+            tc.fillStyle = '#111827'; tc.font = 'bold 30px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText(`Part ${part} Complete`, W/2, 498);
+            tc.fillStyle = color + '14'; tc.beginPath(); tc.arc(W/2, 590, 70, 0, Math.PI*2); tc.fill();
+            tc.strokeStyle = color; tc.lineWidth = 2.5; tc.beginPath(); tc.arc(W/2, 590, 70, 0, Math.PI*2); tc.stroke();
+            tc.fillStyle = color; tc.font = 'bold 52px -apple-system, sans-serif';
+            tc.fillText(`${elapsed}s`, W/2, 608);
+            tc.fillStyle = '#6b7280'; tc.font = '19px -apple-system, sans-serif';
+            tc.fillText('completion time', W/2, 648);
+
+            const nextLabel = isB ? 'Next Test  ›' : 'Start Part B  ›';
+            const nextColor = isB ? '#059669' : '#5856d6';
+            tc.fillStyle = nextColor;
+            tc.beginPath(); tc.roundRect(W/2 - 150, 686, 300, 58, 29); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
+            tc.fillText(nextLabel, W/2, 722);
+            return;
+        }
+
+        if (tabState.trailStartTime > 0) {
+            const elapsed = ((Date.now() - tabState.trailStartTime) / 1000).toFixed(1);
+            tc.fillStyle = color; tc.font = 'bold 24px -apple-system, sans-serif'; tc.textAlign = 'right';
+            tc.fillText(`${elapsed}s`, W - 40, 170);
+            tc.textAlign = 'center';
+        }
+
+        tc.strokeStyle = color; tc.lineWidth = 3; tc.setLineDash([]);
+        for (let i = 0; i < tabState.trailDots.length - 1; i++) {
+            if (tabState.trailConnected[i]) {
+                const a = tabState.trailDots[i], b = tabState.trailDots[i+1];
+                tc.beginPath(); tc.moveTo(a.x, a.y); tc.lineTo(b.x, b.y); tc.stroke();
+            }
+        }
+
+        tabState.trailDots.forEach((dot, i) => {
+            const connected = i > 0 && tabState.trailConnected[i-1];
+            const isLetter = /[A-Z]/.test(dot.label);
+            const isFirstWaiting = i === 0 && !tabState.trailFirstReady && !tabState.trailComplete;
+            const isNext = !isFirstWaiting && (i === 0 ? false : tabState.trailConnected[i-1] === false && (i === 1 || tabState.trailConnected[i-2]));
+            tc.beginPath(); tc.arc(dot.x, dot.y, 32, 0, Math.PI*2);
+            tc.fillStyle = connected ? color
+                : isFirstWaiting ? '#f0c020'
+                : isNext ? (isB && isLetter ? '#ede9ff' : '#e3f2ff')
+                : '#f2f2f7';
+            tc.fill();
+            tc.strokeStyle = connected ? (isB ? '#3634a3' : '#0055cc')
+                : isFirstWaiting ? '#d4a010' : color;
+            tc.lineWidth = isFirstWaiting ? 3 : 2; tc.stroke();
+            tc.fillStyle = connected ? '#fff' : isFirstWaiting ? '#7a5000' : '#1c1c1e';
+            tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center'; tc.textBaseline = 'middle';
+            tc.fillText(dot.label, dot.x, dot.y);
+        });
+        tc.textBaseline = 'alphabetic';
     }
-
-    // Draw labeled circles
-    tabState.trailDots.forEach((dot, i) => {
-        const connected = i > 0 && tabState.trailConnected[i-1];
-        const isNext = i === 0 ? tabState.trailStartTime === 0 : tabState.trailConnected[i-1];
-        const isLetter = /[A-Z]/.test(dot.label);
-        tc.beginPath(); tc.arc(dot.x, dot.y, 32, 0, Math.PI*2);
-        const isFirstWaiting = i === 0 && tabState.trailStartTime === 0 && !tabState.trailComplete;
-        tc.fillStyle = connected ? color : isFirstWaiting ? '#f0c020' : (isNext ? (isB ? (isLetter ? '#ede9ff' : '#e3f2ff') : '#e3f2ff') : '#f2f2f7');
-        tc.fill();
-        tc.strokeStyle = connected ? (isB ? '#3634a3' : '#0055cc') : isFirstWaiting ? '#d4a010' : color; tc.lineWidth = isFirstWaiting ? 3 : 2; tc.stroke();
-        tc.fillStyle = connected ? '#fff' : '#1c1c1e';
-        tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center'; tc.textBaseline = 'middle';
-        tc.fillText(dot.label, dot.x, dot.y);
-    });
-    tc.textBaseline = 'alphabetic';
-
 }
 
 function drawClockDrawing(W, H) {
@@ -4506,21 +4974,54 @@ function drawClockDrawing(W, H) {
 
     if (phase === 'draw') {
         const btnY = trayTop;
-        if (tabState.clockStrokes.length > 0) {
-            tc.fillStyle = '#ff3b30';
-            tc.beginPath(); tc.roundRect(W/2 - 230, btnY, 120, 50, 25); tc.fill();
-            tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'center';
-            tc.fillText('Clear', W/2 - 170, btnY + 30);
+        const circDetected = tabState.clockCircleDetected;
 
-            tc.fillStyle = '#8e8e93';
-            tc.beginPath(); tc.roundRect(W/2 - 90, btnY, 120, 50, 25); tc.fill();
-            tc.fillStyle = '#fff';
-            tc.fillText('Undo', W/2 - 30, btnY + 30);
+        // If circle is detected, draw a subtle green outline over it
+        if (circDetected) {
+            const circ = getClockCircle();
+            if (circ) {
+                tc.save();
+                tc.strokeStyle = '#34c759';
+                tc.lineWidth = 5;
+                tc.globalAlpha = 0.45;
+                tc.setLineDash([14, 7]);
+                tc.beginPath(); tc.arc(circ.cx, circ.cy, circ.r, 0, Math.PI * 2); tc.stroke();
+                tc.restore();
+            }
+            // "Circle detected" label above buttons
+            tc.fillStyle = '#34c759';
+            tc.font = 'bold 15px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('✓ Circle detected', W/2, btnY - 10);
+
+            // Large Clear button (left)
+            tc.fillStyle = '#ff3b30';
+            tc.beginPath(); tc.roundRect(W/2 - 240, btnY, 160, 64, 32); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Clear', W/2 - 160, btnY + 38);
+
+            // Large prominent Next button (right, green)
+            tc.fillStyle = '#34c759';
+            tc.beginPath(); tc.roundRect(W/2 - 60, btnY, 300, 64, 32); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Place Numbers →', W/2 + 90, btnY + 38);
+        } else {
+            // No circle yet — normal small buttons
+            if (tabState.clockStrokes.length > 0) {
+                tc.fillStyle = '#ff3b30';
+                tc.beginPath(); tc.roundRect(W/2 - 230, btnY, 120, 50, 25); tc.fill();
+                tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'center';
+                tc.fillText('Clear', W/2 - 170, btnY + 30);
+
+                tc.fillStyle = '#8e8e93';
+                tc.beginPath(); tc.roundRect(W/2 - 90, btnY, 120, 50, 25); tc.fill();
+                tc.fillStyle = '#fff';
+                tc.fillText('Undo', W/2 - 30, btnY + 30);
+            }
+            tc.fillStyle = tabState.clockStrokes.length > 0 ? color : '#ccc';
+            tc.beginPath(); tc.roundRect(W/2 + 50, btnY, 180, 50, 25); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Next →', W/2 + 140, btnY + 30);
         }
-        tc.fillStyle = tabState.clockStrokes.length > 0 ? color : '#ccc';
-        tc.beginPath(); tc.roundRect(W/2 + 50, btnY, 180, 50, 25); tc.fill();
-        tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
-        tc.fillText('Next →', W/2 + 140, btnY + 30);
 
     } else if (phase === 'numbers') {
         // Number tray — shuffled tiles to drag
@@ -4544,17 +5045,29 @@ function drawClockDrawing(W, H) {
         // "Done" / "Next" button when all placed
         if (tray.length === 0) {
             const btnY = trayTop + 10;
+            // Undo last number (left of Draw Hands)
+            tc.fillStyle = '#8e8e93';
+            tc.beginPath(); tc.roundRect(W/2 - 250, btnY, 120, 54, 27); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Undo', W/2 - 190, btnY + 32);
+            // Draw Hands → (shifted right to make room)
             tc.fillStyle = color;
-            tc.beginPath(); tc.roundRect(W/2 - 120, btnY, 240, 54, 27); tc.fill();
+            tc.beginPath(); tc.roundRect(W/2 - 110, btnY, 240, 54, 27); tc.fill();
             tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
-            tc.fillText('Draw Hands →', W/2, btnY + 32);
+            tc.fillText('Draw Hands →', W/2 + 10, btnY + 32);
         }
 
-        // Reset numbers button
+        // Undo + Reset buttons while tray still has numbers
         if (tabState.clockPlacedNums.length > 0 && tray.length > 0) {
+            // Undo last placed number
+            tc.fillStyle = '#8e8e93';
+            tc.beginPath(); tc.roundRect(40, trayTop + 80, 110, 40, 20); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 16px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Undo', 95, trayTop + 105);
+            // Reset all
             tc.fillStyle = '#ff3b30';
             tc.beginPath(); tc.roundRect(W - 140, trayTop + 80, 100, 40, 20); tc.fill();
-            tc.fillStyle = '#fff'; tc.font = 'bold 16px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillStyle = '#fff';
             tc.fillText('Reset', W - 90, trayTop + 105);
         }
 
@@ -4610,10 +5123,148 @@ function drawClockDrawing(W, H) {
         });
 
         tc.textAlign = 'center';
+        // Try Again (left)
         tc.fillStyle = '#6b7280';
-        tc.beginPath(); tc.roundRect(W/2 - 130, 816, 260, 56, 28); tc.fill();
+        tc.beginPath(); tc.roundRect(W/2 - 280, 816, 220, 56, 28); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 20px -apple-system, sans-serif';
+        tc.fillText('Try Again', W/2 - 170, 850);
+        // Delayed Recall → (right)
+        tc.fillStyle = '#0891b2';
+        tc.beginPath(); tc.roundRect(W/2 + 40, 816, 220, 56, 28); tc.fill();
+        tc.fillStyle = '#fff';
+        tc.fillText('Delayed Recall →', W/2 + 150, 850);
+    }
+}
+
+function resetDelayed() {
+    tabState.delayedPhase = 'idle';
+    tabState.delayedWords = [];
+    tabState.delayedSelected = new Set();
+}
+
+function drawDelayedRecall(W, H) {
+    const color = '#0891b2';
+    drawNavBar(W, 'Delayed Recall', 'Recognition Memory', color);
+
+    if (tabState.delayedPhase === 'idle') {
+        // Instruction card
+        tc.fillStyle = '#ffffff';
+        tc.beginPath(); tc.roundRect(40, 160, W - 80, 360, 20); tc.fill();
+        tc.strokeStyle = color + '30'; tc.lineWidth = 1.5;
+        tc.beginPath(); tc.roundRect(40, 160, W - 80, 360, 20); tc.stroke();
+
+        tc.fillStyle = color + '18';
+        tc.beginPath(); tc.arc(W/2, 248, 44, 0, Math.PI * 2); tc.fill();
+        tc.font = '40px sans-serif'; tc.textAlign = 'center';
+        tc.fillText('🔍', W/2, 262);
+
+        tc.fillStyle = '#111827'; tc.font = 'bold 28px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Delayed Recognition', W/2, 322);
+
+        tc.fillStyle = '#6b7280'; tc.font = '19px -apple-system, sans-serif';
+        const lines = [
+            'You will see 20 words.',
+            'Tap the 5 words shown at the start of the session.',
+        ];
+        lines.forEach((l, i) => tc.fillText(l, W/2, 362 + i * 32));
+
+        // Begin button
+        tc.fillStyle = color;
+        tc.beginPath(); tc.roundRect(W/2 - 150, 440, 300, 64, 32); tc.fill();
         tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
-        tc.fillText('Try Again', W/2, 850);
+        tc.fillText('Begin', W/2, 603);
+
+    } else if (tabState.delayedPhase === 'selecting') {
+        // Progress banner
+        const selCount = tabState.delayedSelected.size;
+        tc.fillStyle = color + '18';
+        tc.beginPath(); tc.roundRect(W/2 - 280, 133, 560, 30, 15); tc.fill();
+        tc.fillStyle = color; tc.font = 'bold 15px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText(`Select the 5 words you remember  —  ${selCount} / 5 selected`, W/2, 153);
+
+        // Word grid: 4 cols × 5 rows
+        const words = tabState.delayedWords;
+        const cols = 4, padX = 28, gap = 10;
+        const tileW = (W - padX * 2 - gap * (cols - 1)) / cols;
+        const tileH = 68;
+        const gridTop = 174;
+
+        words.forEach((word, idx) => {
+            const col = idx % cols;
+            const row = Math.floor(idx / cols);
+            const tx = padX + col * (tileW + gap);
+            const ty = gridTop + row * (tileH + gap);
+            const selected = tabState.delayedSelected.has(word);
+
+            tc.fillStyle = selected ? color : '#ffffff';
+            tc.beginPath(); tc.roundRect(tx, ty, tileW, tileH, 14); tc.fill();
+            tc.strokeStyle = selected ? color : '#e5e7eb';
+            tc.lineWidth = selected ? 2.5 : 1.5;
+            tc.beginPath(); tc.roundRect(tx, ty, tileW, tileH, 14); tc.stroke();
+
+            tc.fillStyle = selected ? '#fff' : '#111827';
+            tc.font = 'bold 19px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText(word, tx + tileW / 2, ty + tileH / 2 + 7);
+        });
+
+        // Submit button below grid
+        const gridBot = gridTop + 5 * (tileH + gap) - gap;
+        tc.fillStyle = selCount > 0 ? color : '#d1d5db';
+        tc.beginPath(); tc.roundRect(W/2 - 150, gridBot + 18, 300, 62, 31); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 21px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Submit →', W/2, gridBot + 56);
+        tabState._delayedGridBot = gridBot;
+
+    } else if (tabState.delayedPhase === 'score') {
+        const selected = tabState.delayedSelected;
+        const hits = MOCA_WORDS.filter(w => selected.has(w)).length;
+        const falseAlarms = [...selected].filter(w => !MOCA_WORDS.includes(w)).length;
+        const sCol = hits >= 4 ? '#059669' : hits >= 2 ? '#d97706' : '#dc2626';
+
+        tc.fillStyle = 'rgba(250,250,252,0.97)';
+        tc.beginPath(); tc.roundRect(40, 148, W - 80, 744, 22); tc.fill();
+        tc.strokeStyle = sCol + '30'; tc.lineWidth = 1.5;
+        tc.beginPath(); tc.roundRect(40, 148, W - 80, 744, 22); tc.stroke();
+
+        tc.fillStyle = '#111827'; tc.font = 'bold 30px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Delayed Recall Score', W/2, 202);
+
+        // Score circle
+        tc.fillStyle = sCol + '18'; tc.beginPath(); tc.arc(W/2, 308, 72, 0, Math.PI * 2); tc.fill();
+        tc.strokeStyle = sCol; tc.lineWidth = 2.5; tc.beginPath(); tc.arc(W/2, 308, 72, 0, Math.PI * 2); tc.stroke();
+        tc.fillStyle = sCol; tc.font = 'bold 50px -apple-system, sans-serif';
+        tc.fillText(`${hits} / 5`, W/2, 326);
+
+        tc.fillStyle = '#6b7280'; tc.font = '19px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText(`${hits} correct  ·  ${falseAlarms} false alarm${falseAlarms !== 1 ? 's' : ''}`, W/2, 402);
+
+        // Target word rows
+        tc.fillStyle = '#9ca3af'; tc.font = 'bold 14px -apple-system, sans-serif'; tc.textAlign = 'left';
+        tc.fillText('TARGET WORDS', 60, 442);
+        MOCA_WORDS.forEach((word, i) => {
+            const wy = 458 + i * 54;
+            const hit = selected.has(word);
+            tc.fillStyle = hit ? '#ecfdf5' : '#fef2f2';
+            tc.beginPath(); tc.roundRect(56, wy, W - 112, 44, 10); tc.fill();
+            tc.strokeStyle = hit ? '#6ee7b7' : '#fca5a5'; tc.lineWidth = 1;
+            tc.beginPath(); tc.roundRect(56, wy, W - 112, 44, 10); tc.stroke();
+            tc.fillStyle = hit ? '#059669' : '#dc2626';
+            tc.font = 'bold 22px sans-serif'; tc.textAlign = 'left';
+            tc.fillText(hit ? '✓' : '✗', 72, wy + 30);
+            tc.fillStyle = '#111827'; tc.font = 'bold 20px -apple-system, sans-serif';
+            tc.fillText(word, 104, wy + 30);
+            if (!hit) {
+                tc.fillStyle = '#9ca3af'; tc.font = '17px -apple-system, sans-serif';
+                tc.fillText('not selected', 240, wy + 30);
+            }
+        });
+
+        // Done button
+        tc.textAlign = 'center';
+        tc.fillStyle = color;
+        tc.beginPath(); tc.roundRect(W/2 - 130, 740, 260, 56, 28); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 21px -apple-system, sans-serif';
+        tc.fillText('Done', W/2, 774);
     }
 }
 
@@ -4623,6 +5274,7 @@ function resetClock() {
     tabState.clockCurrentStroke = null;
     tabState.clockScore = null;
     tabState.clockIsDrawing = false;
+    tabState.clockCircleDetected = false;
     tabState.clockPlacedNums = [];
     tabState.clockDragging = null;
     tabState._circleStrokeCount = 0;
@@ -4679,7 +5331,7 @@ function scoreClockDrawing() {
     }
     const numbersOk = tabState.clockPlacedNums.length === 12 && numCorrect >= 10;
 
-    // 3. Hands: detect strokes drawn in hands phase pointing toward 11 and 2
+    // 3. Hands: detect two rays in hands phase pointing toward 11 and 2
     let handsOk = false;
     if (circleOk) {
         function angleDiff(a, b) {
@@ -4689,42 +5341,52 @@ function scoreClockDrawing() {
             return Math.abs(d);
         }
         const expectedHour = (11 * Math.PI / 6 + 10/60 * Math.PI / 6) - Math.PI / 2;
-        const expectedMin = (2 * Math.PI / 6) - Math.PI / 2;
-        const centerThresh = circleR * 0.55;
+        const expectedMin  = (2  * Math.PI / 6) - Math.PI / 2;
+        const centerThresh = circleR * 1.2; // stroke must pass within 120% of radius from center
 
-        // Only check hand strokes (drawn after circle phase)
         const handStrokes = strokes.slice(tabState._circleStrokeCount);
-        const rays = [];
+
+        // Build rays: each stroke produces 1 ray normally, or 2 rays if it passes through center
+        // (handles V-shape drawn as a single continuous stroke)
+        const strokeRays = [];
         for (const s of handStrokes) {
             if (s.length < 3) continue;
-            let minCDist = Infinity;
+            let minCDist = Infinity, minCIdx = 0;
             for (let i = 0; i < s.length; i++) {
                 const d = Math.sqrt((s[i].x - circleCx)**2 + (s[i].y - circleCy)**2);
-                if (d < minCDist) minCDist = d;
+                if (d < minCDist) { minCDist = d; minCIdx = i; }
             }
-            if (minCDist > centerThresh) continue;
-            const start = s[0], end = s[s.length - 1];
-            const dStart = Math.sqrt((start.x - circleCx)**2 + (start.y - circleCy)**2);
-            const dEnd = Math.sqrt((end.x - circleCx)**2 + (end.y - circleCy)**2);
-            if (dEnd > circleR * 0.2) {
-                rays.push({ angle: Math.atan2(end.y - circleCy, end.x - circleCx), len: dEnd });
-            }
-            if (dStart > circleR * 0.2) {
-                rays.push({ angle: Math.atan2(start.y - circleCy, start.x - circleCx), len: dStart });
+            if (minCDist > centerThresh) continue; // stroke never came near center
+            // If the closest-to-center point is in the interior of the stroke, it's a V/pass-through
+            if (minCIdx > s.length * 0.15 && minCIdx < s.length * 0.85) {
+                for (const endpoint of [s[0], s[s.length - 1]]) {
+                    const d = Math.sqrt((endpoint.x - circleCx)**2 + (endpoint.y - circleCy)**2);
+                    if (d < circleR * 0.15) continue;
+                    strokeRays.push({ angle: Math.atan2(endpoint.y - circleCy, endpoint.x - circleCx), len: d, id: strokeRays.length });
+                }
+            } else {
+                const start = s[0], end = s[s.length - 1];
+                const dStart = Math.sqrt((start.x - circleCx)**2 + (start.y - circleCy)**2);
+                const dEnd   = Math.sqrt((end.x   - circleCx)**2 + (end.y   - circleCy)**2);
+                const tip = dEnd >= dStart ? end : start;
+                const dTip = Math.max(dStart, dEnd);
+                if (dTip < circleR * 0.15) continue;
+                strokeRays.push({ angle: Math.atan2(tip.y - circleCy, tip.x - circleCx), len: dTip, id: strokeRays.length });
             }
         }
 
-        const tolerance = Math.PI / 7.2; // 25 degrees
-        let bestHour = null, bestHourDiff = Infinity;
-        let bestMin = null, bestMinDiff = Infinity;
-        for (const r of rays) {
+        const tolerance = Math.PI / 4; // 45 degrees — forgiving for freehand drawing
+        let hourRay = null, hourDiff = Infinity;
+        let minRay  = null, minDiff  = Infinity;
+        for (const r of strokeRays) {
             const hd = angleDiff(r.angle, expectedHour);
             const md = angleDiff(r.angle, expectedMin);
-            if (hd < bestHourDiff) { bestHourDiff = hd; bestHour = r; }
-            if (md < bestMinDiff) { bestMinDiff = md; bestMin = r; }
+            if (hd < hourDiff) { hourDiff = hd; hourRay = r; }
+            if (md < minDiff)  { minDiff  = md; minRay  = r; }
         }
-        const hourMatch = bestHour && bestHourDiff < tolerance;
-        const minMatch = bestMin && bestMinDiff < tolerance && bestMin !== bestHour;
+        const hourMatch = hourRay && hourDiff < tolerance;
+        // The minute ray must be a different ray than the hour ray
+        const minMatch  = minRay  && minDiff  < tolerance && (!hourRay || minRay.id !== hourRay.id);
         handsOk = hourMatch && minMatch;
     }
 
@@ -5184,13 +5846,15 @@ function handleTabletTap(px, py) {
     const W = tabScrW, H = tabScrH;
     if (tabState.currentScreen === 'home') {
         // Cards: grpTop=218, cardH=110, px covers 28..W-28
-        const cards = ['recall', 'qdrs', 'trail', 'clock'];
+        const cards = ['recall', 'qdrs', 'trail', 'clock', 'delayed'];
         const grpTop = 218, cardH = 110;
         cards.forEach((screen, i) => {
             const cy = grpTop + i * cardH;
             if (py >= cy && py <= cy + cardH && px >= 28 && px <= W - 28) {
                 if (screen === 'clock') resetClock();
+                if (screen === 'trail') resetTrail();
                 if (screen === 'qdrs') { tabState.qdrsRatings = new Array(10).fill(null); tabState.qdrsDomainIdx = 0; tabState.qdrsPhase = 'intro'; tabState.qdrsSubmitted = false; }
+                if (screen === 'delayed') resetDelayed();
                 tabState.currentScreen = screen;
             }
         });
@@ -5285,55 +5949,75 @@ function handleTabletTap(px, py) {
             }
         }
     } else if (tabState.currentScreen === 'trail') {
-        // Back button
+        const trPhase = tabState.trailPhase;
+        // Back button — always
         if (py >= 48 && py < 122 && px < 180) {
-            tabState.currentScreen = 'home'; tabState.trailDots = []; tabState.trailConnected = [];
-            tabState.trailComplete = false; tabState.trailStartTime = 0;
-        }
-        // Completion screen — next button
-        else if (tabState.trailComplete) {
-            const kbY = 680;
-            if (px >= W/2 - 130 && px <= W/2 + 130 && py >= kbY && py <= kbY + 54) {
-                if (tabState.trailPart === 'A') {
-                    // Move to Part B
+            resetTrail(); tabState.currentScreen = 'home';
+
+        } else if (trPhase === 'intro') {
+            const btnY = tabState._trailIntroBtnY || 710;
+            if (py >= btnY && py <= btnY + 64 && px >= W/2 - 180 && px <= W/2 + 180) {
+                tabState.trailPhase = 'trial';
+                initTrailTrial(tabState.trailPart);
+            }
+
+        } else if (trPhase === 'trial') {
+            const done = tabState.trailConnected.every(Boolean);
+            if (done) {
+                // "Begin Part X →" button: roundRect(W/2-170, 700, 340, 64)
+                if (py >= 700 && py <= 764 && px >= W/2 - 170 && px <= W/2 + 170) {
+                    tabState.trailPhase = 'real';
                     tabState.trailDots = [];
                     tabState.trailConnected = [];
                     tabState.trailComplete = false;
-                    tabState.trailStartTime = 0;
-                    initTrailDots('B');
-                } else {
-                    // Move to next test (clock)
-                    tabState.trailDots = []; tabState.trailConnected = [];
-                    tabState.trailComplete = false; tabState.trailStartTime = 0;
-                    resetClock();
-                    tabState.currentScreen = 'clock';
+                    tabState.trailFirstReady = false;
+                    tabState.trailStartTime = Date.now();
+                    initTrailDots(tabState.trailPart);
+                }
+            } else {
+                // Tap the next circle in sequence
+                const nextIdx = tabState.trailConnected.indexOf(false);
+                if (nextIdx >= 0) {
+                    const target = tabState.trailDots[nextIdx + 1];
+                    if (target) {
+                        const dx = px - target.x, dy = py - target.y;
+                        if (dx*dx + dy*dy < 50*50) tabState.trailConnected[nextIdx] = true;
+                    }
                 }
             }
-        }
-        else {
-            // Check dot clicks
-            const nextIdx = tabState.trailConnected.indexOf(false);
 
-            // Tapping the first dot starts the timer
-            if (tabState.trailStartTime === 0) {
-                const first = tabState.trailDots[0];
-                const dx = px - first.x, dy = py - first.y;
-                if (dx*dx + dy*dy < 50*50) {
-                    tabState.trailStartTime = Date.now();
-                    // Also connect to second if tapped on second
-                    const second = tabState.trailDots[1];
-                    const dx2 = px - second.x, dy2 = py - second.y;
-                    if (dx2*dx2 + dy2*dy2 < 50*50) tabState.trailConnected[0] = true;
+        } else if (trPhase === 'real') {
+            if (tabState.trailComplete) {
+                // Next button: roundRect(W/2-150, 686, 300, 58)
+                if (px >= W/2 - 150 && px <= W/2 + 150 && py >= 686 && py <= 744) {
+                    if (tabState.trailPart === 'A') {
+                        // Go to Part B intro
+                        tabState.trailPart = 'B';
+                        tabState.trailPhase = 'intro';
+                        tabState.trailDots = [];
+                        tabState.trailConnected = [];
+                        tabState.trailComplete = false;
+                        tabState.trailStartTime = 0;
+                    } else {
+                        resetClock(); tabState.currentScreen = 'clock';
+                    }
                 }
-            } else if (nextIdx >= 0 && nextIdx < tabState.trailDots.length - 1) {
-                const target = tabState.trailDots[nextIdx + 1];
-                const dx = px - target.x, dy = py - target.y;
-                if (dx*dx + dy*dy < 50*50) {
-                    tabState.trailConnected[nextIdx] = true;
-                    // Check if all connected
-                    if (tabState.trailConnected.every(Boolean)) {
-                        tabState.trailComplete = true;
-                        tabState.trailEndTime = Date.now();
+            } else {
+                const nextIdx = tabState.trailConnected.indexOf(false);
+                if (!tabState.trailFirstReady) {
+                    // Must tap circle 1 first to begin
+                    const first = tabState.trailDots[0];
+                    const dx = px - first.x, dy = py - first.y;
+                    if (dx*dx + dy*dy < 50*50) tabState.trailFirstReady = true;
+                } else if (nextIdx >= 0 && nextIdx < tabState.trailDots.length - 1) {
+                    const target = tabState.trailDots[nextIdx + 1];
+                    const dx = px - target.x, dy = py - target.y;
+                    if (dx*dx + dy*dy < 50*50) {
+                        tabState.trailConnected[nextIdx] = true;
+                        if (tabState.trailConnected.every(Boolean)) {
+                            tabState.trailComplete = true;
+                            tabState.trailEndTime = Date.now();
+                        }
                     }
                 }
             }
@@ -5347,17 +6031,35 @@ function handleTabletTap(px, py) {
             resetClock();
         } else if (phase === 'draw') {
             const btnY = trayTop;
-            if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 - 230 && px <= W/2 - 110) {
-                tabState.clockStrokes = [];
-            } else if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 - 90 && px <= W/2 + 30) {
-                tabState.clockStrokes.pop();
-            } else if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 + 50 && px <= W/2 + 230) {
-                // Next → move to numbers phase
-                tabState._circleStrokeCount = tabState.clockStrokes.length;
-                tabState.clockPhase = 'numbers';
-            } else if (py >= drawTop && py <= drawBot && px >= 40 && px <= W - 40) {
-                tabState.clockIsDrawing = true;
-                tabState.clockCurrentStroke = [{ x: px, y: py }];
+            if (tabState.clockCircleDetected) {
+                // Large button layout when circle detected
+                // Clear: W/2-240 to W/2-80, h=64
+                if (py >= btnY && py <= btnY + 64 && px >= W/2 - 240 && px <= W/2 - 80) {
+                    tabState.clockStrokes = [];
+                    tabState.clockCircleDetected = false;
+                // Next: W/2-60 to W/2+240, h=64
+                } else if (py >= btnY && py <= btnY + 64 && px >= W/2 - 60 && px <= W/2 + 240) {
+                    tabState._circleStrokeCount = tabState.clockStrokes.length;
+                    tabState.clockPhase = 'numbers';
+                } else if (py >= drawTop && py <= drawBot && px >= 40 && px <= W - 40) {
+                    tabState.clockIsDrawing = true;
+                    tabState.clockCurrentStroke = [{ x: px, y: py }];
+                }
+            } else {
+                // Normal small button layout
+                if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 - 230 && px <= W/2 - 110) {
+                    tabState.clockStrokes = [];
+                    tabState.clockCircleDetected = false;
+                } else if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 - 90 && px <= W/2 + 30) {
+                    tabState.clockStrokes.pop();
+                    tabState.clockCircleDetected = !!getClockCircle();
+                } else if (tabState.clockStrokes.length > 0 && py >= btnY && py <= btnY + 50 && px >= W/2 + 50 && px <= W/2 + 230) {
+                    tabState._circleStrokeCount = tabState.clockStrokes.length;
+                    tabState.clockPhase = 'numbers';
+                } else if (py >= drawTop && py <= drawBot && px >= 40 && px <= W - 40) {
+                    tabState.clockIsDrawing = true;
+                    tabState.clockCurrentStroke = [{ x: px, y: py }];
+                }
             }
         } else if (phase === 'numbers') {
             const tray = tabState.clockTrayNums;
@@ -5366,8 +6068,18 @@ function handleTabletTap(px, py) {
             const startX = Math.max(50, (W - totalW) / 2);
 
             // Check "Draw Hands →" button (when all placed)
-            if (tray.length === 0 && py >= trayTop + 10 && py <= trayTop + 64 && px >= W/2 - 120 && px <= W/2 + 120) {
+            if (tray.length === 0 && py >= trayTop + 10 && py <= trayTop + 64 && px >= W/2 - 110 && px <= W/2 + 130) {
                 tabState.clockPhase = 'hands';
+            }
+            // Check "Undo" when all placed (left of Draw Hands)
+            else if (tray.length === 0 && tabState.clockPlacedNums.length > 0 && py >= trayTop + 10 && py <= trayTop + 64 && px >= W/2 - 250 && px <= W/2 - 130) {
+                const last = tabState.clockPlacedNums.pop();
+                tabState.clockTrayNums.push(last.num);
+            }
+            // Check "Undo" when tray still has numbers
+            else if (tabState.clockPlacedNums.length > 0 && tray.length > 0 && py >= trayTop + 80 && py <= trayTop + 120 && px >= 40 && px <= 150) {
+                const last = tabState.clockPlacedNums.pop();
+                tabState.clockTrayNums.push(last.num);
             }
             // Check "Reset" button
             else if (tabState.clockPlacedNums.length > 0 && tray.length > 0 && py >= trayTop + 80 && py <= trayTop + 120 && px >= W - 140 && px <= W - 40) {
@@ -5402,8 +6114,64 @@ function handleTabletTap(px, py) {
                 tabState.clockCurrentStroke = [{ x: px, y: py }];
             }
         } else if (phase === 'score') {
-            if (py >= 790 && py <= 840 && px >= W/2 - 100 && px <= W/2 + 100) {
+            // Try Again (left button): W/2-280 to W/2-60, y 816-872
+            if (py >= 816 && py <= 872 && px >= W/2 - 280 && px <= W/2 - 60) {
                 resetClock();
+            }
+            // Delayed Recall → (right button): W/2+40 to W/2+260, y 816-872
+            else if (py >= 816 && py <= 872 && px >= W/2 + 40 && px <= W/2 + 260) {
+                resetDelayed();
+                tabState.currentScreen = 'delayed';
+                resetClock();
+            }
+        }
+    } else if (tabState.currentScreen === 'delayed') {
+        // Back button
+        if (py >= 48 && py < 122 && px < 180) { resetDelayed(); tabState.currentScreen = 'home'; }
+        else if (tabState.delayedPhase === 'idle') {
+            // Begin: roundRect(W/2-150, 440, 300, 64)
+            if (px >= W/2 - 150 && px <= W/2 + 150 && py >= 440 && py <= 504) {
+                const all = [...MOCA_WORDS, ...DELAYED_DISTRACTORS];
+                for (let i = all.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [all[i], all[j]] = [all[j], all[i]];
+                }
+                tabState.delayedWords = all;
+                tabState.delayedSelected = new Set();
+                tabState.delayedPhase = 'selecting';
+            }
+        } else if (tabState.delayedPhase === 'selecting') {
+            const words = tabState.delayedWords;
+            const cols = 4, padX = 28, gap = 10;
+            const tileW = (W - padX * 2 - gap * (cols - 1)) / cols;
+            const tileH = 68;
+            const gridTop = 174;
+            let tileHit = false;
+
+            words.forEach((word, idx) => {
+                const col = idx % cols;
+                const row = Math.floor(idx / cols);
+                const tx = padX + col * (tileW + gap);
+                const ty = gridTop + row * (tileH + gap);
+                if (px >= tx && px <= tx + tileW && py >= ty && py <= ty + tileH) {
+                    if (tabState.delayedSelected.has(word)) tabState.delayedSelected.delete(word);
+                    else tabState.delayedSelected.add(word);
+                    tileHit = true;
+                }
+            });
+
+            // Submit button
+            if (!tileHit && tabState.delayedSelected.size > 0) {
+                const gridBot = gridTop + 5 * (tileH + gap) - gap;
+                if (py >= gridBot + 18 && py <= gridBot + 80 && px >= W/2 - 150 && px <= W/2 + 150) {
+                    tabState.delayedPhase = 'score';
+                }
+            }
+        } else if (tabState.delayedPhase === 'score') {
+            // Done button: roundRect(W/2-130, 740, 260, 56)
+            if (py >= 740 && py <= 796 && px >= W/2 - 130 && px <= W/2 + 130) {
+                resetDelayed();
+                tabState.currentScreen = 'home';
             }
         }
     }
@@ -5724,6 +6492,11 @@ window.addEventListener('mouseup', () => {
     // Finish freehand stroke on clock
     if (tabState.clockIsDrawing && tabState.clockCurrentStroke && tabState.clockCurrentStroke.length > 1) {
         tabState.clockStrokes.push(tabState.clockCurrentStroke);
+        // Real-time circle detection while in draw phase
+        if (tabState.clockPhase === 'draw') {
+            tabState.clockCircleDetected = !!getClockCircle();
+            drawTabletScreen();
+        }
     }
     tabState.clockIsDrawing = false;
     tabState.clockCurrentStroke = null;
