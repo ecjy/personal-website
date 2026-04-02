@@ -353,6 +353,7 @@ function dismissIntro() {
     el.style.pointerEvents = 'none';
     setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 900);
 }
+window.dismissIntro = dismissIntro;
 
 // ─── Renderer ────────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, logarithmicDepthBuffer: true });
@@ -2051,7 +2052,7 @@ bookRackGroup.add(rackBase);
     }
 });
 
-// Books — 5 books with realistic covers, openable
+// Books — 6 books with realistic covers, openable
 const bookDefs = [
     { title: "The Manager's Path", author: 'Camille Fournier', color: 0x1a2744, w: 0.14, h: 1.18, d: 0.76, titleColor: '#e8d44d',
       subtitle: 'A Guide for Tech Leaders\nNavigating Growth & Change',
@@ -2254,7 +2255,266 @@ const bookDefs = [
         ctx.fillText('GUILFORD PRESS', W/2, H * 0.94);
       }
     },
+    { title: 'The Art of Explanation', author: 'Ros Atkins', color: 0xC84B19, w: 0.13, h: 1.16, d: 0.74, titleColor: '#FAF0E6',
+      subtitle: 'How to Communicate with\nClarity and Confidence',
+      firstPage: "Why I read this:\n\nClear communication is at\nthe heart of clinical research.\nAtkins shows how to distil\ncomplex ideas into accessible\nexplanations.\n\nKey takeaway: The best\nexplanations are built on\nstructure, not simplification.\nComplexity needs clarity,\nnot dumbing down.",
+      drawCover: function(ctx, W, H) {
+        // Deep rich saturated orange — matched to actual cover
+        ctx.fillStyle = '#C84B19'; ctx.fillRect(0, 0, W, H);
+        const ivory = '#FAF0E6';
+        const ivoryFade = 'rgba(250,240,230,0.6)';
+        const ivoryLight = 'rgba(250,240,230,0.45)';
+        // Press quotes at top — small italic serif, cream-white
+        ctx.fillStyle = ivoryFade; ctx.font = 'italic 12px Georgia, serif'; ctx.textAlign = 'left';
+        ctx.fillText("'Precision, deftness and", 28, H * 0.05);
+        ctx.fillText("a calming expertise'", 28, H * 0.073);
+        ctx.fillStyle = ivoryLight; ctx.font = 'bold italic 9px Georgia, serif';
+        ctx.fillText('THE TIMES', 28, H * 0.098);
+        ctx.fillStyle = ivoryFade; ctx.font = 'italic 12px Georgia, serif'; ctx.textAlign = 'center';
+        ctx.fillText("'Dazzling'", W * 0.48, H * 0.05);
+        ctx.fillStyle = ivoryLight; ctx.font = 'bold italic 9px Georgia, serif';
+        ctx.fillText('ALAN RUSBRIDGER', W * 0.48, H * 0.073);
+        ctx.fillStyle = ivoryFade; ctx.font = 'italic 12px Georgia, serif'; ctx.textAlign = 'right';
+        ctx.fillText("'Lucid and", W - 28, H * 0.05);
+        ctx.fillText("detailed'", W - 28, H * 0.073);
+        ctx.fillStyle = ivoryLight; ctx.font = 'bold italic 9px Georgia, serif';
+        ctx.fillText('INDEPENDENT', W - 28, H * 0.098);
+        // Main title — thin elegant serif, cream-white, dictionary-entry style
+        ctx.textAlign = 'left';
+        ctx.fillStyle = ivory; ctx.font = '100 68px Georgia, serif';
+        ctx.fillText('the art', 32, H * 0.23);
+        ctx.font = '100 78px Georgia, serif';
+        ctx.fillText('of', 32, H * 0.335);
+        // "ex·plan·ation" with interpuncts — thinner weight, slightly smaller
+        ctx.font = '100 54px Georgia, serif';
+        ctx.fillText('ex\u00B7plan\u00B7ation', 32, H * 0.43);
+        // "noun" label — italic, smaller, faded
+        ctx.fillStyle = ivoryFade; ctx.font = 'italic 16px Georgia, serif';
+        ctx.fillText('noun', 32, H * 0.465);
+        // Definition-style subtitle
+        ctx.fillStyle = ivory; ctx.font = '100 20px Georgia, serif';
+        ctx.fillText('1.  How to Communicate', 32, H * 0.525);
+        ctx.fillText('     with Clarity and Confidence', 32, H * 0.565);
+        // Author name — bold, large, cream-white, all caps
+        ctx.fillStyle = ivory; ctx.font = 'bold 42px -apple-system, sans-serif';
+        ctx.fillText('ROS ATKINS', 32, H * 0.74);
+        // Bottom quote
+        ctx.fillStyle = ivoryFade; ctx.font = 'italic 13px Georgia, serif';
+        ctx.fillText("'One of the clearest analysts", 32, H * 0.86);
+        ctx.fillText("in modern journalism'", 32, H * 0.885);
+        ctx.fillStyle = ivoryLight; ctx.font = 'italic 11px Georgia, serif';
+        ctx.fillText('Rory Stewart', 80, H * 0.915);
+      }
+    },
 ];
+
+// Helper: draw the inside of the front cover with a note paper stuck on it
+function drawCoverInsideWithNote(ctx, W, H, book, hexColor) {
+    // ── Inner cover surface — slightly darkened version of book color ──
+    ctx.fillStyle = hexColor; ctx.fillRect(0, 0, W, H);
+    // Darken overlay for inner cover feel
+    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(0, 0, W, H);
+    // Subtle texture grain on inner cover
+    ctx.fillStyle = 'rgba(0,0,0,0.04)';
+    for (let i = 0; i < 200; i++) {
+        const gx = (Math.sin(i * 97.3) * 0.5 + 0.5) * W;
+        const gy = (Math.cos(i * 61.7) * 0.5 + 0.5) * H;
+        ctx.fillRect(gx, gy, 2, 1);
+    }
+
+    // ── Note paper — slightly rotated, with shadow ──
+    const noteW = W * 0.82, noteH = H * 0.80;
+    const noteX = (W - noteW) / 2, noteY = (H - noteH) / 2 + 8;
+    const noteAngle = -0.012; // very slight tilt
+
+    ctx.save();
+    ctx.translate(W / 2, H / 2 + 8);
+    ctx.rotate(noteAngle);
+
+    // Drop shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 5;
+
+    // Note paper background
+    ctx.fillStyle = '#fdf8ef';
+    ctx.beginPath();
+    ctx.roundRect(-noteW / 2, -noteH / 2, noteW, noteH, 3);
+    ctx.fill();
+
+    // Reset shadow for the rest
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    // ── Tape strips at top — two small pieces ──
+    // Left tape
+    ctx.save();
+    ctx.translate(-noteW * 0.22, -noteH / 2);
+    ctx.rotate(0.08);
+    ctx.fillStyle = 'rgba(200, 195, 160, 0.55)';
+    ctx.fillRect(-28, -10, 56, 24);
+    // Tape shine
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.fillRect(-28, -10, 56, 8);
+    ctx.restore();
+
+    // Right tape
+    ctx.save();
+    ctx.translate(noteW * 0.22, -noteH / 2);
+    ctx.rotate(-0.06);
+    ctx.fillStyle = 'rgba(200, 195, 160, 0.55)';
+    ctx.fillRect(-28, -10, 56, 24);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.fillRect(-28, -10, 56, 8);
+    ctx.restore();
+
+    // ── Draw the handwritten content on the note paper ──
+    // Offset the drawing context to the note paper area
+    ctx.translate(-noteW / 2, -noteH / 2);
+    drawFirstPageContent(ctx, noteW, noteH, book);
+
+    ctx.restore();
+}
+
+// Helper: draw the note content (shared between standalone and stuck-on-cover versions)
+function drawFirstPageContent(ctx, W, H, book) {
+    const HW = `'Segoe Script','Apple Chancery','Bradley Hand',cursive`;
+
+    // Very faint paper grain (scattered dots)
+    ctx.fillStyle = 'rgba(180,160,120,0.06)';
+    for (let i = 0; i < 320; i++) {
+        const gx = (Math.sin(i * 127.3) * 0.5 + 0.5) * W;
+        const gy = (Math.cos(i * 84.7)  * 0.5 + 0.5) * H;
+        ctx.fillRect(gx, gy, 2, 2);
+    }
+
+    // Ruled lines (light blue, college-ruled style)
+    const ruleSpacing = 28;
+    ctx.strokeStyle = '#c9d9f0'; ctx.lineWidth = 0.7;
+    for (let ry = 66; ry < H - 20; ry += ruleSpacing) {
+        ctx.beginPath(); ctx.moveTo(W * 0.12, ry); ctx.lineTo(W * 0.92, ry); ctx.stroke();
+    }
+
+    // Red margin line
+    ctx.strokeStyle = '#f0b0b0'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(W * 0.17, 30); ctx.lineTo(W * 0.17, H - 20); ctx.stroke();
+
+    // Dog-eared top-right corner
+    const fold = 22;
+    ctx.fillStyle = '#ede8dc';
+    ctx.beginPath();
+    ctx.moveTo(W - fold, 0); ctx.lineTo(W, 0); ctx.lineTo(W, fold); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#d5cec0'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(W - fold, 0); ctx.lineTo(W, fold); ctx.stroke();
+
+    // ── Title (large, handwritten) ──
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = `bold italic 30px ${HW}`;
+    let words = book.title.split(' '), titleLines = [], tl = '';
+    for (const w of words) {
+        const test = tl ? tl + ' ' + w : w;
+        if (ctx.measureText(test).width > W * 0.70 && tl) { titleLines.push(tl); tl = w; }
+        else tl = test;
+    }
+    if (tl) titleLines.push(tl);
+
+    titleLines.forEach((l, i) => {
+        const ty = 50 + i * 34;
+        ctx.save();
+        ctx.translate(W / 2, ty);
+        ctx.rotate(Math.sin(i * 3.1) * 0.008);
+        ctx.fillStyle = '#1a237e';
+        ctx.fillText(l, 0, 0);
+        ctx.restore();
+    });
+    const titleBot = 50 + titleLines.length * 34;
+
+    // Author — smaller, indigo italic
+    ctx.font = `italic 16px ${HW}`;
+    ctx.fillStyle = '#5c6bc0';
+    ctx.fillText('— ' + book.author + ' —', W / 2, titleBot + 14);
+    ctx.restore();
+
+    // ── Wavy hand-drawn separator ──
+    const sepY = titleBot + 32;
+    ctx.save();
+    ctx.strokeStyle = '#1a237e'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    const x0 = W * 0.20, x1 = W * 0.82;
+    ctx.moveTo(x0, sepY);
+    for (let x = x0; x <= x1; x += 6) {
+        const p = (x - x0) / (x1 - x0);
+        ctx.lineTo(x, sepY + Math.sin(p * Math.PI * 7) * 2);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Small star doodle in left margin
+    ctx.save();
+    ctx.translate(W * 0.09, sepY - 2);
+    ctx.strokeStyle = '#e53935'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let a = 0; a < 5; a++) {
+        const ang = (a * 4 * Math.PI / 5) - Math.PI / 2;
+        a === 0 ? ctx.moveTo(Math.cos(ang)*7, Math.sin(ang)*7)
+                : ctx.lineTo(Math.cos(ang)*7, Math.sin(ang)*7);
+    }
+    ctx.closePath(); ctx.stroke();
+    ctx.restore();
+
+    // ── Handwritten notes ──
+    const noteLines = book.firstPage.split('\n');
+    const leftX = W * 0.20;
+    let ny = sepY + 24;
+
+    noteLines.forEach((nl, idx) => {
+        if (!nl.trim()) { ny += 12; return; }
+
+        const isHeader = nl.startsWith('Why') || nl.startsWith('Key');
+
+        if (isHeader) {
+            ctx.save();
+            ctx.translate(leftX, ny);
+            ctx.rotate(Math.sin(idx * 2.1) * 0.010);
+            ctx.fillStyle = '#c62828';
+            ctx.font = `bold italic 16px ${HW}`;
+            ctx.textAlign = 'left';
+            ctx.fillText(nl, 0, 0);
+            // Hand-drawn underline
+            const tw = ctx.measureText(nl).width;
+            ctx.strokeStyle = '#c62828'; ctx.lineWidth = 1.1;
+            ctx.beginPath(); ctx.moveTo(0, 4);
+            for (let ux = 0; ux <= tw; ux += 5)
+                ctx.lineTo(ux, 4 + Math.sin(ux * 0.4) * 1);
+            ctx.stroke();
+            ctx.restore();
+            ny += 28;
+        } else {
+            ctx.save();
+            ctx.fillStyle = '#1a237e';
+            ctx.font = `15px ${HW}`;
+            ctx.textAlign = 'left';
+            ctx.fillText('–', leftX - 12, ny + Math.sin(idx * 1.9) * 1.2);
+            ctx.restore();
+
+            ctx.save();
+            const wobbleY = Math.sin(idx * 2.7) * 1.5;
+            const wobbleR = Math.sin(idx * 1.3) * 0.007;
+            ctx.translate(leftX, ny + wobbleY);
+            ctx.rotate(wobbleR);
+            ctx.fillStyle = idx % 5 === 3 ? '#283593' : '#1a237e';
+            ctx.font = `15px ${HW}`;
+            ctx.textAlign = 'left';
+            ctx.fillText(nl, 0, 0);
+            ctx.restore();
+            ny += 26;
+        }
+    });
+}
 
 // Helper: draw a first page styled as personal handwritten notebook notes
 function drawFirstPage(ctx, W, H, book) {
@@ -2473,27 +2733,23 @@ bookDefs.forEach((b, idx) => {
     const cCtx = coverCvs.getContext('2d');
     b.drawCover(cCtx, 512, 700);
     const coverTex = new THREE.CanvasTexture(coverCvs);
-    const coverArtMat = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.5, metalness: 0.05 });
+    const coverArtMat = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.5, metalness: 0.05, toneMapped: false });
 
     const frontCoverGeo = new THREE.BoxGeometry(coverW, b.h, backCoverD);
-    // Face order: +x (outer cover art), -x (inner), +y, -y, +z, -z
-    const frontCover = new THREE.Mesh(frontCoverGeo, [coverArtMat, coverMat, coverMat, coverMat, coverMat, coverMat]);
-    // Cover extends from pivot toward -Z (away from spine)
-    frontCover.position.set(0, 0, -backCoverD / 2);
-    frontCoverPivot.add(frontCover);
-
-    // ── First Page (visible when book opens) — sits just inside front cover ──
+    // Face order: +x (outer cover art), -x (inner with note), +y, -y, +z, -z
+    // Create the handwritten note canvas for the inside of the front cover
     const firstPageCvs = document.createElement('canvas');
     firstPageCvs.width = 512; firstPageCvs.height = 700;
     const fpCtx = firstPageCvs.getContext('2d');
-    drawFirstPage(fpCtx, 512, 700, b);
+    // Draw the cover's inner surface (book cover color) with a note paper stuck on
+    drawCoverInsideWithNote(fpCtx, 512, 700, b, hex);
     const firstPageTex = new THREE.CanvasTexture(firstPageCvs);
-    const firstPageMat = new THREE.MeshStandardMaterial({ map: firstPageTex, roughness: 0.85 });
-    const firstPageMesh = new THREE.Mesh(new THREE.PlaneGeometry(b.d - 0.02, b.h - 0.02), firstPageMat);
-    // Positioned on top of page block, facing +x (revealed when cover opens)
-    firstPageMesh.position.set(b.w / 2 - bookCoverThick - 0.001, 0, 0);
-    firstPageMesh.rotation.y = Math.PI / 2;
-    bookGroup.add(firstPageMesh);
+    const firstPageMat = new THREE.MeshStandardMaterial({ map: firstPageTex, roughness: 0.7, metalness: 0.02, toneMapped: false });
+
+    const frontCover = new THREE.Mesh(frontCoverGeo, [coverArtMat, firstPageMat, coverMat, coverMat, coverMat, coverMat]);
+    // Cover extends from pivot toward -Z (away from spine)
+    frontCover.position.set(0, 0, -backCoverD / 2);
+    frontCoverPivot.add(frontCover);
 
     // Position the book group on the rack
     const lean = (idx < 2) ? -0.06 : (idx > 3) ? 0.05 : (Math.random() - 0.5) * 0.03;
@@ -2580,6 +2836,31 @@ const PAPERS_CVD = [
       'In a memory-clinic cohort, the annual incidence of cortical microinfarcts was 4.2%.',
       'Cortical microinfarcts could become invisible or incorporated into large infarctions.',
     ],
+  },
+  {
+    color: '#c62828',
+    journal: 'Journal of the American Heart Association',
+    jsub: 'AHA / ASA',
+    artType: 'ORIGINAL RESEARCH',
+    doi: '10.1161/JAHA.125.045054',
+    volume: 'J Am Heart Assoc. 2026;15:e045054',
+    received: '10 October 2025', accepted: '5 December 2025',
+    published: '30 December 2025',
+    title: 'Association of Atrial Electrophysiological Abnormalities With Cognitive Decline and Cerebrovascular Disease',
+    authors: 'Eugene S. J. Tan, MBBS*; Ming Ann Sim, MBBS*; Lucia Li, BA; Anqi Toh, BSc; Eddie Chong, BSc; Siew Pang Chan, PhD; Paul Gonzales, MD; Mark J. H. Lim, PhD; Saima Hilal, MD, PhD; Joyce Chong, PhD; Mitchell K. P. Lai, PhD; Narayanaswamy Venketasubramanian, MD; Boon-Yeow Tan, MBBS; A. Mark Richards, MD, PhD; Lieng-Hsi Ling, MD&#8224;; Christopher Chen, BMBCh&#8224;',
+    affiliations: [
+      'Memory Aging and Cognition Centre, National University Health System, Singapore',
+      'Department of Medicine, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
+      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
+    ],
+    correspondence: 'Eugene S.J. Tan, MBBS, Department of Cardiology, National University Heart Centre, 5 Lower Kent Ridge Road, Singapore 119074. Email: eugene_sj_tan@nuhs.edu.sg',
+    abstract: [
+      { h: 'BACKGROUND', t: 'Atrial electrophysiological abnormalities (AEA) are associated with cognitive dysfunction. We evaluated the associations of AEA with longitudinal cognitive decline and incident dementia and investigated underlying mechanisms.' },
+      { h: 'METHODS', t: 'In subjects without atrial fibrillation followed prospectively for 5 years, 12-lead ECGs were evaluated for AEA, defined as the presence of sinus node dysfunction (SND), frequent premature atrial complexes, advanced interatrial block (a-IAB), or P-terminal force in V1 (>40 mm·ms). Rate of decline in global cognition (Z-score averaged from 6 cognitive domains), Clinical Dementia Rating–Sum of Boxes score, and associations with cerebrovascular disease on neuroimaging and circulating biomarkers of neurodegenerative disease were determined.' },
+      { h: 'RESULTS', t: 'Among 358 subjects (age 73.3±7.6 years, 55% female, 47% dementia), 188 (53%) had AEA (94 SND, 6 frequent premature atrial complexes, 52 a-IAB, 92 P-terminal force in V1 >40 mm·ms). Compared with non-AEA, AEA was associated with accelerated decline in both global cognition and Clinical Dementia Rating–Sum of Boxes score (P<sub>interaction</sub>&lt;0.05), 2 times increased risk of dementia in competing risk analyses, and increased burden of cortical infarcts, lacunes, and cerebral microinfarcts (P&lt;0.05). Among AEA subtypes, SND (versus non-SND) and a-IAB (versus non-a-IAB) both associated with accelerated decline in global cognition and Clinical Dementia Rating–Sum of Boxes score (P<sub>interaction</sub>&lt;0.05). a-IAB was associated with 3 times increased risk of incident ischemic stroke and P-terminal force in V1 with increased burden of lacunes. SND was associated with increased burden of cerebral microinfarcts and cerebral microbleeds, incident cerebral microbleeds, higher circulating pTau-181 levels, and increased odds of Alzheimer disease among subjects with preexisting dementia (P&lt;0.05).' },
+      { h: 'CONCLUSIONS', t: 'AEA is associated with worse cognitive trajectories and increased cerebrovascular disease burden. These associations may be underpinned by AEA-subtype-specific mechanisms.' },
+    ],
+    keywords: 'atrial cardiomyopathy &#9632; cognitive decline &#9632; dementia &#9632; ECG &#9632; interatrial block &#9632; sinus node dysfunction &#9632; stroke',
   },
   {
     color: '#1a3a7a',
@@ -2735,6 +3016,28 @@ const PAPERS_CVD = [
     keywords: 'cerebrovascular disease, cognitive dysfunction, diabetes, magnetic resonance imaging',
   },
   {
+    color: '#1b5e20',
+    journal: "Alzheimer's Research & Therapy",
+    jsub: 'BIOMED CENTRAL / SPRINGER',
+    doi: '10.1186/s13195-024-01627-0',
+    volume: 'Alzheimers Res Ther. 2024;16(1):273',
+    received: '7 July 2024', accepted: '18 November 2024',
+    published: '23 December 2024',
+    title: 'Retinal thickness predicts the risk of cognitive decline over five years',
+    authors: 'Leila Sara Eppenberger<sup>1</sup>  |  Chi Li<sup>1</sup>  |  Damon Wong<sup>1</sup>  |  Bingyao Tan<sup>1</sup>  |  Gerhard Garhöfer<sup>2</sup>  |  Saima Hilal<sup>3</sup>  |  Eddie Chong<sup>4</sup>  |  An Qi Toh<sup>4</sup>  |  Narayanaswamy Venketasubramanian<sup>5</sup>  |  Christopher Li-Hsian Chen<sup>4</sup>  |  Leopold Schmetterer<sup>1</sup>  |  Jacqueline Chua<sup>1</sup>',
+    affiliations: [
+      'Singapore Eye Research Institute, Singapore National Eye Centre, Singapore',
+      'Department of Clinical Pharmacology, Medical University of Vienna, Vienna, Austria',
+      'Saw Swee Hock School of Public Health, National University of Singapore, Singapore',
+      'Memory Aging and Cognition Centre, National University Health System, Singapore',
+      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
+    ],
+    abstract: [
+      { h: '', t: 'Retinal thickness measured by optical coherence tomography (OCT) was evaluated as a predictor of longitudinal cognitive decline over five years in a Singapore-based cohort of older adults. The retina, as a window to the brain, shows structural changes in ganglion cell and nerve fiber layers that mirror neurodegeneration. Key retinal thickness parameters — including ganglion cell-inner plexiform layer and peripapillary retinal nerve fiber layer — were evaluated against cognitive trajectories across multiple domains. Retinal thickness measures were significantly associated with rate of cognitive decline, supporting non-invasive retinal imaging as a biomarker for early identification of individuals at risk of cognitive deterioration and dementia.' },
+    ],
+    keywords: 'retinal thickness, optical coherence tomography, cognitive decline, dementia, neurodegeneration',
+  },
+  {
     color: '#2a5f5f',
     journal: "Journal of Alzheimer's Disease",
     jsub: 'IOS PRESS',
@@ -2780,6 +3083,53 @@ const PAPERS_CVD = [
       { h: 'CONCLUSION', t: 'Location-specific cerebral small vessel disease markers predict domain-specific cognitive decline and should inform monitoring strategies.' },
     ],
     keywords: 'cerebral small vessel disease, cognitive decline, memory clinic, mixed-location, strictly deep, strictly lobar',
+  },
+  {
+    color: '#4a148c',
+    journal: 'The American Journal of Geriatric Psychiatry',
+    jsub: 'ELSEVIER / AMERICAN ASSOCIATION FOR GERIATRIC PSYCHIATRY',
+    doi: '10.1016/j.jagp.2020.06.009',
+    volume: 'Am J Geriatr Psychiatry. 2021;29(2):156–165',
+    published: 'June 2020',
+    title: 'The Impact of Strategic White Matter Hyperintensity Lesion Location on Language',
+    authors: 'Saima Hilal<sup>1,2</sup>  |  J. Matthijs Biesbroek<sup>3</sup>  |  Henri Vrooman<sup>4</sup>  |  Eddie Chong<sup>5</sup>  |  Hugo J. Kuijf<sup>3</sup>  |  Narayanaswamy Venketasubramanian<sup>6</sup>  |  Ching-Yu Cheng<sup>7</sup>  |  Tien Yin Wong<sup>7</sup>  |  Geert Jan Biessels<sup>3</sup>  |  Christopher Chen<sup>5</sup>',
+    affiliations: [
+      'Saw Swee Hock School of Public Health, National University of Singapore, Singapore',
+      'Department of Epidemiology, Erasmus University Medical Center, Rotterdam, Netherlands',
+      'Department of Neurology, UMC Utrecht Brain Center, Utrecht, Netherlands',
+      'Department of Radiology and Nuclear Medicine, Erasmus University Medical Center, Rotterdam, Netherlands',
+      'Memory Aging and Cognition Centre, National University Health System, Singapore',
+      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
+      'Singapore Eye Research Institute, Singapore National Eye Centre, Singapore',
+    ],
+    abstract: [
+      { h: '', t: 'This study investigates the relationship between the spatial location of white matter hyperintensities (WMH) — lesions associated with cerebral small vessel disease — and language function. Using voxel-based lesion-symptom mapping in a Singapore memory clinic cohort, the authors identify which specific white matter tracts, when affected by WMH, are most strongly associated with language impairments assessed via naming and verbal fluency tests. Findings highlight strategic WMH locations — particularly in left perisylvian and frontal white matter tracts — as key determinants of language deficits, with implications for understanding vascular contributions to cognitive and language impairment in older adults.' },
+    ],
+    keywords: 'white matter hyperintensities, language, voxel-based lesion-symptom mapping, cerebrovascular disease, cognition',
+  },
+  {
+    color: '#1565c0',
+    journal: "Journal of Alzheimer's Disease",
+    jsub: 'IOS PRESS',
+    doi: '10.3233/JAD-160139',
+    volume: 'J Alzheimers Dis. 2016;52(3):1021–1028',
+    published: '23 May 2016',
+    title: 'Validation of the Total Cerebrovascular Disease Burden Scale in a Community Sample',
+    authors: 'Xin Xu<sup>1</sup>  |  Saima Hilal<sup>1,2</sup>  |  Simon L. Collinson<sup>3</sup>  |  Qun Lin Chan<sup>1</sup>  |  Eddie Jun Yi Chong<sup>1</sup>  |  Mohammad Kamran Ikram<sup>1,4</sup>  |  Narayanaswamy Venketasubramanian<sup>5</sup>  |  Ching-Yu Cheng<sup>6</sup>  |  Tien Yin Wong<sup>6</sup>  |  Christopher Li-Hsian Chen<sup>1</sup>',
+    affiliations: [
+      'Memory Aging and Cognition Centre, National University Health System, Singapore',
+      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
+      'Department of Psychology, National University of Singapore, Singapore',
+      'Department of Neurology, Erasmus University Medical Center, Rotterdam, Netherlands',
+      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
+      'Singapore Eye Research Institute, Singapore National Eye Centre, Singapore',
+    ],
+    abstract: [
+      { h: 'BACKGROUND', t: 'A Total Cerebrovascular Disease (CVD) Burden Scale was developed combining multiple MRI markers of cerebral small vessel disease — including white matter hyperintensities, lacunes, cerebral microbleeds, brain atrophy, and enlarged perivascular spaces — into a composite burden score.' },
+      { h: 'OBJECTIVE', t: 'To validate the Total CVD Burden Scale in a community-based sample from the Epidemiology of Dementia in Singapore (EDIS) study.' },
+      { h: 'RESULTS', t: "Higher total CVD burden was significantly associated with worse cognitive performance across multiple domains. Results confirm the scale\'s construct and concurrent validity as a summary measure of cerebrovascular disease load in population-based research." },
+    ],
+    keywords: 'cerebrovascular disease burden, community cohort, magnetic resonance imaging, cognitive impairment, validation',
   },
   {
     color: '#c62828',
@@ -2835,6 +3185,28 @@ const PAPERS_AI = [
       { h: 'CONCLUSIONS', t: 'Cardiovascular pathways warrant investigation as intervention targets for cognitive frailty, bridging cardiac and neurocognitive aging research.' },
     ],
     keywords: 'cognitive frailty, frailty, GDF-15, high-sensitivity cardiac troponin T, mild cognitive impairment, NT-proBNP',
+  },
+  {
+    color: '#00695c',
+    journal: 'Communications Medicine',
+    jsub: 'NATURE PORTFOLIO',
+    doi: '10.1038/s43856-026-01484-y',
+    volume: 'Commun Med. 2026',
+    received: '18 June 2025', accepted: '18 February 2026',
+    published: '5 March 2026',
+    title: 'Spatial navigation as a digital marker for clinically differentiating cognitive impairment severity',
+    authors: 'Giorgio Colombo<sup>1</sup>  |  Karolina Minta<sup>1</sup>  |  William R. Taylor<sup>1</sup>  |  Jascha Grübel<sup>1</sup>  |  Eddie Chong<sup>2</sup>  |  Joyce R. Chong<sup>2</sup>  |  Mark J. H. Lim<sup>2</sup>  |  Paul Nichol G. Gonzales<sup>2</sup>  |  Mitchell K. P. Lai<sup>2</sup>  |  Christopher P. Chen<sup>2</sup>  |  Victor R. Schinazi<sup>1</sup>',
+    affiliations: [
+      'ETH Zurich, Zurich, Switzerland',
+      'Memory Aging and Cognition Centre, National University Health System, Singapore',
+    ],
+    abstract: [
+      { h: 'BACKGROUND', t: 'Spatial navigation impairments emerge early in Alzheimer\'s disease, but assessments targeting these deficits remain underutilised or impractical for cognitive screening. The Spatial Performance Assessment for Cognitive Evaluation (SPACE) is a newly developed digital tool that evaluates spatial navigation deficits associated with cognitive impairment.' },
+      { h: 'METHODS', t: 'Spatial navigation ability using SPACE was assessed in 300 older adults recruited from memory clinics and the general community. Participants were classified across different levels of cognitive impairment using the Clinical Dementia Rating (CDR) scale. SPACE performance was compared with clinical diagnosis, standard cognitive assessments, and demographic models using AUC, sensitivity, and specificity.' },
+      { h: 'RESULTS', t: 'SPACE reliably distinguishes CDR levels, exceeding the accuracy of demographic models and matching or surpassing most traditional neuropsychological tests. Including SPACE significantly increases the AUC for no dementia vs. mild dementia (0.76 to 0.94), no dementia vs. moderate dementia (0.79 to 0.95), and questionable vs. mild dementia (0.70 to 0.91). A shortened version (<11 minutes) reduces administration time by 40% while maintaining high diagnostic accuracy.' },
+      { h: 'CONCLUSIONS', t: 'Digital spatial navigation assessments have strong potential for early detection, contributing to scalable and accessible healthcare.' },
+    ],
+    keywords: 'spatial navigation, digital biomarker, cognitive impairment, dementia screening, Clinical Dementia Rating',
   },
   {
     color: '#7d2035',
@@ -2919,6 +3291,46 @@ const PAPERS_AI = [
       { h: 'CONCLUSIONS', t: 'Heart rate extremes impact cognition through distinct neurobiological mechanisms, with implications for cardiovascular monitoring in older adults.' },
     ],
     keywords: 'biomarkers, bradycardia, cerebrovascular disease, cognitive decline, heart rate',
+  },
+  {
+    color: '#006064',
+    journal: 'eClinicalMedicine',
+    jsub: 'THE LANCET / ELSEVIER',
+    doi: '10.1016/j.eclinm.2024.102725',
+    volume: 'eClinicalMedicine. 2024;74:102725',
+    published: 'August 2024',
+    title: 'Robust and interpretable AI-guided marker for early dementia prediction in real-world clinical settings',
+    authors: 'Liz Yuanxi Lee<sup>1</sup>  |  Delshad Vaghari<sup>1</sup>  |  Michael C. Burkhart<sup>1</sup>  |  Peter Tino<sup>2</sup>  |  Marcella Montagnese<sup>1</sup>  |  Zhuoyu Li<sup>1</sup>  |  Katharina Zühlsdorff<sup>1</sup>  |  Joseph Giorgio<sup>1</sup>  |  Guy Williams<sup>1</sup>  |  Eddie Chong<sup>3</sup>  |  Christopher Chen<sup>3</sup>  |  Benjamin R. Underwood<sup>4</sup>  |  Timothy Rittman<sup>1</sup>  |  Zoe Kourtzi<sup>1</sup>',
+    affiliations: [
+      'Department of Psychology, University of Cambridge, Cambridge, United Kingdom',
+      'School of Computer Science, University of Birmingham, Birmingham, United Kingdom',
+      'Memory Aging and Cognition Centre, National University Health System, Singapore',
+      'Cambridgeshire and Peterborough NHS Foundation Trust, Cambridge, United Kingdom',
+    ],
+    abstract: [
+      { h: '', t: 'This study develops a robust and interpretable AI-guided marker for early dementia prediction validated in real-world clinical settings. Using multimodal data and an ensemble machine learning approach combining Generalized Learning Vector Quantization with majority voting, bagging, and boosting, the authors propose a marker that is both clinically interpretable and robust to the heterogeneity and missing data common in real-world memory clinic populations. The marker demonstrates high predictive accuracy for dementia progression, generalizes across multiple cohorts (research and clinical), and outperforms standard cognitive and neuroimaging assessments alone, supporting its clinical translation potential.' },
+    ],
+    keywords: 'artificial intelligence, dementia prediction, machine learning, real-world data, clinical translation',
+  },
+  {
+    color: '#2e7d32',
+    journal: 'Scientific Reports',
+    jsub: 'NATURE PORTFOLIO',
+    doi: '10.1038/s41598-024-60914-w',
+    volume: 'Sci Rep. 2024;14(1):10755',
+    received: '13 December 2023', accepted: '29 April 2024',
+    published: '10 May 2024',
+    title: 'Unsupervised multimodal modeling of cognitive and brain health trajectories for early dementia prediction',
+    authors: 'Michael C. Burkhart<sup>1</sup>  |  Liz Y. Lee<sup>1</sup>  |  Delshad Vaghari<sup>1</sup>  |  An Qi Toh<sup>2</sup>  |  Eddie Chong<sup>2</sup>  |  Christopher Chen<sup>2</sup>  |  Peter Tino<sup>3</sup>  |  Zoe Kourtzi<sup>1</sup>',
+    affiliations: [
+      'Department of Psychology, University of Cambridge, Cambridge, United Kingdom',
+      'Memory Aging and Cognition Centre, National University Health System, Singapore',
+      'School of Computer Science, University of Birmingham, Birmingham, United Kingdom',
+    ],
+    abstract: [
+      { h: '', t: 'Predicting the course of neurodegenerative disorders early has potential to greatly improve clinical management and patient outcomes. A key challenge in real-world settings is the lack of labeled data (i.e., clinical diagnosis). In contrast to supervised classification approaches, this work proposes an unsupervised multimodal trajectory modeling (MTM) approach based on a mixture of state space models, which captures changes in longitudinal data (trajectories) and stratifies individuals without requiring clinical diagnosis for training. MTM learns the relationship between expensive/invasive biomarkers (β-amyloid, grey matter density) and readily obtainable cognitive observations. Training on trajectories (vs. baseline data alone) stratifies individuals into clinically meaningful clusters more reliably and is robust to missing data. An individualized cognitive health index predicts progression to Alzheimer\'s disease more precisely than standard clinical assessments. MTM generalizes from research cohort to real-world memory clinic patients, enhancing clinical utility.' },
+    ],
+    keywords: 'unsupervised learning, multimodal trajectories, dementia prediction, cognitive decline, brain health',
   },
   {
     color: '#336699',
@@ -3452,7 +3864,7 @@ function buildPubPaper(p) {
     '</div>' +
     '<div class="pp-doi-row">DOI: <a href="https://doi.org/' + p.doi + '" target="_blank" style="color:inherit;text-decoration:underline;cursor:pointer">' + p.doi + '</a></div>' +
     '<div class="pp-jbar" style="--jc:' + p.color + '">' +
-      '<span class="pp-art-type">Research Article</span>' +
+      '<span class="pp-art-type">' + (p.artType || 'Research Article') + '</span>' +
       '<span class="pp-jname-wrap"><span class="pp-jname">' + p.journal + '</span><span class="pp-jsub">' + p.jsub + '</span></span>' +
     '</div>' +
     '<div class="pp-main">' +
@@ -4044,6 +4456,7 @@ const tabState = {
     trailConnected: [],
     trailStartTime: 0,
     trailEndTime: 0,
+    trailPartATime: 0, // seconds, saved when Part A completes
     trailComplete: false,
     trailFirstReady: false, // true once user taps circle 1 in real test
     // Clock drawing
@@ -4063,6 +4476,9 @@ const tabState = {
     recallShowTimer: null,
     recallInput: '',
     recallAnswers: [],
+    recallTrial: 1,           // 1 or 2
+    recallTrial1Answers: [],  // answers from trial 1 (preserved for scoring)
+    recallTypos: [],          // words user typed that looked like a typo (just the typed string)
     recallCursor: true,
     recallCursorTimer: null,
     // QDRS
@@ -4074,6 +4490,12 @@ const tabState = {
     delayedPhase: 'idle',   // 'idle', 'selecting', 'score'
     delayedWords: [],        // shuffled 20-word array shown to user
     delayedSelected: new Set(), // words user has tapped
+    // Completion tracking (persist across screen changes)
+    doneRecall: false,
+    doneQdrs: false,
+    doneTrail: false,
+    doneClock: false,
+    doneDelayed: false,
 };
 
 // Assessment screens
@@ -4156,7 +4578,7 @@ function drawHomeScreen(W, H) {
     tc.fillText('ASSESSMENTS', 36, 200);
 
     const cards = [
-        { label: 'Immediate Recall', sub: 'MoCA — Verbal Memory',        color: '#059669', icon: '🧠', screen: 'recall'   },
+        { label: '5-Word Immediate Recall', sub: 'Verbal Memory',        color: '#059669', icon: '🧠', screen: 'recall'   },
         { label: 'QDRS',             sub: 'Quick Dementia Rating System', color: '#7c3aed', icon: '📋', screen: 'qdrs'     },
         { label: 'Trail Making',     sub: 'TMT-A / TMT-B',               color: '#2563eb', icon: '✏️', screen: 'trail'    },
         { label: 'Clock Drawing',    sub: 'CDT — Visuospatial',          color: '#d97706', icon: '🕐', screen: 'clock'    },
@@ -4172,34 +4594,95 @@ function drawHomeScreen(W, H) {
     tc.fillStyle = '#ffffff';
     tc.beginPath(); tc.roundRect(px, grpTop, gW, cards.length * cardH, 22); tc.fill();
 
+    const doneMap = { recall: tabState.doneRecall, qdrs: tabState.doneQdrs, trail: tabState.doneTrail, clock: tabState.doneClock, delayed: tabState.doneDelayed };
+    const allDone = tabState.doneRecall && tabState.doneQdrs && tabState.doneTrail && tabState.doneClock;
+
     cards.forEach((card, i) => {
         const ry = grpTop + i * cardH;
+        const isMiddle = card.screen === 'qdrs' || card.screen === 'trail' || card.screen === 'clock';
+        const isLocked = (card.screen === 'delayed' && !allDone) || (isMiddle && !tabState.doneRecall);
+        const isDone = !!doneMap[card.screen];
 
         // Row separator
         if (i > 0) { tc.fillStyle = '#f0f0f5'; tc.fillRect(px + 94, ry, gW - 94, 1); }
 
+        // Completed green tint overlay
+        if (isDone) {
+            tc.fillStyle = 'rgba(5,150,105,0.06)';
+            const isFirst = i === 0, isLast = i === cards.length - 1;
+            const r = [isFirst?22:0, isFirst?22:0, isLast?22:0, isLast?22:0];
+            tc.beginPath(); tc.roundRect(px, ry, gW, cardH, r); tc.fill();
+        }
+
+        // Locked overlay tint
+        if (isLocked) {
+            tc.fillStyle = 'rgba(245,245,250,0.7)';
+            const isLast = i === cards.length - 1;
+            tc.beginPath(); tc.roundRect(px, ry, gW, cardH + (isLast ? 22 : 0), isLast ? [0,0,22,22] : 0); tc.fill();
+        }
+
         // Icon pill
-        tc.fillStyle = card.color + '18';
+        tc.fillStyle = isDone ? '#05966918' : isLocked ? '#9ca3af18' : card.color + '18';
         tc.beginPath(); tc.arc(px + 58, ry + cardH / 2, 30, 0, Math.PI * 2); tc.fill();
         tc.font = '27px sans-serif'; tc.textAlign = 'center';
-        tc.fillText(card.icon, px + 58, ry + cardH / 2 + 9);
+        tc.fillText(isLocked ? '🔒' : card.icon, px + 58, ry + cardH / 2 + 9);
 
         // Labels
         tc.textAlign = 'left';
-        tc.fillStyle = '#111827'; tc.font = 'bold 26px -apple-system, sans-serif';
+        tc.fillStyle = isLocked ? '#9ca3af' : '#111827';
+        tc.font = 'bold 26px -apple-system, sans-serif';
         tc.fillText(card.label, px + 102, ry + 52);
-        tc.fillStyle = '#6b7280'; tc.font = '20px -apple-system, sans-serif';
-        tc.fillText(card.sub, px + 102, ry + 80);
+        tc.fillStyle = isDone ? '#059669' : '#9ca3af';
+        tc.font = '20px -apple-system, sans-serif';
+        tc.fillText(isLocked ? 'Complete all other tests first' : isDone ? 'Completed' : card.sub, px + 102, ry + 80);
 
-        // Chevron
-        const cvx = px + gW - 30, cvy = ry + cardH / 2;
-        tc.strokeStyle = '#d1d5db'; tc.lineWidth = 2.5; tc.lineCap = 'round'; tc.lineJoin = 'round';
-        tc.beginPath(); tc.moveTo(cvx - 5, cvy - 11); tc.lineTo(cvx + 3, cvy); tc.lineTo(cvx - 5, cvy + 11); tc.stroke();
+        // Right side: green checkmark if done, chevron if active, nothing if locked
+        if (isDone) {
+            const cx = px + gW - 34, cy = ry + cardH / 2;
+            tc.fillStyle = '#059669';
+            tc.beginPath(); tc.arc(cx, cy, 18, 0, Math.PI * 2); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 20px sans-serif'; tc.textAlign = 'center';
+            tc.fillText('✓', cx, cy + 7);
+        } else if (!isLocked) {
+            const cvx = px + gW - 30, cvy = ry + cardH / 2;
+            tc.strokeStyle = '#d1d5db'; tc.lineWidth = 2.5; tc.lineCap = 'round'; tc.lineJoin = 'round';
+            tc.beginPath(); tc.moveTo(cvx - 5, cvy - 11); tc.lineTo(cvx + 3, cvy); tc.lineTo(cvx - 5, cvy + 11); tc.stroke();
+        }
     });
 
     // ── Footer ───────────────────────────────────────────────────────────────
     tc.fillStyle = '#b0b6c3'; tc.font = '18px -apple-system, sans-serif'; tc.textAlign = 'center';
     tc.fillText('Tap any assessment to begin', W / 2, grpTop + cards.length * cardH + 44);
+
+    // ── Disclaimer ───────────────────────────────────────────────────────────
+    const discY = grpTop + cards.length * cardH + 90;
+    const discW = W - 56;
+    const discX = 28;
+
+    tc.fillStyle = '#fffbeb';
+    tc.beginPath(); tc.roundRect(discX, discY, discW, 260, 18); tc.fill();
+    tc.strokeStyle = '#fcd34d'; tc.lineWidth = 2;
+    tc.beginPath(); tc.roundRect(discX, discY, discW, 260, 18); tc.stroke();
+
+    // Warning icon
+    tc.font = '36px sans-serif'; tc.textAlign = 'center';
+    tc.fillText('⚠️', W / 2, discY + 50);
+
+    // Title
+    tc.fillStyle = '#92400e'; tc.font = 'bold 24px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText('For Educational & Research Use Only', W / 2, discY + 92);
+
+    // Body lines
+    tc.fillStyle = '#78350f'; tc.font = '20px -apple-system, sans-serif';
+    const lines = [
+        'These assessments are still in development.',
+        'Results are not clinically validated or conclusive.',
+        'If you have concerns about memory impairment',
+        'or dementia, please consult a qualified clinician.',
+    ];
+    lines.forEach((line, idx) => {
+        tc.fillText(line, W / 2, discY + 134 + idx * 32);
+    });
 }
 
 const QDRS_DATA = [
@@ -4301,7 +4784,7 @@ function drawQDRS(W, H) {
 
         const sections = [
             { icon: '👤', title: 'Who should complete this?',
-              body: 'A caregiver or close family member with frequent, long-term contact with the patient — such as a spouse or adult child. Can be self-administered or read aloud in person or over the phone.' },
+              body: 'Preferably completed by a close informant — a caregiver, spouse, or adult child with frequent, long-term contact with the patient. If no informant is available, the patient may rate themselves.' },
             { icon: '🔄', title: 'How to rate',
               body: 'Compare the patient NOW to how they USED TO BE. The key feature is change from their previous baseline. Rate changes due to cognitive problems only — not physical limitations.' },
             { icon: '✅', title: 'Choosing an answer',
@@ -4354,7 +4837,7 @@ function drawQDRS(W, H) {
         tc.fillStyle = ACCENT; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'left';
         tc.fillText('ℹ', mx + 18, y + 24);
         tc.fillStyle = '#374151'; tc.font = '18px -apple-system, sans-serif';
-        wrapText('Not all descriptions in an option need to be present to select that answer.', mx + 40, y + 24, gW - 60, 24);
+        wrapText('Best completed by a close informant. Self-rating is acceptable if no informant is available.', mx + 40, y + 24, gW - 60, 24);
         y += 82;
 
         // Begin button
@@ -4466,32 +4949,32 @@ function drawQDRS(W, H) {
 
     // Domain label
     let qy = 150;
-    tc.fillStyle = ACCENT; tc.font = 'bold 16px -apple-system, sans-serif'; tc.textAlign = 'center';
-    tc.fillText('DOMAIN ' + (d + 1) + ' OF ' + QDRS_DATA.length, W / 2, qy); qy += 34;
+    tc.fillStyle = ACCENT; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
+    tc.fillText('DOMAIN ' + (d + 1) + ' OF ' + QDRS_DATA.length, W / 2, qy); qy += 38;
 
-    tc.fillStyle = '#111827'; tc.font = 'bold 28px -apple-system, sans-serif';
-    tc.fillText(domain.name, W / 2, qy); qy += 30;
+    tc.fillStyle = '#111827'; tc.font = 'bold 30px -apple-system, sans-serif';
+    tc.fillText(domain.name, W / 2, qy); qy += 36;
 
-    tc.fillStyle = '#9ca3af'; tc.font = '18px -apple-system, sans-serif';
-    tc.fillText('Rate the change compared to how the patient used to be', W / 2, qy); qy += 22;
+    tc.fillStyle = '#9ca3af'; tc.font = '22px -apple-system, sans-serif';
+    tc.fillText('Rate the change compared to how the patient used to be', W / 2, qy); qy += 30;
 
     // Store hit regions for tap handler
     tabState._qdrsHitRegions = { options: [], prev: null, next: null };
 
-    // Option cards — cleaner, smaller
-    const cardPad = 32, cardGap = 10, optW = W - cardPad * 2;
+    // Option cards
+    const cardPad = 32, cardGap = 12, optW = W - cardPad * 2;
     domain.opts.forEach((opt, oi) => {
         const selected = tabState.qdrsRatings[d] === opt.s;
 
         // Measure text height
-        tc.font = '18px -apple-system, sans-serif';
+        tc.font = '22px -apple-system, sans-serif';
         const tw = optW - 116; // badge(70) + gap(16) + right pad(30)
         const words2 = opt.t.split(' '); let ln2 = '', lns2 = 1;
         words2.forEach(w => {
             const t = ln2 ? ln2 + ' ' + w : w;
             if (tc.measureText(t).width > tw && ln2) { ln2 = w; lns2++; } else { ln2 = t; }
         });
-        const cH = 28 + lns2 * 26 + 20;
+        const cH = 32 + lns2 * 30 + 22;
 
         // Store hit region
         tabState._qdrsHitRegions.options.push({ x: cardPad, y: qy, w: optW, h: cH, score: opt.s });
@@ -4504,23 +4987,23 @@ function drawQDRS(W, H) {
 
         // Score badge
         tc.fillStyle = selected ? ACCENT : ACCENT + '18';
-        tc.beginPath(); tc.arc(cardPad + 40, qy + cH / 2, 24, 0, Math.PI * 2); tc.fill();
-        tc.fillStyle = selected ? '#fff' : ACCENT; tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center';
-        tc.fillText(opt.s === 0 ? '0' : String(opt.s), cardPad + 40, qy + cH / 2 + 8);
+        tc.beginPath(); tc.arc(cardPad + 40, qy + cH / 2, 26, 0, Math.PI * 2); tc.fill();
+        tc.fillStyle = selected ? '#fff' : ACCENT; tc.font = 'bold 24px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText(opt.s === 0 ? '0' : String(opt.s), cardPad + 40, qy + cH / 2 + 9);
 
         // Checkmark when selected
         if (selected) {
-            tc.fillStyle = ACCENT; tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'right';
-            tc.fillText('✓', cardPad + optW - 16, qy + cH / 2 + 8);
+            tc.fillStyle = ACCENT; tc.font = 'bold 24px -apple-system, sans-serif'; tc.textAlign = 'right';
+            tc.fillText('✓', cardPad + optW - 16, qy + cH / 2 + 9);
         }
 
         // Description
         tc.fillStyle = selected ? '#3b0764' : '#374151';
-        tc.font = '18px -apple-system, sans-serif'; tc.textAlign = 'left';
-        const words3 = opt.t.split(' '); let line3 = '', lineY3 = qy + 28;
+        tc.font = '22px -apple-system, sans-serif'; tc.textAlign = 'left';
+        const words3 = opt.t.split(' '); let line3 = '', lineY3 = qy + 32;
         words3.forEach(w => {
             const t = line3 ? line3 + ' ' + w : w;
-            if (tc.measureText(t).width > tw && line3) { tc.fillText(line3, cardPad + 76, lineY3); line3 = w; lineY3 += 26; }
+            if (tc.measureText(t).width > tw && line3) { tc.fillText(line3, cardPad + 76, lineY3); line3 = w; lineY3 += 30; }
             else { line3 = t; }
         });
         if (line3) tc.fillText(line3, cardPad + 76, lineY3);
@@ -4853,25 +5336,66 @@ function drawTrailMaking(W, H) {
             });
             tc.textBaseline = 'alphabetic';
 
-            tc.fillStyle = 'rgba(250,250,252,0.96)';
-            tc.beginPath(); tc.roundRect(60, 440, W - 120, 360, 20); tc.fill();
-            tc.strokeStyle = color + '30'; tc.lineWidth = 1.5;
-            tc.beginPath(); tc.roundRect(60, 440, W - 120, 360, 20); tc.stroke();
-            tc.fillStyle = '#111827'; tc.font = 'bold 30px -apple-system, sans-serif'; tc.textAlign = 'center';
-            tc.fillText(`Part ${part} Complete`, W/2, 498);
-            tc.fillStyle = color + '14'; tc.beginPath(); tc.arc(W/2, 590, 70, 0, Math.PI*2); tc.fill();
-            tc.strokeStyle = color; tc.lineWidth = 2.5; tc.beginPath(); tc.arc(W/2, 590, 70, 0, Math.PI*2); tc.stroke();
-            tc.fillStyle = color; tc.font = 'bold 52px -apple-system, sans-serif';
-            tc.fillText(`${elapsed}s`, W/2, 608);
-            tc.fillStyle = '#6b7280'; tc.font = '19px -apple-system, sans-serif';
-            tc.fillText('completion time', W/2, 648);
+            const elapsedSec = parseFloat(elapsed);
+            // Part A norms: <60s good, ≥60s possible impairment in processing speed
+            // Part B norms: <100s good, ≥100s possible impairment in processing speed + executive function
+            let tCol, tLabel, tSub;
+            if (!isB) {
+                if (elapsedSec < 60)  { tCol = '#059669'; tLabel = 'Good';                        tSub = 'Processing speed within normal range'; }
+                else                  { tCol = '#ea580c'; tLabel = 'Possible Impairment';          tSub = 'Processing speed may be slowed'; }
+            } else {
+                if (elapsedSec < 100) { tCol = '#059669'; tLabel = 'Good';                        tSub = 'Processing speed & executive function within range'; }
+                else                  { tCol = '#ea580c'; tLabel = 'Possible Impairment';          tSub = 'Processing speed and/or executive function may be impaired'; }
+            }
+
+            const cardH3 = isB ? 420 : 350;
+            tc.fillStyle = 'rgba(250,250,252,0.97)';
+            tc.beginPath(); tc.roundRect(60, 440, W - 120, cardH3, 20); tc.fill();
+            tc.strokeStyle = tCol + '40'; tc.lineWidth = 2;
+            tc.beginPath(); tc.roundRect(60, 440, W - 120, cardH3, 20); tc.stroke();
+
+            tc.fillStyle = '#111827'; tc.font = 'bold 28px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText(`Part ${part} Complete`, W/2, 490);
+
+            // Time circle
+            tc.fillStyle = tCol + '18'; tc.beginPath(); tc.arc(W/2, 576, 64, 0, Math.PI*2); tc.fill();
+            tc.strokeStyle = tCol; tc.lineWidth = 2.5; tc.beginPath(); tc.arc(W/2, 576, 64, 0, Math.PI*2); tc.stroke();
+            tc.fillStyle = tCol; tc.font = 'bold 46px -apple-system, sans-serif';
+            tc.fillText(`${elapsed}s`, W/2, 594);
+
+            // Label & sub
+            tc.fillStyle = tCol; tc.font = 'bold 22px -apple-system, sans-serif';
+            tc.fillText(tLabel, W/2, 658);
+            tc.fillStyle = '#6b7280'; tc.font = '17px -apple-system, sans-serif';
+            tc.fillText(tSub, W/2, 682);
+
+            // Executive score row for Part B
+            if (isB && tabState.trailPartATime > 0) {
+                const tA = tabState.trailPartATime, tB = elapsedSec;
+                const execIdx = ((tB - tA) / tA).toFixed(2);
+                const execImpaired = parseFloat(execIdx) > 1.5;
+                const execCol = execImpaired ? '#dc2626' : '#059669';
+                tc.fillStyle = '#f3f4f6';
+                tc.beginPath(); tc.roundRect(80, 700, W - 160, 80, 12); tc.fill();
+                tc.strokeStyle = execCol + '60'; tc.lineWidth = 1.5;
+                tc.beginPath(); tc.roundRect(80, 700, W - 160, 80, 12); tc.stroke();
+                tc.fillStyle = '#374151'; tc.font = 'bold 18px -apple-system, sans-serif'; tc.textAlign = 'left';
+                tc.fillText('Executive Index  (B−A)/A', 100, 727);
+                tc.fillStyle = execCol; tc.font = 'bold 26px -apple-system, sans-serif'; tc.textAlign = 'right';
+                tc.fillText(execIdx, W - 100, 727);
+                tc.fillStyle = '#9ca3af'; tc.font = '16px -apple-system, sans-serif'; tc.textAlign = 'left';
+                tc.fillText(`TMT-A ${tA}s  ·  TMT-B ${tB}s  ·  cutoff >1.5`, 100, 754);
+                tc.fillStyle = execCol; tc.textAlign = 'right';
+                tc.fillText(execImpaired ? '⚠ Elevated' : '✓ Normal', W - 100, 754);
+            }
 
             const nextLabel = isB ? 'Next Test  ›' : 'Start Part B  ›';
             const nextColor = isB ? '#059669' : '#5856d6';
+            const btnY3 = isB ? (tabState.trailPartATime > 0 ? 800 : 718) : 718;
             tc.fillStyle = nextColor;
-            tc.beginPath(); tc.roundRect(W/2 - 150, 686, 300, 58, 29); tc.fill();
-            tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
-            tc.fillText(nextLabel, W/2, 722);
+            tc.beginPath(); tc.roundRect(W/2 - 150, btnY3, 300, 58, 29); tc.fill();
+            tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText(nextLabel, W/2, btnY3 + 36);
             return;
         }
 
@@ -4893,7 +5417,7 @@ function drawTrailMaking(W, H) {
         tabState.trailDots.forEach((dot, i) => {
             const connected = i > 0 && tabState.trailConnected[i-1];
             const isLetter = /[A-Z]/.test(dot.label);
-            const isFirstWaiting = i === 0 && !tabState.trailFirstReady && !tabState.trailComplete;
+            const isFirstWaiting = i === 0 && !tabState.trailComplete && !tabState.trailConnected[0];
             const isNext = !isFirstWaiting && (i === 0 ? false : tabState.trailConnected[i-1] === false && (i === 1 || tabState.trailConnected[i-2]));
             tc.beginPath(); tc.arc(dot.x, dot.y, 32, 0, Math.PI*2);
             tc.fillStyle = connected ? color
@@ -5393,12 +5917,76 @@ function scoreClockDrawing() {
     tabState.clockScore = { circle: circleOk, numbers: numbersOk, hands: handsOk, numCorrect };
 }
 
+// ─── Immediate Recall helpers ────────────────────────────────────────────────
+function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    const dp = Array.from({length: m + 1}, (_, i) =>
+        Array.from({length: n + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+    for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+            dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]
+                : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    return dp[m][n];
+}
+
+// Returns true if typed word is close enough to target (spelling tolerance).
+// Rules: first letter must match, then allow 1 edit for any length, or 2 edits for words ≥5 letters.
+function recallFuzzyMatch(typed, target) {
+    if (typed === target) return true;
+    if (typed[0] !== target[0]) return false; // first letter must match to avoid false positives
+    const dist = levenshtein(typed, target);
+    return dist === 1 || (dist === 2 && target.length >= 5);
+}
+
+// Returns true if typed matches any MOCA word at ≥70% similarity
+function recallIsCorrect(typed) {
+    return MOCA_WORDS.some(w => recallFuzzyMatch(typed.toUpperCase(), w));
+}
+
+// Count correct answers from an array, with 70% fuzzy tolerance
+function recallScore(answers) {
+    const matched = new Set();
+    let count = 0;
+    answers.forEach(typed => {
+        const t = typed.toUpperCase();
+        MOCA_WORDS.forEach(w => {
+            if (!matched.has(w) && recallFuzzyMatch(t, w)) { matched.add(w); count++; }
+        });
+    });
+    return count;
+}
+
+function submitRecallWord() {
+    const input = tabState.recallInput.trim().toUpperCase();
+    if (!input) return;
+
+    // Store as-is (no silent correction)
+    tabState.recallAnswers.push(input);
+    tabState.recallInput = '';
+
+    // When all 5 words entered for trial 1, detect typos then go to between-trials screen
+    if (tabState.recallTrial === 1 && tabState.recallAnswers.length >= MOCA_WORDS.length) {
+        tabState.recallTrial1Answers = [...tabState.recallAnswers];
+        // Detect typos: fuzzy match but not exact (will still score as correct, but flag for trial 2 reminder)
+        tabState.recallTypos = tabState.recallAnswers.filter(typed => {
+            if (MOCA_WORDS.includes(typed)) return false; // exact — no typo
+            return recallIsCorrect(typed); // fuzzy match → likely a typo
+        });
+        if (tabState.recallCursorTimer) { clearInterval(tabState.recallCursorTimer); tabState.recallCursorTimer = null; }
+        tabState.recallPhase = 'between';
+    }
+    // Trial 2 completes: score overlay is drawn automatically, nothing extra needed
+
+    drawTabletScreen();
+}
+
 // ─── Immediate Recall (MoCA) ─────────────────────────────────────────────────
-function startRecallShow() {
+function startRecallShow(forTrial) {
     tabState.recallPhase = 'showing';
     tabState.recallShowIdx = 0;
     tabState.recallInput = '';
     tabState.recallAnswers = [];
+    if (forTrial) tabState.recallTrial = forTrial;
     drawTabletScreen();
     // Show each word for 2 seconds
     tabState.recallShowTimer = setInterval(() => {
@@ -5421,7 +6009,7 @@ function startRecallShow() {
 
 function drawImmediateRecall(W, H) {
     // Nav bar
-    drawNavBar(W, 'Immediate Recall', 'MoCA — Verbal Memory', '#059669');
+    drawNavBar(W, '5-Word Immediate Recall', 'Verbal Memory', '#059669');
 
     const REC = '#059669';
     if (tabState.recallPhase === 'idle') {
@@ -5465,17 +6053,89 @@ function drawImmediateRecall(W, H) {
         tc.fillStyle = '#9ca3af'; tc.font = '19px -apple-system, sans-serif';
         tc.fillText('Memorise this word…', W/2, 624);
 
+    } else if (tabState.recallPhase === 'between') {
+        // ── Between trials screen ────────────────────────────────────────────
+        const trial1Score = recallScore(tabState.recallTrial1Answers);
+        tc.fillStyle = '#111827'; tc.font = 'bold 30px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Trial 1 Complete', W/2, 180);
+        tc.fillStyle = '#6b7280'; tc.font = '22px -apple-system, sans-serif';
+        tc.fillText(`You recalled ${trial1Score} of ${MOCA_WORDS.length} words correctly.`, W/2, 224);
+
+        // Show their answers
+        tc.fillStyle = '#374151'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'left';
+        tc.fillText('Your answers:', 60, 278);
+        tabState.recallTrial1Answers.forEach((ans, i) => {
+            const correct = recallIsCorrect(ans);
+            const isTypo = tabState.recallTypos.includes(ans);
+            const ay = 306 + i * 58;
+            tc.fillStyle = correct ? '#ecfdf5' : isTypo ? '#fffbeb' : '#fef2f2';
+            tc.beginPath(); tc.roundRect(60, ay, W - 120, 48, 12); tc.fill();
+            tc.strokeStyle = correct ? '#6ee7b7' : isTypo ? '#fcd34d' : '#fca5a5'; tc.lineWidth = 1.5;
+            tc.beginPath(); tc.roundRect(60, ay, W - 120, 48, 12); tc.stroke();
+            tc.fillStyle = '#111827'; tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'left';
+            tc.fillText(ans, 82, ay + 31);
+            if (isTypo) {
+                tc.fillStyle = '#d97706'; tc.font = '19px -apple-system, sans-serif'; tc.textAlign = 'right';
+                tc.fillText('⚠ possible spelling error', W - 82, ay + 31);
+            } else {
+                tc.fillStyle = correct ? REC : '#dc2626'; tc.font = 'bold 22px sans-serif'; tc.textAlign = 'right';
+                tc.fillText(correct ? '✓' : '✗', W - 82, ay + 31);
+            }
+        });
+
+        // Instruction for trial 2
+        const noteY = 306 + MOCA_WORDS.length * 58 + 20;
+        if (tabState.recallTypos.length > 0) {
+            tc.fillStyle = '#fffbeb';
+            tc.beginPath(); tc.roundRect(60, noteY, W - 120, 90, 14); tc.fill();
+            tc.strokeStyle = '#fcd34d'; tc.lineWidth = 1.5;
+            tc.beginPath(); tc.roundRect(60, noteY, W - 120, 90, 14); tc.stroke();
+            tc.fillStyle = '#92400e'; tc.font = 'bold 20px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('⚠  Spelling errors detected', W/2, noteY + 32);
+            tc.fillStyle = '#78350f'; tc.font = '19px -apple-system, sans-serif';
+            tc.fillText('In Trial 2, please check your spelling carefully.', W/2, noteY + 62);
+        } else {
+            tc.fillStyle = '#ecfdf5';
+            tc.beginPath(); tc.roundRect(60, noteY, W - 120, 70, 14); tc.fill();
+            tc.fillStyle = '#065f46'; tc.font = '20px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('Good spelling! Try Trial 2 to confirm your recall.', W/2, noteY + 40);
+        }
+
+        // Continue button
+        const btnY2 = noteY + (tabState.recallTypos.length > 0 ? 110 : 90);
+        tabState._recallBetweenBtnY = btnY2;
+        tc.fillStyle = REC;
+        tc.beginPath(); tc.roundRect(W/2 - 160, btnY2, 320, 68, 34); tc.fill();
+        tc.fillStyle = '#fff'; tc.font = 'bold 24px -apple-system, sans-serif'; tc.textAlign = 'center';
+        tc.fillText('Start Trial 2  ›', W/2, btnY2 + 44);
+
     } else if (tabState.recallPhase === 'input') {
         const answered = tabState.recallAnswers.length;
         const total = MOCA_WORDS.length;
+        const trialLabel = tabState.recallTrial === 2 ? 'Trial 2 — ' : '';
+
+        // Typo reminder banner for trial 2
+        let inputTopY = 158;
+        if (tabState.recallTrial === 2 && tabState.recallTypos.length > 0) {
+            tc.fillStyle = '#fffbeb';
+            tc.beginPath(); tc.roundRect(40, 136, W - 80, 64, 12); tc.fill();
+            tc.strokeStyle = '#fcd34d'; tc.lineWidth = 1.5;
+            tc.beginPath(); tc.roundRect(40, 136, W - 80, 64, 12); tc.stroke();
+            tc.fillStyle = '#92400e'; tc.font = 'bold 19px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText('⚠  Watch spelling: you wrote ' + tabState.recallTypos.join(', '), W/2, 157);
+            tc.fillStyle = '#78350f'; tc.font = '17px -apple-system, sans-serif';
+            tc.fillText('These may have been spelling errors — please spell carefully.', W/2, 183);
+            inputTopY = 212;
+        }
 
         tc.fillStyle = '#374151'; tc.font = '22px -apple-system, sans-serif'; tc.textAlign = 'center';
-        tc.fillText(`Recall the words you saw  (${answered}/${total} entered)`, W/2, 158);
+        tc.fillText(`${trialLabel}Recall the words  (${answered}/${total} entered)`, W/2, inputTopY);
 
         // Answered word pills
+        const pillTop = inputTopY + 24;
         tabState.recallAnswers.forEach((ans, i) => {
-            const ay = 178 + i * 56;
-            const correct = MOCA_WORDS.map(w => w.toUpperCase()).includes(ans.toUpperCase());
+            const ay = pillTop + i * 56;
+            const correct = recallIsCorrect(ans);
             tc.fillStyle = correct ? '#ecfdf5' : '#fef2f2';
             tc.beginPath(); tc.roundRect(64, ay, W - 128, 46, 12); tc.fill();
             tc.strokeStyle = correct ? '#6ee7b7' : '#fca5a5'; tc.lineWidth = 1;
@@ -5487,7 +6147,7 @@ function drawImmediateRecall(W, H) {
         });
 
         // Active input field
-        const iy = 178 + answered * 56;
+        const iy = pillTop + answered * 56;
         if (answered < total) {
             tc.fillStyle = '#ffffff';
             tc.beginPath(); tc.roundRect(64, iy, W - 128, 46, 12); tc.fill();
@@ -5548,31 +6208,54 @@ function drawImmediateRecall(W, H) {
         tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif'; tc.textAlign = 'center';
         tc.fillText(answered < total - 1 ? 'Next ›' : 'Done ✓', 696, bry + 38);
 
-        // Score summary overlay when all answered
-        if (answered >= total) {
+        // Score summary overlay when trial 2 is complete
+        if (tabState.recallTrial === 2 && answered >= total) {
             if (tabState.recallCursorTimer) { clearInterval(tabState.recallCursorTimer); tabState.recallCursorTimer = null; }
-            const score = tabState.recallAnswers.filter(a => MOCA_WORDS.map(w=>w.toUpperCase()).includes(a.toUpperCase())).length;
-            const sCol = score >= 4 ? REC : '#d97706';
-            tc.fillStyle = 'rgba(250,250,252,0.96)';
-            tc.beginPath(); tc.roundRect(40, kbY - 20, W - 80, 420, 20); tc.fill();
-            tc.strokeStyle = sCol + '40'; tc.lineWidth = 1.5;
-            tc.beginPath(); tc.roundRect(40, kbY - 20, W - 80, 420, 20); tc.stroke();
+            const score1 = recallScore(tabState.recallTrial1Answers);
+            const score2 = recallScore(tabState.recallAnswers);
+            const combined = score1 + score2; // out of 10
+            // Severity norms
+            let sCol, sLabel, sSub;
+            if (combined >= 8)      { sCol = '#059669'; sLabel = 'Good';                  sSub = 'Memory recall within healthy range'; }
+            else if (combined >= 6) { sCol = '#d97706'; sLabel = 'Questionable';          sSub = 'Some difficulty with verbal memory — monitor closely'; }
+            else if (combined >= 4) { sCol = '#ea580c'; sLabel = 'Moderate Impairment';   sSub = 'Noticeable difficulty recalling words'; }
+            else                    { sCol = '#dc2626'; sLabel = 'Severe Impairment';      sSub = 'Significant difficulty with verbal memory'; }
+
+            tc.fillStyle = 'rgba(250,250,252,0.97)';
+            tc.beginPath(); tc.roundRect(40, kbY - 20, W - 80, 460, 20); tc.fill();
+            tc.strokeStyle = sCol + '50'; tc.lineWidth = 2;
+            tc.beginPath(); tc.roundRect(40, kbY - 20, W - 80, 460, 20); tc.stroke();
+
             // Score circle
-            tc.fillStyle = sCol + '18'; tc.beginPath(); tc.arc(W/2, kbY + 80, 62, 0, Math.PI * 2); tc.fill();
-            tc.strokeStyle = sCol; tc.lineWidth = 2.5; tc.beginPath(); tc.arc(W/2, kbY + 80, 62, 0, Math.PI * 2); tc.stroke();
-            tc.fillStyle = sCol; tc.font = 'bold 52px -apple-system, sans-serif'; tc.textAlign = 'center';
-            tc.fillText(`${score}/${total}`, W/2, kbY + 100);
+            tc.fillStyle = sCol + '18'; tc.beginPath(); tc.arc(W/2, kbY + 72, 68, 0, Math.PI * 2); tc.fill();
+            tc.strokeStyle = sCol; tc.lineWidth = 3; tc.beginPath(); tc.arc(W/2, kbY + 72, 68, 0, Math.PI * 2); tc.stroke();
+            tc.fillStyle = sCol; tc.font = 'bold 54px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText(`${combined}/10`, W/2, kbY + 92);
+
+            // Label
             tc.fillStyle = sCol; tc.font = 'bold 24px -apple-system, sans-serif';
-            tc.fillText(score >= 4 ? 'Normal range' : 'Below threshold', W/2, kbY + 162);
-            // Correct words
-            tc.fillStyle = '#6b7280'; tc.font = '18px -apple-system, sans-serif';
-            tc.fillText('Words: ' + MOCA_WORDS.join(' · '), W/2, kbY + 202);
+            tc.fillText(sLabel, W/2, kbY + 160);
+            tc.fillStyle = '#6b7280'; tc.font = '19px -apple-system, sans-serif';
+            tc.fillText(sSub, W/2, kbY + 190);
+
+            // Trial breakdown bar
+            const barX = 80, barW = W - 160, barY = kbY + 216;
+            tc.fillStyle = '#f3f4f6'; tc.beginPath(); tc.roundRect(barX, barY, barW, 14, 7); tc.fill();
+            tc.fillStyle = sCol; tc.beginPath(); tc.roundRect(barX, barY, barW * (combined / 10), 14, 7); tc.fill();
+            tc.fillStyle = '#9ca3af'; tc.font = '17px -apple-system, sans-serif'; tc.textAlign = 'center';
+            tc.fillText(`Trial 1: ${score1}/5   ·   Trial 2: ${score2}/5   ·   Total: ${combined}/10`, W/2, barY + 34);
+
+            // Disclaimer
+            tc.fillStyle = '#9ca3af'; tc.font = '15px -apple-system, sans-serif';
+            tc.fillText('Indicative only — consult a clinician for diagnosis', W/2, barY + 58);
+
             // Next Test button
             tc.fillStyle = '#2563eb';
-            tc.beginPath(); tc.roundRect(W/2 - 150, kbY + 240, 300, 58, 29); tc.fill();
+            tc.beginPath(); tc.roundRect(W/2 - 150, kbY + 310, 300, 58, 29); tc.fill();
             tc.fillStyle = '#fff'; tc.font = 'bold 22px -apple-system, sans-serif';
-            tc.fillText('Next Test  ›', W/2, kbY + 276);
+            tc.fillText('Next Test  ›', W/2, kbY + 346);
         }
+
     }
 }
 
@@ -5658,10 +6341,10 @@ cardGroup.position.set(-3.4, 0.10, 1.2); // Left-front of desk, clear of coffee 
 cardGroup.rotation.set(-Math.PI/2, 0, 0.2); // flat on desk
 workstation.add(cardGroup);
 
-const cardW = 0.54, cardH = 0.86, cardD = 0.02;
+const cardW = 0.38, cardH = 0.60, cardD = 0.015;
 
 // Use standard BoxGeometry to avoid ExtrudeGeometry failing with thin depths
-const holderGeo = new THREE.BoxGeometry(cardW + 0.04, cardH + 0.04, cardD);
+const holderGeo = new THREE.BoxGeometry(cardW + 0.03, cardH + 0.03, cardD);
 const holderMat = new THREE.MeshStandardMaterial({color: 0xdddddd, roughness: 0.4});
 const holder = new THREE.Mesh(holderGeo, holderMat);
 holder.castShadow = true;
@@ -5723,23 +6406,7 @@ cardBack.position.set(0, 0, -cardD/2 - 0.001); // Behind the holder
 cardBack.rotation.y = Math.PI; // Face outward on back side
 cardGroup.add(cardBack);
 
-const lanyardPoints = [
-    new THREE.Vector3(0, cardH/2, 0),
-    new THREE.Vector3(-0.2, cardH/2 + 0.4, 0.2),
-    new THREE.Vector3(-0.6, cardH/2 + 0.6, 0.6),
-    new THREE.Vector3(-1.0, cardH/2 + 0.2, 1.2),
-    new THREE.Vector3(-0.4, cardH/2 - 0.4, 0.8),
-    new THREE.Vector3(-0.1, cardH/2 - 0.1, 0.2),
-    new THREE.Vector3(0, cardH/2, 0)
-];
-const curve = new THREE.CatmullRomCurve3(lanyardPoints, true, 'chordal', 0.5);
-const strapGeo = new THREE.TubeGeometry(curve, 64, 0.04, 8, true);
-// Apply scale before Mesh to keep normals correct? No, simple scale on Mesh works for this stylized strap
-const strapMat = new THREE.MeshStandardMaterial({color: 0x102a43, roughness: 0.9});
-const strap = new THREE.Mesh(strapGeo, strapMat);
-strap.castShadow = true;
-strap.scale.z = 0.2; // flatten to ribbon
-cardGroup.add(strap);
+
 
 // Hitbox for raycaster
 const hitBox = new THREE.Mesh(new THREE.BoxGeometry(cardW+0.2, cardH+0.2, 0.2), new THREE.MeshBasicMaterial({visible:false}));
@@ -5839,6 +6506,9 @@ function resetRecall() {
     tabState.recallPhase = 'idle';
     tabState.recallInput = '';
     tabState.recallAnswers = [];
+    tabState.recallTrial = 1;
+    tabState.recallTrial1Answers = [];
+    tabState.recallTypos = [];
     tabState.recallShowIdx = 0;
 }
 
@@ -5848,9 +6518,15 @@ function handleTabletTap(px, py) {
         // Cards: grpTop=218, cardH=110, px covers 28..W-28
         const cards = ['recall', 'qdrs', 'trail', 'clock', 'delayed'];
         const grpTop = 218, cardH = 110;
+        const allDone = tabState.doneRecall && tabState.doneQdrs && tabState.doneTrail && tabState.doneClock;
+        const doneMap2 = { recall: tabState.doneRecall, qdrs: tabState.doneQdrs, trail: tabState.doneTrail, clock: tabState.doneClock, delayed: tabState.doneDelayed };
         cards.forEach((screen, i) => {
             const cy = grpTop + i * cardH;
             if (py >= cy && py <= cy + cardH && px >= 28 && px <= W - 28) {
+                if (screen === 'delayed' && !allDone) return; // locked until all done
+                const isMiddle2 = screen === 'qdrs' || screen === 'trail' || screen === 'clock';
+                if (isMiddle2 && !tabState.doneRecall) return; // locked until recall done
+                if (doneMap2[screen]) return; // completed, cannot redo
                 if (screen === 'clock') resetClock();
                 if (screen === 'trail') resetTrail();
                 if (screen === 'qdrs') { tabState.qdrsRatings = new Array(10).fill(null); tabState.qdrsDomainIdx = 0; tabState.qdrsPhase = 'intro'; tabState.qdrsSubmitted = false; }
@@ -5867,16 +6543,24 @@ function handleTabletTap(px, py) {
                 startRecallShow();
                 return; // drawTabletScreen called by startRecallShow
             }
+        } else if (tabState.recallPhase === 'between') {
+            // Start Trial 2 button
+            const btnY2 = tabState._recallBetweenBtnY || 900;
+            if (px >= W/2 - 160 && px <= W/2 + 160 && py >= btnY2 && py <= btnY2 + 68) {
+                startRecallShow(2); // re-show words for trial 2
+            }
+            return;
         } else if (tabState.recallPhase === 'input') {
             const answered = tabState.recallAnswers.length;
             const total = MOCA_WORDS.length;
 
-            // Score screen: Next Test button
-            if (answered >= total) {
-                const kbY = 520;
-                if (px >= W/2 - 120 && px <= W/2 + 120 && py >= kbY + 160 && py <= kbY + 214) {
+            // Score screen: Next Test button (only after trial 2)
+            if (tabState.recallTrial === 2 && answered >= total) {
+                const kbY = 480;
+                if (px >= W/2 - 150 && px <= W/2 + 150 && py >= kbY + 310 && py <= kbY + 368) {
+                    tabState.doneRecall = true;
                     resetRecall();
-                    tabState.currentScreen = 'trail';
+                    tabState.currentScreen = 'home';
                 }
                 drawTabletScreen(); return;
             }
@@ -5908,8 +6592,7 @@ function handleTabletTap(px, py) {
                     keyHit = true;
                 } else if (px >= 600 && px <= 780 && tabState.recallInput.length > 0) {
                     // Submit / Next
-                    tabState.recallAnswers.push(tabState.recallInput);
-                    tabState.recallInput = '';
+                    submitRecallWord();
                     keyHit = true;
                 }
             }
@@ -5939,7 +6622,7 @@ function handleTabletTap(px, py) {
             const nx = hr.next;
             if (nx && py >= nx.y && py <= nx.y + nx.h && px >= nx.x && px <= nx.x + nx.w) {
                 if (tabState.qdrsRatings[d] !== null) {
-                    if (d === 9) { tabState.qdrsSubmitted = true; tabState.qdrsPhase = 'done'; }
+                    if (d === 9) { tabState.qdrsSubmitted = true; tabState.qdrsPhase = 'done'; tabState.doneQdrs = true; }
                     else { tabState.qdrsDomainIdx++; }
                 }
             }
@@ -5988,10 +6671,12 @@ function handleTabletTap(px, py) {
 
         } else if (trPhase === 'real') {
             if (tabState.trailComplete) {
-                // Next button: roundRect(W/2-150, 686, 300, 58)
-                if (px >= W/2 - 150 && px <= W/2 + 150 && py >= 686 && py <= 744) {
+                // Next button (Y varies by part)
+                const btnY3 = (tabState.trailPart === 'B' && tabState.trailPartATime > 0) ? 800 : 718;
+                if (px >= W/2 - 150 && px <= W/2 + 150 && py >= btnY3 && py <= btnY3 + 58) {
                     if (tabState.trailPart === 'A') {
-                        // Go to Part B intro
+                        // Save Part A time before moving to Part B
+                        tabState.trailPartATime = parseFloat(((tabState.trailEndTime - tabState.trailStartTime) / 1000).toFixed(1));
                         tabState.trailPart = 'B';
                         tabState.trailPhase = 'intro';
                         tabState.trailDots = [];
@@ -6004,12 +6689,7 @@ function handleTabletTap(px, py) {
                 }
             } else {
                 const nextIdx = tabState.trailConnected.indexOf(false);
-                if (!tabState.trailFirstReady) {
-                    // Must tap circle 1 first to begin
-                    const first = tabState.trailDots[0];
-                    const dx = px - first.x, dy = py - first.y;
-                    if (dx*dx + dy*dy < 50*50) tabState.trailFirstReady = true;
-                } else if (nextIdx >= 0 && nextIdx < tabState.trailDots.length - 1) {
+                if (nextIdx >= 0 && nextIdx < tabState.trailDots.length - 1) {
                     const target = tabState.trailDots[nextIdx + 1];
                     const dx = px - target.x, dy = py - target.y;
                     if (dx*dx + dy*dy < 50*50) {
@@ -6017,6 +6697,7 @@ function handleTabletTap(px, py) {
                         if (tabState.trailConnected.every(Boolean)) {
                             tabState.trailComplete = true;
                             tabState.trailEndTime = Date.now();
+                            if (tabState.trailPart === 'B') tabState.doneTrail = true;
                         }
                     }
                 }
@@ -6107,6 +6788,7 @@ function handleTabletTap(px, py) {
             else if (tabState.clockStrokes.length > tabState._circleStrokeCount && py >= btnY && py <= btnY + 50 && px >= W/2 + 10 && px <= W/2 + 190) {
                 scoreClockDrawing();
                 tabState.clockPhase = 'score';
+                tabState.doneClock = true;
             }
             // Freehand drawing for hands
             else if (py >= drawTop && py <= drawBot && px >= 40 && px <= W - 40) {
@@ -6165,6 +6847,7 @@ function handleTabletTap(px, py) {
                 const gridBot = gridTop + 5 * (tileH + gap) - gap;
                 if (py >= gridBot + 18 && py <= gridBot + 80 && px >= W/2 - 150 && px <= W/2 + 150) {
                     tabState.delayedPhase = 'score';
+                    tabState.doneDelayed = true;
                 }
             }
         } else if (tabState.delayedPhase === 'score') {
@@ -6187,9 +6870,7 @@ window.addEventListener('keydown', (e) => {
         tabState.recallInput = tabState.recallInput.slice(0, -1);
         drawTabletScreen();
     } else if (e.key === 'Enter' && tabState.recallInput.length > 0) {
-        tabState.recallAnswers.push(tabState.recallInput);
-        tabState.recallInput = '';
-        drawTabletScreen();
+        submitRecallWord();
     } else if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
         tabState.recallInput += e.key.toUpperCase();
         drawTabletScreen();
