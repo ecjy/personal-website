@@ -144,11 +144,14 @@
     transition: transform 0.44s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .pub-paper {
-    flex: 0 0 100%; height: 100%; overflow-y: auto;
+    flex: 0 0 100%; height: 100%; overflow: hidden;
     background: #fff; font-family: Arial, Helvetica, sans-serif;
   }
-  .pub-paper::-webkit-scrollbar { width: 5px; }
-  .pub-paper::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+  .pp-scale-inner {
+    transform-origin: top left;
+    width: 100%;
+    height: 100%;
+  }
   .pp-dates {
     padding: 5px 14px 4px; background: #fafafa;
     border-bottom: 1px solid #eee; font-size: 9px; color: #555;
@@ -188,6 +191,267 @@
   .pp-highlights { font-size: 7.5px; color: #2a2a2a; line-height: 1.55; margin: 3px 0 0 14px; padding: 0; }
   .pp-highlights li { margin-bottom: 3px; }
   .pp-foot { margin-top: 10px; padding: 6px 14px; border-top: 2px solid var(--jc); display: flex; justify-content: space-between; font-size: 7.5px; color: #888; background: #fafafa; }
+
+  /* ── JAHA journal layout ──────────────────────────────────────────────── */
+  .jaha-layout { font-family: Arial, Helvetica, sans-serif; background: #fff; }
+  .jaha-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 14px 4px; border-bottom: 1px solid #ddd;
+    background: #fff;
+  }
+  .jaha-journal-link {
+    font-family: Arial, sans-serif; font-size: 13px; font-weight: 700;
+    color: #003087; text-decoration: underline; letter-spacing: 0.01em;
+  }
+  .jaha-body { padding: 8px 14px 10px; }
+  .jaha-art-type {
+    font-size: 11px; font-weight: 700; color: #2a7028;
+    letter-spacing: 0.04em; margin-bottom: 6px; font-family: Arial, sans-serif;
+  }
+  .jaha-title {
+    font-family: Arial, sans-serif; font-size: 13.5px; font-weight: 700;
+    color: #111; line-height: 1.3; margin-bottom: 7px;
+  }
+  .jaha-authors {
+    font-family: Arial, sans-serif; font-size: 7.5px; color: #1a1a1a;
+    line-height: 1.6; margin-bottom: 8px; padding-bottom: 7px;
+    border-bottom: 1px solid #ddd;
+  }
+  .jaha-abstract { margin-bottom: 8px; }
+  .jaha-abs-p {
+    font-size: 8px; color: #111; line-height: 1.6;
+    margin-bottom: 4px; text-align: justify;
+  }
+  .jaha-abs-p b { color: #000; font-weight: 700; }
+  .jaha-kw {
+    font-size: 7.5px; color: #222; line-height: 1.6; margin-bottom: 8px;
+  }
+  .jaha-kw b { font-weight: 700; }
+  .jaha-kw i { font-style: italic; }
+  .jaha-divider { border: none; border-top: 1px solid #ccc; margin: 8px 0; }
+  .jaha-dropcap-para {
+    font-size: 7.5px; color: #111; line-height: 1.65;
+    text-align: justify; columns: 2; column-gap: 12px; margin-bottom: 7px;
+  }
+  .jaha-dropcap {
+    float: left; font-size: 32px; line-height: 0.78;
+    font-weight: 700; color: #111; margin: 2px 3px 0 0; font-family: Arial, sans-serif;
+  }
+  .jaha-footnotes {
+    border-top: 1px solid #ddd; padding-top: 6px; margin-top: 6px;
+    font-size: 6.5px; color: #555; line-height: 1.55;
+  }
+  .jaha-footnotes p { margin-bottom: 3px; }
+  .jaha-footer {
+    padding: 5px 14px; border-top: 1px solid #ddd; background: #fafafa;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 7px; color: #888; font-style: italic;
+  }
+
+  /* ── BMC / Springer layout ────────────────────────────────────────────── */
+  .bmc-layout { font-family: Arial, Helvetica, sans-serif; background: #fff; }
+  .bmc-topbar {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 8px 18px 6px; border-bottom: 1px solid #ddd;
+  }
+  .bmc-citation { font-size: 8.5px; color: #555; line-height: 1.7; }
+  .bmc-jname-right {
+    font-size: 14px; font-weight: 700; color: #111;
+    text-align: right; line-height: 1.3; max-width: 180px;
+  }
+  .bmc-typebar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 18px; border-bottom: 3px solid #111; background: #fff;
+  }
+  .bmc-art-type {
+    background: #111; color: #fff; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.12em; padding: 3px 10px;
+  }
+  .bmc-oa {
+    font-size: 9px; font-weight: 700; color: #2e7d32; letter-spacing: 0.05em;
+  }
+  .bmc-layout { display: flex; flex-direction: column; height: 100%; }
+  .bmc-body { padding: 14px 18px 10px; flex: 1; display: flex; flex-direction: column; }
+  .bmc-title {
+    font-size: 26px; font-weight: 300; color: #111;
+    line-height: 1.25; margin-bottom: 16px; letter-spacing: -0.02em;
+  }
+  .bmc-authors {
+    font-size: 9px; color: #333; line-height: 1.8; margin-bottom: 12px;
+    padding-bottom: 12px; border-bottom: 1px solid #eee;
+  }
+  .bmc-authors sup { font-size: 6px; color: #1a6496; }
+  .bmc-abs-box {
+    background: #f5f5f5; border-radius: 3px;
+    padding: 10px 13px; margin-bottom: 10px; flex: 1;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .bmc-abs-head { font-size: 11px; font-weight: 700; color: #111; margin-bottom: 0; flex-shrink: 0; }
+  .bmc-abs-p {
+    font-size: 9px; color: #111; line-height: 1.65;
+    margin-bottom: 0; text-align: justify;
+  }
+  .bmc-abs-p b { font-weight: 700; }
+  .bmc-footer-main {
+    border-top: 1px solid #ddd; padding-top: 7px; margin-top: 6px;
+    font-size: 8px; color: #555; line-height: 1.6; flex-shrink: 0;
+  }
+  .bmc-cofirst { font-size: 7px; color: #1a6496; margin-bottom: 3px; }
+  .bmc-corr-line { border: none; border-top: 1px solid #aaa; width: 40%; margin: 4px 0; }
+  .bmc-corr { margin-bottom: 3px; }
+  .bmc-fulllist { color: #1a6496; font-size: 8px; margin-bottom: 8px; }
+  .bmc-logo-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    border-top: 1px solid #ddd; padding-top: 7px; margin-top: 6px;
+  }
+  .bmc-logo {
+    background: #111; color: #fff; font-size: 13px; font-weight: 900;
+    padding: 5px 8px; letter-spacing: 0.05em;
+    flex-shrink: 0; line-height: 1;
+  }
+  .bmc-copyright { font-size: 7px; color: #555; line-height: 1.5; }
+
+  /* ── Elsevier journal layout ──────────────────────────────────────────── */
+  .elsevier-layout { font-family: Arial, Helvetica, sans-serif; background: #fff; font-size: 7.5px; }
+  .elsevier-topline {
+    text-align: center; padding: 4px 14px 3px;
+    font-size: 8px; color: #1a6496; border-bottom: 1px solid #ddd;
+  }
+  .elsevier-header {
+    display: flex; align-items: center; gap: 0;
+    padding: 7px 10px 6px; border-bottom: 2px solid #ddd;
+  }
+  .elsevier-logo-block {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 48px; border-right: 1px solid #ddd; padding-right: 8px; margin-right: 8px;
+  }
+  .elsevier-tree {
+    font-size: 18px; line-height: 1; margin-bottom: 1px;
+  }
+  .elsevier-name {
+    font-size: 7px; font-weight: 700; color: #e87722;
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .elsevier-center { flex: 1; text-align: center; }
+  .elsevier-sdirect {
+    font-size: 6.5px; color: #555; margin-bottom: 3px;
+  }
+  .elsevier-sdirect a { color: #1a6496; }
+  .elsevier-jname {
+    font-family: Georgia, serif; font-size: 17px; font-weight: 400;
+    color: #111; letter-spacing: -0.01em; line-height: 1;
+  }
+  .elsevier-jhomepage {
+    font-size: 6.5px; color: #555; margin-top: 3px;
+  }
+  .elsevier-jhomepage a { color: #1a6496; }
+  .elsevier-cover-block {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 44px; border-left: 1px solid #ddd;
+    padding-left: 8px; margin-left: 6px; gap: 3px;
+  }
+  .elsevier-cover-img {
+    width: 36px; height: 48px; background: #cc2200;
+    border-radius: 2px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 4px 3px 3px;
+    gap: 3px; overflow: hidden;
+  }
+  .elsevier-cover-title {
+    font-size: 5px; color: #fff; font-weight: 400;
+    letter-spacing: 0.02em; text-align: center; line-height: 1.2;
+    font-family: Georgia, serif;
+  }
+  .elsevier-cover-eas {
+    display: flex; align-items: center; gap: 2px; margin-top: 2px;
+  }
+  .elsevier-cover-eas-circle {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 4px; font-weight: 700; color: #cc2200;
+  }
+  .elsevier-cover-eas-text {
+    font-size: 5px; font-weight: 700; color: #fff; letter-spacing: 0.05em;
+  }
+  .elsevier-cover-badge {
+    display: none;
+  }
+  .elsevier-body { padding: 8px 12px 6px; }
+  .elsevier-title {
+    font-family: Arial, sans-serif; font-size: 13px; font-weight: 400;
+    color: #1b6b7b; line-height: 1.35; margin-bottom: 7px;
+  }
+  .elsevier-authors {
+    font-size: 8px; color: #111; line-height: 1.7; margin-bottom: 5px;
+  }
+  .elsevier-authors sup { font-size: 5.5px; color: #1a6496; }
+  .elsevier-affs {
+    margin-bottom: 8px; padding-bottom: 7px; border-bottom: 1px solid #ddd;
+  }
+  .elsevier-aff {
+    font-size: 6.5px; color: #333; font-style: italic;
+    line-height: 1.45; margin-bottom: 1px;
+  }
+  .elsevier-aff sup { font-size: 5px; color: #1a6496; font-style: normal; }
+  .elsevier-cols {
+    display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin-top: 4px;
+  }
+  .elsevier-left { font-size: 6.5px; }
+  .elsevier-sec-lbl {
+    font-size: 6.5px; font-weight: 700; letter-spacing: 0.18em;
+    color: #111; text-transform: uppercase; margin-bottom: 5px;
+    border-bottom: 1px solid #aaa; padding-bottom: 2px;
+  }
+  .elsevier-highlights { list-style: none; padding: 0; margin: 0 0 10px; }
+  .elsevier-highlights li {
+    font-size: 6.5px; color: #1b6b7b; line-height: 1.5;
+    margin-bottom: 4px; padding-left: 8px; position: relative;
+  }
+  .elsevier-highlights li::before {
+    content: '•'; position: absolute; left: 0; color: #1b6b7b; font-size: 8px; top: -1px;
+  }
+  .elsevier-kw-lbl { font-size: 6.5px; font-weight: 700; color: #111; margin-bottom: 3px; }
+  .elsevier-kw-item {
+    font-size: 6.5px; color: #1b6b7b; line-height: 1.6; margin-bottom: 1px;
+  }
+  .elsevier-art-info { margin-top: 8px; }
+  .elsevier-art-date { font-size: 6px; color: #555; line-height: 1.6; }
+  .elsevier-abs-p {
+    font-size: 7.5px; color: #111; line-height: 1.62;
+    margin-bottom: 4px; text-align: justify;
+  }
+  .elsevier-abs-p i { font-style: italic; font-weight: 700; }
+  .elsevier-footer {
+    border-top: 1px solid #ddd; padding: 5px 12px 4px;
+    font-size: 6.5px; color: #555; line-height: 1.6; background: #fafafa;
+  }
+  .elsevier-ga-box {
+    border: 1px solid #ddd; border-radius: 3px;
+    padding: 7px 8px; margin-bottom: 6px; background: #fafafa;
+  }
+  .elsevier-ga-title {
+    font-size: 7px; font-weight: 700; text-align: center;
+    color: #111; margin-bottom: 7px; line-height: 1.4;
+  }
+  .elsevier-ga-visual {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-bottom: 6px;
+  }
+  .elsevier-ga-col { text-align: center; flex: 1; }
+  .elsevier-ga-label { font-size: 6.5px; font-weight: 700; }
+  .elsevier-ga-label.lo { color: #1b6b7b; }
+  .elsevier-ga-label.hi { color: #c0392b; }
+  .elsevier-ga-sub { font-size: 6px; color: #555; line-height: 1.4; }
+  .elsevier-ga-val { font-size: 9px; font-weight: 700; line-height: 1.3; }
+  .elsevier-ga-val.hi { color: #1b6b7b; }
+  .elsevier-ga-val.lo { color: #c0392b; }
+  .elsevier-ga-brain { font-size: 22px; flex-shrink: 0; }
+  .elsevier-ga-caption {
+    font-size: 6.5px; color: #444; text-align: center;
+    line-height: 1.5; font-style: italic;
+  }
+  .elsevier-footer a { color: #1a6496; }
+  .elsevier-footer .elsevier-corr { margin-bottom: 3px; }
+  .elsevier-footer .elsevier-doi { color: #1a6496; margin-bottom: 2px; }
 
   /* ── Brain journal layout ─────────────────────────────────────────────── */
   .brain-layout { font-family: 'Times New Roman', Georgia, serif; background: #fff; }
@@ -340,10 +604,8 @@
     }
 }
 </script>
-<script type="module">
-import * as THREE from 'three';
-import { RoomEnvironment }  from 'three/addons/environments/RoomEnvironment.js';
-
+<script src="./publications.js"></script>
+<script>
 // ─── Intro dismiss ───────────────────────────────────────────────────────────
 function dismissIntro() {
     const el = document.getElementById('intro');
@@ -353,7 +615,10 @@ function dismissIntro() {
     el.style.pointerEvents = 'none';
     setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 900);
 }
-window.dismissIntro = dismissIntro;
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment }  from 'three/addons/environments/RoomEnvironment.js';
 
 // ─── Renderer ────────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, logarithmicDepthBuffer: true });
@@ -2807,990 +3072,6 @@ function cycleBookToEnd(idx) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ── Publication data — 4 categories ──────────────────────────────────────────
-const PAPERS_CVD = [
-  {
-    color: '#7d2035',
-    journal: "Alzheimer's & Dementia",
-    jsub: "THE JOURNAL OF THE ALZHEIMER'S ASSOCIATION",
-    doi: '10.1002/alz.71264',
-    volume: "Alzheimers Dement. 2026;22:e71264",
-    received: '6 October 2025', revised: '21 January 2026', accepted: '5 February 2026',
-    title: 'Evolution of cortical cerebral microinfarcts on 3T MRI: risk factors and clinical relevance',
-    authors: 'Jiannan Huang<sup>1</sup> &nbsp;|&nbsp; Christopher Chen<sup>2,3</sup> &nbsp;|&nbsp; Wei Ying Tan<sup>1</sup> &nbsp;|&nbsp; Jiangbo Cui<sup>2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>2,3</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>4</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,3</sup>',
-    affiliations: [
-      'Saw Swee Hock School of Public Health, National University of Singapore and National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, National University of Singapore, Tahir Foundation Building (MD1), 12 Science Drive 2, #10-03U, Singapore 117549. Email: saimahilal@nus.edu.sg',
-    funding: 'National University of Singapore, Grant/Award Number: A-8000336-00-00; National Medical Research Council, Grant/Award Numbers: NMRC/CG/NUHS/2010, NMRC/CG/013/2013, NMRC/CIRG/1485/2018, CliniciansScientistAward A-8003721-00-00; Ministry of Education Singapore, Grant/Award Number: A-8003143-00-00',
-    abstract: [
-      { h: 'INTRODUCTION', t: 'Cortical cerebral microinfarcts (CMIs) are associated with cognitive dysfunction and dementia, while their evolution on sequential magnetic resonance imaging (MRI) remains unclear.' },
-      { h: 'METHODS', t: 'The study enrolled 490 patients (72.5 ± 7.9 years) from a memory-clinic cohort, with 5-year follow-up. Cortical CMIs were graded at baseline and year 2 to identify incident lesions and other evolutionary patterns. Cognitive function was assessed annually. Clinical events, including dementia, stroke, and mortality, were recorded with time to event.' },
-      { h: 'RESULTS', t: 'Forty-one (8.4%) patients showed incident cortical CMIs at year 2. Additionally, 12 had CMIs becoming invisible, and six showed CMIs incorporated into new large infarctions. Baseline cortical CMIs and large cortical infarcts showed the strongest association with incident CMIs. Incident cortical CMIs were associated with cognitive decline, white matter hyperintensity progression, and incident dementia, independent of prevalent lesions.' },
-      { h: 'DISCUSSION', t: 'Cortical CMI evolution may reflect dynamic changes in brain vascular pathology and represent a potential target for interventions aimed at preserving cognitive function.' },
-    ],
-    keywords: 'cerebral small vessel disease, cognitive dysfunction, dementia, epidemiology, neuroimaging',
-    highlights: [
-      'In a memory-clinic cohort, the annual incidence of cortical microinfarcts was 4.2%.',
-      'Cortical microinfarcts could become invisible or incorporated into large infarctions.',
-    ],
-  },
-  {
-    color: '#c62828',
-    journal: 'Journal of the American Heart Association',
-    jsub: 'AHA / ASA',
-    artType: 'ORIGINAL RESEARCH',
-    doi: '10.1161/JAHA.125.045054',
-    volume: 'J Am Heart Assoc. 2026;15:e045054',
-    received: '10 October 2025', accepted: '5 December 2025',
-    published: '30 December 2025',
-    title: 'Association of Atrial Electrophysiological Abnormalities With Cognitive Decline and Cerebrovascular Disease',
-    authors: 'Eugene S. J. Tan, MBBS*; Ming Ann Sim, MBBS*; Lucia Li, BA; Anqi Toh, BSc; Eddie Chong, BSc; Siew Pang Chan, PhD; Paul Gonzales, MD; Mark J. H. Lim, PhD; Saima Hilal, MD, PhD; Joyce Chong, PhD; Mitchell K. P. Lai, PhD; Narayanaswamy Venketasubramanian, MD; Boon-Yeow Tan, MBBS; A. Mark Richards, MD, PhD; Lieng-Hsi Ling, MD&#8224;; Christopher Chen, BMBCh&#8224;',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Medicine, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Eugene S.J. Tan, MBBS, Department of Cardiology, National University Heart Centre, 5 Lower Kent Ridge Road, Singapore 119074. Email: eugene_sj_tan@nuhs.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Atrial electrophysiological abnormalities (AEA) are associated with cognitive dysfunction. We evaluated the associations of AEA with longitudinal cognitive decline and incident dementia and investigated underlying mechanisms.' },
-      { h: 'METHODS', t: 'In subjects without atrial fibrillation followed prospectively for 5 years, 12-lead ECGs were evaluated for AEA, defined as the presence of sinus node dysfunction (SND), frequent premature atrial complexes, advanced interatrial block (a-IAB), or P-terminal force in V1 (>40 mm·ms). Rate of decline in global cognition (Z-score averaged from 6 cognitive domains), Clinical Dementia Rating–Sum of Boxes score, and associations with cerebrovascular disease on neuroimaging and circulating biomarkers of neurodegenerative disease were determined.' },
-      { h: 'RESULTS', t: 'Among 358 subjects (age 73.3±7.6 years, 55% female, 47% dementia), 188 (53%) had AEA (94 SND, 6 frequent premature atrial complexes, 52 a-IAB, 92 P-terminal force in V1 >40 mm·ms). Compared with non-AEA, AEA was associated with accelerated decline in both global cognition and Clinical Dementia Rating–Sum of Boxes score (P<sub>interaction</sub>&lt;0.05), 2 times increased risk of dementia in competing risk analyses, and increased burden of cortical infarcts, lacunes, and cerebral microinfarcts (P&lt;0.05). Among AEA subtypes, SND (versus non-SND) and a-IAB (versus non-a-IAB) both associated with accelerated decline in global cognition and Clinical Dementia Rating–Sum of Boxes score (P<sub>interaction</sub>&lt;0.05). a-IAB was associated with 3 times increased risk of incident ischemic stroke and P-terminal force in V1 with increased burden of lacunes. SND was associated with increased burden of cerebral microinfarcts and cerebral microbleeds, incident cerebral microbleeds, higher circulating pTau-181 levels, and increased odds of Alzheimer disease among subjects with preexisting dementia (P&lt;0.05).' },
-      { h: 'CONCLUSIONS', t: 'AEA is associated with worse cognitive trajectories and increased cerebrovascular disease burden. These associations may be underpinned by AEA-subtype-specific mechanisms.' },
-    ],
-    keywords: 'atrial cardiomyopathy &#9632; cognitive decline &#9632; dementia &#9632; ECG &#9632; interatrial block &#9632; sinus node dysfunction &#9632; stroke',
-  },
-  {
-    color: '#1a3a7a',
-    journal: 'Hypertension Research',
-    jsub: 'JAPANESE SOCIETY OF HYPERTENSION',
-    doi: '10.1038/s41440-025-02435-1',
-    volume: 'Hypertens Res. Published online 5 November 2025',
-    received: '30 June 2025', revised: '25 September 2025', accepted: '15 October 2025',
-    published: '5 November 2025',
-    title: 'Visit-to-visit blood pressure variability, brain MRI measures, and cognition in non-demented older adults',
-    authors: 'Jiangbo Cui<sup>1,2</sup> &nbsp;·&nbsp; Caroline Robert<sup>1,2</sup> &nbsp;·&nbsp; An Qi Toh<sup>1,2</sup> &nbsp;·&nbsp; Eddie J. Y. Chong<sup>1,2</sup> &nbsp;·&nbsp; Joyce R. Chong<sup>1,2</sup> &nbsp;·&nbsp; Yuan Cai<sup>3</sup> &nbsp;·&nbsp; Narayanaswamy Venketasubramanian<sup>4</sup> &nbsp;·&nbsp; Mitchell K. P. Lai<sup>1,2</sup> &nbsp;·&nbsp; Saima Hilal<sup>1,2,5</sup> &nbsp;·&nbsp; Christopher Chen<sup>1,2</sup>',
-    affiliations: [
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore, Singapore',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore, Singapore',
-      'Division of Neurology, Department of Medicine and Therapeutics, Faculty of Medicine, The Chinese University of Hong Kong, Hong Kong SAR, China',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore, Singapore',
-      'Saw Swee Hock School of Public Health, National University of Singapore and National University Health System, Singapore, Singapore',
-    ],
-    correspondence: 'Christopher Chen. Email: phcclh@nus.edu.sg',
-    supplementary: 'The online version contains supplementary material available at https://doi.org/10.1038/s41440-025-02435-1',
-    abstract: [
-      { h: '', t: 'Blood pressure variability (BPV) may be a potentially modifiable risk factor for dementia. However, longitudinal studies investigating the associations between BPV, cerebrovascular disease (CeVD), and brain atrophy remain limited. Importantly, it is unclear whether these brain structural changes mediate the relationship between BPV and cognition, and whether such mediation effects are independent of preexisting brain pathology. This study included 362 non-demented individuals who underwent at least two neuropsychological assessments or brain magnetic resonance imaging (MRI). BPV was calculated as variation independent of mean. MRI markers of CeVD (i.e., white matter hyperintensity [WMH], lacunes, cerebral microbleeds [CMBs], intracranial stenosis, and cortical infarcts) and brain atrophy (i.e., white matter volume [WMV], gray matter volume [GMV], and lateral ventricular volume [VV]), were evaluated. Plasma p-tau181 was measured as a marker of amyloid pathology. Higher systolic BPV (SBPV) was associated with worse cognitive outcomes. SBPV was associated with WMH, cortical infarcts, and VV at the final brain MRI. These results were consistent in longitudinal analyses. The association between SBPV and cognition was partially mediated by CeVD and brain atrophy, with mediation proportion ranging from 17 to 24% for CeVD and 14 to 35% for brain atrophy. Preexisting CeVD and amyloid pathology had minimal influence on these mediation effects. SBPV showed stronger effects than other BPV indices on cognition, CeVD, and brain atrophy.' },
-    ],
-    keywords: 'Blood pressure variability · Brain atrophy · Cerebrovascular disease · Cognition',
-  },
-  {
-    layout: 'brain',
-    color: '#1a4a80',
-    journal: 'Brain',
-    jsub: 'OXFORD UNIVERSITY PRESS',
-    doi: '10.1093/brain/awaf301',
-    volume: 'BRAIN 2025: 148; 3924\u20133934',
-    received: 'March 05, 2025', revised: 'June 24, 2025', accepted: 'July 20, 2025',
-    published: 'August 12, 2025',
-    title: 'Synergistic effect between cortical cerebral microinfarcts and brain atrophy on cognitive decline',
-    authors: 'Jiannan Huang,<sup>1</sup> Wei Ying Tan,<sup>1</sup> Jiangbo Cui,<sup>2</sup> Shin Hui On,<sup>2,3</sup> Eddie Jun Yi Chong,<sup>2,3</sup> Christopher Chen<sup>2,3</sup> and Saima Hilal<sup>1,2,3</sup>',
-    commentary: 'See Sol\u00e9-Guardia <i>et al.</i> (https://doi.org/10.1093/brain/awaf377) for a scientific commentary on this article.',
-    affiliations: [
-      'Saw Swee Hock School of Public Health, National University of Singapore and National University Health System, Singapore 117549, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore 117600, Singapore',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore 117599, Singapore',
-    ],
-    abstract: [
-      { h: '', t: 'Cortical cerebral microinfarcts are associated with brain atrophy in cross-sectional studies, with further investigation using longitudinal datasets being warranted. Moreover, little is known about their combined impact on cognition. This study aimed to establish the association between cortical cerebral microinfarcts and brain volume loss over time and explore whether they synergistically contribute to cognitive decline.' },
-      { h: '', t: 'A total of 475 patients, aged 72.7 \u00b1 7.9 years, were enrolled from a memory clinic cohort, who underwent neuroimaging and neuropsychological assessments at least twice over 5 years. Cortical cerebral microinfarcts and other cerebrovascular disease were assessed using 3-T MRI. Brain volumes were calculated semi-automatically using FreeSurfer. Cognitive function was assessed using a neuropsychological test battery including six domains. Linear mixed-effect models were utilized to examine the association between cortical cerebral microinfarcts and brain volume loss and their interaction on cognitive decline. Estimated marginal means were derived to plot global cognitive trajectories.' },
-      { h: '', t: 'Cortical cerebral microinfarcts were associated with a greater decrease over 2 years in total brain volume [\u03b2 = \u22121.94 (\u22123.07, \u22120.82) at Year 2, P-interaction with time < 0.001], grey matter volume [\u03b2 = \u22121.00 (\u22121.69, \u22120.30) at Year 2, P-interaction = 0.002] and white matter volume [\u03b2 = \u22120.95 (\u22121.54, \u22120.35) at Year 2, P-interaction < 0.001]. Brain volume loss was more pronounced in patients with multiple microinfarcts. Patients with high brain volume loss and cortical cerebral microinfarcts, particularly multiple microinfarcts, exhibited significantly lower global cognitive scores [single microinfarct: \u03b2 = \u22121.83 (\u22122.68, \u22120.97) at Year 5, P-interaction with time < 0.001; multiple microinfarcts: \u03b2 = \u22123.13 (\u22124.21, \u22122.05) at Year 5, P-interaction < 0.001]. The synergistic effects were more significant in the domains of executive function, memory, language and visuospatial function. Global cognitive trajectories revealed greater cognitive decline in patients with high brain volume loss and single or multiple microinfarcts, with the latter showing the steepest slope.' },
-      { h: '', t: 'This study established a longitudinal association between cortical cerebral microinfarcts and brain atrophy progression, with higher microinfarct burden associated with more pronounced brain volume loss. Furthermore, cortical cerebral microinfarcts and brain atrophy showed synergistic effects on cognitive decline. These findings highlight the importance of investigating the role of mixed pathologies in the development of cognitive impairment and dementia in future research.' },
-    ],
-    keywords: 'brain atrophy \u00b7 cerebrovascular disease \u00b7 cerebral microinfarcts \u00b7 cognitive decline \u00b7 longitudinal',
-    footer: 'Received March 05, 2025. Revised June 24, 2025. Accepted July 20, 2025. Advance access publication August 12, 2025\n\u00a9 The Author(s) 2025. Published by Oxford University Press on behalf of the Guarantors of Brain.\nThis is an Open Access article distributed under the terms of the Creative Commons Attribution License (https://creativecommons.org/licenses/by/4.0/), which permits unrestricted reuse, distribution, and reproduction in any medium, provided the original work is properly cited.',
-  },
-  {
-    color: '#0d47a1',
-    journal: 'Diabetes Care',
-    jsub: 'AMERICAN DIABETES ASSOCIATION',
-    doi: '10.2337/dc25-1162',
-    volume: 'Diabetes Care. 2025',
-    received: '1 June 2025', revised: '15 September 2025', accepted: '1 October 2025',
-    title: 'White Matter Hyperintensities Moderate the Association Between Diabetes and Non-AD Brain Atrophy',
-    authors: 'Jiangbo Cui<sup>1,2</sup> &nbsp;|&nbsp; Zhaojun Liu<sup>3</sup> &nbsp;|&nbsp; Wei Ying Tan<sup>4</sup> &nbsp;|&nbsp; Joyce R Chong<sup>1</sup> &nbsp;|&nbsp; Shin Hui On<sup>1</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>1,5</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>6</sup> &nbsp;|&nbsp; Mitchell K P Lai<sup>1,5</sup> &nbsp;|&nbsp; Christopher Chen<sup>1,5</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,4,5</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Psychological Medicine, Yong Loo Lin School of Medicine, NUS',
-      'China-Japan Friendship Hospital, Beijing, China',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, NUS. Email: saimahilal@nus.edu.sg',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'This study examined how white matter hyperintensities (WMHs) moderate the relationship between diabetes and brain atrophy.' },
-      { h: 'METHODS', t: 'Two cohorts without dementia were analyzed with MRI and cognitive assessments.' },
-      { h: 'RESULTS', t: 'Diabetes and WMHs synergistically contribute to brain atrophy independent of Alzheimer disease pathology. The interaction was significant for hippocampal and total brain volumes.' },
-      { h: 'CONCLUSIONS', t: 'Cerebrovascular disease rather than Alzheimer pathology drives cognitive decline in diabetic patients, highlighting the importance of vascular risk management.' },
-    ],
-    keywords: 'white matter hyperintensities, diabetes, brain atrophy, cerebrovascular disease, Alzheimer disease',
-  },
-  {
-    color: '#8b4513',
-    journal: 'Atherosclerosis',
-    jsub: 'ELSEVIER',
-    doi: '10.1016/j.atherosclerosis.2025.120472',
-    volume: 'Atherosclerosis. 2025;409:120472',
-    received: '15 January 2025', revised: '10 April 2025', accepted: '25 April 2025',
-    title: 'Effect of metabolic syndrome severity on cerebral haemodynamics and cognition in community-based cohort',
-    authors: 'Mervin Tee<sup>1</sup> &nbsp;|&nbsp; Mathijs B J Dijsselhof<sup>2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>3,4</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>5</sup> &nbsp;|&nbsp; Christopher Chen<sup>3,4</sup> &nbsp;|&nbsp; Jan Petr<sup>2</sup> &nbsp;|&nbsp; Henk J M M Mutsaerts<sup>2</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,3,4</sup>',
-    affiliations: [
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Department of Radiology and Nuclear Medicine, Amsterdam UMC, Netherlands',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, NUS. Email: saimahilal@nus.edu.sg',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'This study examined how the severity of metabolic syndrome relates to cerebral haemodynamics and cognitive function using ASL-MRI in 602 older adults.' },
-      { h: 'RESULTS', t: 'A paradoxical relationship was found where higher cerebral blood flow correlated with metabolic syndrome severity in lower-risk individuals, but lower flow in higher-risk individuals. Higher cMETS was associated with poorer global cognition.' },
-      { h: 'CONCLUSIONS', t: 'Cerebral blood flow mediated approximately 43.5% of the metabolic syndrome–cognition relationship, highlighting haemodynamics as an intervention target.' },
-    ],
-    keywords: 'ageing, arterial spin labelling, cerebral blood flow, cognitive function, metabolic syndrome',
-  },
-  {
-    color: '#555555',
-    journal: 'Journal of the American Heart Association',
-    jsub: 'AHA / ASA',
-    doi: '10.1161/JAHA.124.035133',
-    volume: 'J Am Heart Assoc. 2024;13(22):e035133',
-    received: '10 March 2024', revised: '5 August 2024', accepted: '20 August 2024',
-    title: 'Associations of Circulating Platelet Endothelial Cell Adhesion Molecule-1 Levels With Progression of Cerebral Small-Vessel Disease, Cognitive Decline, and Incident Dementia',
-    authors: 'Ming Ann Sim<sup>1,2</sup> &nbsp;|&nbsp; Eugene S J Tan<sup>1,3</sup> &nbsp;|&nbsp; Siew Pang Chan<sup>4</sup> &nbsp;|&nbsp; Yuan Cai<sup>1</sup> &nbsp;|&nbsp; Yuek Ling Chai<sup>1</sup> &nbsp;|&nbsp; Joyce Ruifen Chong<sup>1</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>1,2</sup> &nbsp;|&nbsp; Caroline Robert<sup>1</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>5</sup> &nbsp;|&nbsp; Boon Yeow Tan<sup>6</sup> &nbsp;|&nbsp; Mitchell K P Lai<sup>1,2</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,7</sup> &nbsp;|&nbsp; Christopher L H Chen<sup>1,2</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'National University Heart Centre Singapore',
-      'Department of Medicine, Yong Loo Lin School of Medicine, NUS',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      "St. Luke's Hospital, Singapore",
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Circulating PECAM-1 reflects endothelial integrity and vascular inflammation, and may serve as a blood-based biomarker for cerebral small vessel disease.' },
-      { h: 'METHODS', t: 'Plasma PECAM-1 levels and cerebral small-vessel disease progression were examined in dementia-free subjects followed over five years.' },
-      { h: 'RESULTS', t: 'Lower PECAM-1 tertiles correlated with greater white matter hyperintensity volume and cerebral microbleeds. Those in lower PECAM-1 tertiles showed significantly higher incident dementia risk.' },
-      { h: 'CONCLUSIONS', t: 'PECAM-1 is a clinically accessible blood-based biomarker for monitoring cSVD progression and cognitive decline.' },
-    ],
-    keywords: 'PECAM-1, CD31, cerebral small-vessel disease, cognition, dementia, endothelium',
-  },
-  {
-    color: '#2e7d32',
-    journal: "Alzheimer's Research & Therapy",
-    jsub: 'BIOMED CENTRAL',
-    doi: '10.1186/s13195-024-01577-7',
-    volume: 'Alzheimers Res Ther. 2024;16(1):214',
-    received: '14 March 2024', revised: '12 August 2024', accepted: '3 September 2024',
-    title: 'Interactive effect of diabetes mellitus and subclinical MRI markers of cerebrovascular disease on cognitive decline and incident dementia: a memory-clinic study',
-    authors: 'Jiangbo Cui<sup>1,2</sup> &nbsp;|&nbsp; Caroline Robert<sup>1</sup> &nbsp;|&nbsp; Chia May Teh<sup>1</sup> &nbsp;|&nbsp; Eddie Chong Jun Yi<sup>1,3</sup> &nbsp;|&nbsp; Joyce R Chong<sup>1</sup> &nbsp;|&nbsp; Boon Yeow Tan<sup>4</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>5</sup> &nbsp;|&nbsp; Mitchell K P Lai<sup>1,3</sup> &nbsp;|&nbsp; Christopher Chen<sup>1,3</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,3,6</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Psychological Medicine, Yong Loo Lin School of Medicine, NUS',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      "St. Luke's Hospital, Singapore",
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-    ],
-    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, NUS. Email: saimahilal@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'The mechanisms underlying the association between diabetes and cognitive impairment remain poorly understood, particularly the role of cerebrovascular disease as an intermediary.' },
-      { h: 'METHODS', t: '614 participants with baseline MRI and longitudinal cognitive testing over five years were examined for interactive effects of diabetes and white matter hyperintensities.' },
-      { h: 'RESULTS', t: 'An interactive effect of diabetes and WMHs, rather than an independent effect, was found on cognitive decline. The association was stronger in participants with high white matter hyperintensity burden.' },
-      { h: 'CONCLUSIONS', t: 'Diabetes effects on cognition depend on white matter hyperintensity presence and remain unchanged after adjusting for blood-based Alzheimer biomarkers.' },
-    ],
-    keywords: 'cerebrovascular disease, cognitive dysfunction, diabetes, magnetic resonance imaging',
-  },
-  {
-    color: '#1b5e20',
-    journal: "Alzheimer's Research & Therapy",
-    jsub: 'BIOMED CENTRAL / SPRINGER',
-    doi: '10.1186/s13195-024-01627-0',
-    volume: 'Alzheimers Res Ther. 2024;16(1):273',
-    received: '7 July 2024', accepted: '18 November 2024',
-    published: '23 December 2024',
-    title: 'Retinal thickness predicts the risk of cognitive decline over five years',
-    authors: 'Leila Sara Eppenberger<sup>1</sup>  |  Chi Li<sup>1</sup>  |  Damon Wong<sup>1</sup>  |  Bingyao Tan<sup>1</sup>  |  Gerhard Garhöfer<sup>2</sup>  |  Saima Hilal<sup>3</sup>  |  Eddie Chong<sup>4</sup>  |  An Qi Toh<sup>4</sup>  |  Narayanaswamy Venketasubramanian<sup>5</sup>  |  Christopher Li-Hsian Chen<sup>4</sup>  |  Leopold Schmetterer<sup>1</sup>  |  Jacqueline Chua<sup>1</sup>',
-    affiliations: [
-      'Singapore Eye Research Institute, Singapore National Eye Centre, Singapore',
-      'Department of Clinical Pharmacology, Medical University of Vienna, Vienna, Austria',
-      'Saw Swee Hock School of Public Health, National University of Singapore, Singapore',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    abstract: [
-      { h: '', t: 'Retinal thickness measured by optical coherence tomography (OCT) was evaluated as a predictor of longitudinal cognitive decline over five years in a Singapore-based cohort of older adults. The retina, as a window to the brain, shows structural changes in ganglion cell and nerve fiber layers that mirror neurodegeneration. Key retinal thickness parameters — including ganglion cell-inner plexiform layer and peripapillary retinal nerve fiber layer — were evaluated against cognitive trajectories across multiple domains. Retinal thickness measures were significantly associated with rate of cognitive decline, supporting non-invasive retinal imaging as a biomarker for early identification of individuals at risk of cognitive deterioration and dementia.' },
-    ],
-    keywords: 'retinal thickness, optical coherence tomography, cognitive decline, dementia, neurodegeneration',
-  },
-  {
-    color: '#2a5f5f',
-    journal: "Journal of Alzheimer's Disease",
-    jsub: 'IOS PRESS',
-    doi: '10.3233/JAD-220971',
-    volume: 'J Alzheimers Dis. 2023;92(2):445-455',
-    received: '5 September 2022', revised: '22 November 2022', accepted: '12 December 2022',
-    title: 'Association of Interleukin-6 and Interleukin-8 with Cognitive Decline in an Asian Memory Clinic Population',
-    authors: 'Nicole Shu Ning Teoh<sup>1</sup> &nbsp;|&nbsp; Bibek Gyanwali<sup>1</sup> &nbsp;|&nbsp; Mitchell K P Lai<sup>2,3</sup> &nbsp;|&nbsp; Yuek Ling Chai<sup>2</sup> &nbsp;|&nbsp; Joyce R Chong<sup>2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>2,3</sup> &nbsp;|&nbsp; Christopher Chen<sup>2,3</sup> &nbsp;|&nbsp; Chuen Seng Tan<sup>1</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,3</sup>',
-    affiliations: [
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-    ],
-    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, NUS. Email: saimahilal@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Neuroinflammation may contribute to cognitive impairment and dementia. IL-6 and IL-8 are linked to neuroinflammatory processes and reduced cognitive function.' },
-      { h: 'OBJECTIVE', t: 'To examine baseline IL-6 and IL-8 relationships with cognitive function and five-year cognitive decline in 387 memory clinic patients.' },
-      { h: 'RESULTS', t: 'IL-8 was associated with worse cognition especially in attention, executive function, and visuospatial function. No significant association was found for IL-6.' },
-      { h: 'CONCLUSION', t: 'Blood inflammatory biomarkers may be useful indicators in identifying patients at risk of cognitive impairment in memory clinic populations.' },
-    ],
-    keywords: 'blood biomarker, cognitive decline, inflammation, interleukin-6, interleukin-8, memory clinic',
-  },
-  {
-    color: '#3a6b3a',
-    journal: 'Current Alzheimer Research',
-    jsub: 'BENTHAM SCIENCE',
-    doi: '10.2174/1567205018666210820125543',
-    volume: 'Curr Alzheimer Res. 2021;18(5):399-413',
-    received: '12 January 2021', revised: '20 April 2021', accepted: '10 May 2021',
-    title: 'Cerebral Microbleeds and White Matter Hyperintensities are Associated with Cognitive Decline in an Asian Memory Clinic Study',
-    authors: 'Bibek Gyanwali<sup>1,2</sup> &nbsp;|&nbsp; Benedict Lui<sup>1</sup> &nbsp;|&nbsp; Chuen S Tan<sup>2</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>1,3</sup> &nbsp;|&nbsp; Henri Vrooman<sup>4</sup> &nbsp;|&nbsp; Christopher Chen<sup>1,3</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,3</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Department of Radiology and Nuclear Medicine, Erasmus University Medical Centre, Netherlands',
-    ],
-    correspondence: 'Saima Hilal, Saw Swee Hock School of Public Health, NUS. Email: saimahilal@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Cerebral Small Vessel Disease manifestations including lacunes, microbleeds, and white matter changes contribute to cognitive impairment.' },
-      { h: 'METHODS', t: '428 participants underwent baseline MRI and at least three neuropsychological assessments over four years.' },
-      { h: 'RESULTS', t: 'Baseline microbleed burden correlated with declines in global cognition, executive function, and memory. Strictly lobar CMBs, as well as WMH volume in anterior and posterior regions, were associated with cognitive decline.' },
-      { h: 'CONCLUSION', t: 'Location-specific cerebral small vessel disease markers predict domain-specific cognitive decline and should inform monitoring strategies.' },
-    ],
-    keywords: 'cerebral small vessel disease, cognitive decline, memory clinic, mixed-location, strictly deep, strictly lobar',
-  },
-  {
-    color: '#4a148c',
-    journal: 'The American Journal of Geriatric Psychiatry',
-    jsub: 'ELSEVIER / AMERICAN ASSOCIATION FOR GERIATRIC PSYCHIATRY',
-    doi: '10.1016/j.jagp.2020.06.009',
-    volume: 'Am J Geriatr Psychiatry. 2021;29(2):156–165',
-    published: 'June 2020',
-    title: 'The Impact of Strategic White Matter Hyperintensity Lesion Location on Language',
-    authors: 'Saima Hilal<sup>1,2</sup>  |  J. Matthijs Biesbroek<sup>3</sup>  |  Henri Vrooman<sup>4</sup>  |  Eddie Chong<sup>5</sup>  |  Hugo J. Kuijf<sup>3</sup>  |  Narayanaswamy Venketasubramanian<sup>6</sup>  |  Ching-Yu Cheng<sup>7</sup>  |  Tien Yin Wong<sup>7</sup>  |  Geert Jan Biessels<sup>3</sup>  |  Christopher Chen<sup>5</sup>',
-    affiliations: [
-      'Saw Swee Hock School of Public Health, National University of Singapore, Singapore',
-      'Department of Epidemiology, Erasmus University Medical Center, Rotterdam, Netherlands',
-      'Department of Neurology, UMC Utrecht Brain Center, Utrecht, Netherlands',
-      'Department of Radiology and Nuclear Medicine, Erasmus University Medical Center, Rotterdam, Netherlands',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Singapore Eye Research Institute, Singapore National Eye Centre, Singapore',
-    ],
-    abstract: [
-      { h: '', t: 'This study investigates the relationship between the spatial location of white matter hyperintensities (WMH) — lesions associated with cerebral small vessel disease — and language function. Using voxel-based lesion-symptom mapping in a Singapore memory clinic cohort, the authors identify which specific white matter tracts, when affected by WMH, are most strongly associated with language impairments assessed via naming and verbal fluency tests. Findings highlight strategic WMH locations — particularly in left perisylvian and frontal white matter tracts — as key determinants of language deficits, with implications for understanding vascular contributions to cognitive and language impairment in older adults.' },
-    ],
-    keywords: 'white matter hyperintensities, language, voxel-based lesion-symptom mapping, cerebrovascular disease, cognition',
-  },
-  {
-    color: '#1565c0',
-    journal: "Journal of Alzheimer's Disease",
-    jsub: 'IOS PRESS',
-    doi: '10.3233/JAD-160139',
-    volume: 'J Alzheimers Dis. 2016;52(3):1021–1028',
-    published: '23 May 2016',
-    title: 'Validation of the Total Cerebrovascular Disease Burden Scale in a Community Sample',
-    authors: 'Xin Xu<sup>1</sup>  |  Saima Hilal<sup>1,2</sup>  |  Simon L. Collinson<sup>3</sup>  |  Qun Lin Chan<sup>1</sup>  |  Eddie Jun Yi Chong<sup>1</sup>  |  Mohammad Kamran Ikram<sup>1,4</sup>  |  Narayanaswamy Venketasubramanian<sup>5</sup>  |  Ching-Yu Cheng<sup>6</sup>  |  Tien Yin Wong<sup>6</sup>  |  Christopher Li-Hsian Chen<sup>1</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
-      'Department of Psychology, National University of Singapore, Singapore',
-      'Department of Neurology, Erasmus University Medical Center, Rotterdam, Netherlands',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Singapore Eye Research Institute, Singapore National Eye Centre, Singapore',
-    ],
-    abstract: [
-      { h: 'BACKGROUND', t: 'A Total Cerebrovascular Disease (CVD) Burden Scale was developed combining multiple MRI markers of cerebral small vessel disease — including white matter hyperintensities, lacunes, cerebral microbleeds, brain atrophy, and enlarged perivascular spaces — into a composite burden score.' },
-      { h: 'OBJECTIVE', t: 'To validate the Total CVD Burden Scale in a community-based sample from the Epidemiology of Dementia in Singapore (EDIS) study.' },
-      { h: 'RESULTS', t: "Higher total CVD burden was significantly associated with worse cognitive performance across multiple domains. Results confirm the scale\'s construct and concurrent validity as a summary measure of cerebrovascular disease load in population-based research." },
-    ],
-    keywords: 'cerebrovascular disease burden, community cohort, magnetic resonance imaging, cognitive impairment, validation',
-  },
-  {
-    color: '#c62828',
-    journal: 'Stroke',
-    jsub: 'AHA / ASA',
-    doi: '10.1161/STROKEAHA.115.010700',
-    volume: 'Stroke. 2015;46(10):2808-2814',
-    received: '12 February 2015', revised: '1 June 2015', accepted: '15 June 2015',
-    title: 'Association of Magnetic Resonance Imaging Markers of Cerebrovascular Disease Burden and Cognition',
-    authors: 'Xin Xu<sup>1,2</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,3</sup> &nbsp;|&nbsp; Simon L Collinson<sup>4</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>1,2</sup> &nbsp;|&nbsp; Mohammad Kamran Ikram<sup>5</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>6</sup> &nbsp;|&nbsp; Christopher Li-Hsian Chen<sup>1,2</sup>',
-    affiliations: [
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Department of Psychology, National University of Singapore',
-      'Duke-NUS Graduate Medical School, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND AND PURPOSE', t: 'The study examined associations between cerebrovascular disease burden using multimodal MRI and cognitive function.' },
-      { h: 'METHODS', t: '305 cognitively impaired patients and 94 controls underwent neuropsychological testing and brain MRI. A weighted CeVD burden score was computed.' },
-      { h: 'RESULTS', t: 'A graded association of CeVD burden with neurocognitive function was found. White matter hyperintensities associated with global deficits; microbleeds with domain-specific impairments.' },
-      { h: 'CONCLUSIONS', t: 'Weighted cerebrovascular disease burden score comprising both small- and large-vessel disease markers associated with global and domain-specific cognitive deficits.' },
-    ],
-    keywords: 'cerebrovascular disorders, cognition, magnetic resonance imaging, stroke',
-  },
-];
-
-const PAPERS_AI = [
-  {
-    color: '#006e45',
-    journal: 'GeroScience',
-    jsub: 'SPRINGER',
-    doi: '10.1007/s11357-026-02199-7',
-    volume: 'GeroScience. 2026',
-    received: '15 October 2025', revised: '10 January 2026', accepted: '20 January 2026',
-    title: 'Associations between cognitive frailty and circulating cardiovascular biomarkers in a memory clinic cohort',
-    authors: 'Xin Tong Tan<sup>1</sup> &nbsp;|&nbsp; Joyce R Chong<sup>1</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>1,2</sup> &nbsp;|&nbsp; Ming Ann Sim<sup>1</sup> &nbsp;|&nbsp; Jiangbo Cui<sup>1,3</sup> &nbsp;|&nbsp; Siew Pang Chan<sup>4</sup> &nbsp;|&nbsp; Oi Wah Liew<sup>4</sup> &nbsp;|&nbsp; Boon Yeow Tan<sup>5</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>6</sup> &nbsp;|&nbsp; Arthur Mark Richards<sup>4</sup> &nbsp;|&nbsp; Mitchell K P Lai<sup>1,2</sup> &nbsp;|&nbsp; Christopher Li-Hsian Chen<sup>1,2</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Department of Psychological Medicine, Yong Loo Lin School of Medicine, NUS',
-      'Department of Medicine, Yong Loo Lin School of Medicine, NUS',
-      "St. Luke's Hospital, Singapore",
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Whether cognitive frailty, characterized by coexisting physical frailty and mild cognitive impairment, correlates with cardiac dysfunction markers remains unclear.' },
-      { h: 'METHODS', t: '303 memory clinic participants were assessed with frailty measures and cardiovascular biomarkers including NT-proBNP, GDF-15, and hs-cTnT.' },
-      { h: 'RESULTS', t: 'Those with cognitive frailty demonstrated higher NT-proBNP, GDF-15, and hs-cTnT levels. Cognitive frailty predicted accelerated cognitive decline over five years, with elevated NT-proBNP intensifying this decline.' },
-      { h: 'CONCLUSIONS', t: 'Cardiovascular pathways warrant investigation as intervention targets for cognitive frailty, bridging cardiac and neurocognitive aging research.' },
-    ],
-    keywords: 'cognitive frailty, frailty, GDF-15, high-sensitivity cardiac troponin T, mild cognitive impairment, NT-proBNP',
-  },
-  {
-    color: '#00695c',
-    journal: 'Communications Medicine',
-    jsub: 'NATURE PORTFOLIO',
-    doi: '10.1038/s43856-026-01484-y',
-    volume: 'Commun Med. 2026',
-    received: '18 June 2025', accepted: '18 February 2026',
-    published: '5 March 2026',
-    title: 'Spatial navigation as a digital marker for clinically differentiating cognitive impairment severity',
-    authors: 'Giorgio Colombo<sup>1</sup>  |  Karolina Minta<sup>1</sup>  |  William R. Taylor<sup>1</sup>  |  Jascha Grübel<sup>1</sup>  |  Eddie Chong<sup>2</sup>  |  Joyce R. Chong<sup>2</sup>  |  Mark J. H. Lim<sup>2</sup>  |  Paul Nichol G. Gonzales<sup>2</sup>  |  Mitchell K. P. Lai<sup>2</sup>  |  Christopher P. Chen<sup>2</sup>  |  Victor R. Schinazi<sup>1</sup>',
-    affiliations: [
-      'ETH Zurich, Zurich, Switzerland',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-    ],
-    abstract: [
-      { h: 'BACKGROUND', t: 'Spatial navigation impairments emerge early in Alzheimer\'s disease, but assessments targeting these deficits remain underutilised or impractical for cognitive screening. The Spatial Performance Assessment for Cognitive Evaluation (SPACE) is a newly developed digital tool that evaluates spatial navigation deficits associated with cognitive impairment.' },
-      { h: 'METHODS', t: 'Spatial navigation ability using SPACE was assessed in 300 older adults recruited from memory clinics and the general community. Participants were classified across different levels of cognitive impairment using the Clinical Dementia Rating (CDR) scale. SPACE performance was compared with clinical diagnosis, standard cognitive assessments, and demographic models using AUC, sensitivity, and specificity.' },
-      { h: 'RESULTS', t: 'SPACE reliably distinguishes CDR levels, exceeding the accuracy of demographic models and matching or surpassing most traditional neuropsychological tests. Including SPACE significantly increases the AUC for no dementia vs. mild dementia (0.76 to 0.94), no dementia vs. moderate dementia (0.79 to 0.95), and questionable vs. mild dementia (0.70 to 0.91). A shortened version (<11 minutes) reduces administration time by 40% while maintaining high diagnostic accuracy.' },
-      { h: 'CONCLUSIONS', t: 'Digital spatial navigation assessments have strong potential for early detection, contributing to scalable and accessible healthcare.' },
-    ],
-    keywords: 'spatial navigation, digital biomarker, cognitive impairment, dementia screening, Clinical Dementia Rating',
-  },
-  {
-    color: '#7d2035',
-    journal: "Alzheimer's & Dementia",
-    jsub: "THE JOURNAL OF THE ALZHEIMER'S ASSOCIATION",
-    doi: '10.1002/alz.14601',
-    volume: "Alzheimers Dement. 2025;21(3):e14601",
-    received: '5 September 2024', revised: '15 November 2024', accepted: '2 December 2024',
-    title: 'A deep-learning retinal aging biomarker for cognitive decline and incident dementia',
-    authors: 'Ming Ann Sim<sup>1,2</sup> &nbsp;|&nbsp; Yih Chung Tham<sup>3</sup> &nbsp;|&nbsp; Simon Nusinovici<sup>3</sup> &nbsp;|&nbsp; Ten Cheer Quek<sup>3</sup> &nbsp;|&nbsp; Marco Yu<sup>3</sup> &nbsp;|&nbsp; Can Can Xue<sup>3</sup> &nbsp;|&nbsp; Miao Li Chee<sup>3</sup> &nbsp;|&nbsp; Qing Sheng Peng<sup>3</sup> &nbsp;|&nbsp; Eugene S J Tan<sup>1,4</sup> &nbsp;|&nbsp; Siew Pang Chan<sup>5</sup> &nbsp;|&nbsp; Yuan Cai<sup>1</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>1,2</sup> &nbsp;|&nbsp; Boon Yeow Tan<sup>6</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>7</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,8</sup> &nbsp;|&nbsp; Mitchell K P Lai<sup>1,2</sup> &nbsp;|&nbsp; Hyungwon Choi<sup>9</sup> &nbsp;|&nbsp; Arthur Mark Richards<sup>5</sup> &nbsp;|&nbsp; Ching-Yu Cheng<sup>3</sup> &nbsp;|&nbsp; Christopher L H Chen<sup>1,2</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Singapore Eye Research Institute, Singapore National Eye Centre',
-      'National University Heart Centre Singapore',
-      'Department of Medicine, Yong Loo Lin School of Medicine, NUS',
-      "St. Luke's Hospital, Singapore",
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Department of Medicine, Yong Loo Lin School of Medicine, NUS',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'RetiPhenoAge is a deep learning-derived retinal biological age estimated from fundus photographs, capturing systemic aging.' },
-      { h: 'METHODS', t: 'A memory-clinic cohort was followed for 5 years with retinal photography and cognitive assessments. UK Biobank served as an external replication cohort.' },
-      { h: 'RESULTS', t: 'Older RetiPhenoAge associated with incident cognitive decline (subdistribution hazard ratio 1.34, p=0.004) and dementia (p=0.036). UK Biobank replication confirmed RetiPhenoAge predicted incident dementia. The marker correlated with brain MRI changes and aging-related plasma proteins.' },
-      { h: 'CONCLUSIONS', t: 'Retinal photography is a non-invasive window into systemic brain ageing and a promising tool for dementia risk stratification.' },
-    ],
-    keywords: 'biomarker, cognitive decline, deep-learning, dementia, prognostic, retinal age, retinal photography',
-  },
-  {
-    color: '#5c6bc0',
-    journal: 'Human Brain Mapping',
-    jsub: 'WILEY',
-    doi: '10.1002/hbm.70276',
-    volume: 'Hum Brain Mapp. 2025; 46:e70276',
-    received: '3 January 2025', revised: '26 May 2025', accepted: '19 June 2025',
-    title: 'Mind the Gap: Does Brain Age Improve Alzheimer\'s Disease Prediction?',
-    authors: 'Trevor Wei Kiat Tan<sup>1,2,3,4,5,\u2020</sup> &nbsp;|&nbsp; Kim-Ngan Nguyen<sup>1,\u2020</sup> &nbsp;|&nbsp; Chen Zhang<sup>1,2,3,4</sup> &nbsp;|&nbsp; Ru Kong<sup>1,2,3,4</sup> &nbsp;|&nbsp; Susan F. Cheng<sup>1,2,5</sup> &nbsp;|&nbsp; Fang Ji<sup>1,2</sup> &nbsp;|&nbsp; Joanna Su Xian Chong<sup>1,2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>6,7</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>8</sup> &nbsp;|&nbsp; Csaba Orban<sup>1,2,3,4</sup> &nbsp;|&nbsp; Michael W. L. Chee<sup>1,3</sup> &nbsp;|&nbsp; Christopher Chen<sup>6,7,9</sup> &nbsp;|&nbsp; Juan Helen Zhou<sup>1,2,5</sup> &nbsp;|&nbsp; B. T. Thomas Yeo<sup>1,2,3,4,5,10</sup> &nbsp;|&nbsp; The Alzheimer\'s Disease Neuroimaging Initiative &nbsp;|&nbsp; The Australian Imaging Biomarkers and Lifestyle Study of Aging',
-    affiliations: [
-      'Centre for Sleep and Cognition & Centre for Translational MR Research, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
-      'Department of Electrical and Computer Engineering, National University of Singapore, Singapore',
-      'Department of Medicine, Healthy Longevity Translational Research Programme, Human Potential Translational Research Programme & Institute for Digital Medicine (WisDM), Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
-      'N.1 Institute for Health, National University of Singapore, Singapore',
-      'Integrative Sciences and Engineering Programme (ISEP), National University of Singapore, Singapore',
-      'Memory, Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Psychological Medicine, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, National University of Singapore, Singapore',
-      'Martinos Center for Biomedical Imaging, Massachusetts General Hospital, Charlestown, Massachusetts, USA',
-    ],
-    correspondence: 'B. T. Thomas Yeo. Email: thomas.yeo@nus.edu.sg',
-    abstract: [
-      { h: 'ABSTRACT', t: 'Brain age is widely regarded as a powerful marker of general brain health. Brain age models are typically trained on large datasets to predict chronological age, which may offer advantages in predicting specific health outcomes, much like the success of fine-tuning large language models for specific applications. However, it is also well accepted that machine learning models trained to directly predict specific outcomes (i.e., direct models) often outperform those trained on surrogate objectives. Therefore, despite their much larger training data, it is unclear whether brain age models outperform direct models in predicting specific brain health outcomes. Here, we compare large-scale brain age models (pretrained on 53,542 participants) and direct models for predicting specific health outcomes related to Alzheimer\'s disease (AD) dementia. Using anatomical T1 scans from three continents (N=1,848), we find that summarizing brain age with a single scalar (i.e., brain age gap) led to poor prediction performance. Using higher-dimensional intermediate representations of brain age models led to better prediction, but was still worse than direct models without finetuning. Using intermediate representations of finetuned brain age models was necessary to achieve similar performance to direct models. Overall, our results do not discount brain age as a useful marker of general brain health but suggest that using chronological age as a pretraining target might be suboptimal for predicting specific health outcomes.' },
-    ],
-    keywords: 'brain age, Alzheimer\'s disease, neuroimaging, prediction, machine learning',
-  },
-  {
-    color: '#be0000',
-    journal: 'Brain Communications',
-    jsub: 'OXFORD UNIVERSITY PRESS',
-    doi: '10.1093/braincomms/fcaf413',
-    volume: 'Brain Commun. 2025;7(6):fcaf413',
-    received: '10 February 2025', revised: '20 June 2025', accepted: '5 July 2025',
-    title: 'U-shaped association of resting heart rate with cognitive decline',
-    authors: 'Eugene S J Tan<sup>1,2</sup> &nbsp;|&nbsp; Ming Ann Sim<sup>1</sup> &nbsp;|&nbsp; Lucia Li<sup>3</sup> &nbsp;|&nbsp; Anqi Toh<sup>1</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>1,4</sup> &nbsp;|&nbsp; Siew Pang Chan<sup>5</sup> &nbsp;|&nbsp; Cheuk Ni Kan<sup>1</sup> &nbsp;|&nbsp; Xin Tong Tan<sup>1</sup> &nbsp;|&nbsp; Jiangbo Cui<sup>1</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,4,6</sup> &nbsp;|&nbsp; Joyce R Chong<sup>1</sup> &nbsp;|&nbsp; Mitchell K P Lai<sup>1,4</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>7</sup> &nbsp;|&nbsp; Boon Yeow Tan<sup>8</sup> &nbsp;|&nbsp; A Mark Richards<sup>5</sup> &nbsp;|&nbsp; Lieng-Hsi Ling<sup>5</sup> &nbsp;|&nbsp; Christopher L H Chen<sup>1,4</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'National University Heart Centre Singapore',
-      'Imperial College London, United Kingdom',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Department of Medicine, Yong Loo Lin School of Medicine, NUS',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      "St. Luke's Hospital, Singapore",
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Both low and high resting heart rates may be associated with adverse cognitive outcomes through distinct neurobiological mechanisms.' },
-      { h: 'METHODS', t: '643 memory clinic participants (mean age 72.8 years, 57% female) were followed for five years with neuropsychological and neuroimaging assessments.' },
-      { h: 'RESULTS', t: 'U-shaped association with cognitive impairment was observed. Bradycardia correlated with reduced grey matter and elevated biomarkers (pTau-181, neurofilament light chain), while elevated rates showed increased cerebrovascular lesions.' },
-      { h: 'CONCLUSIONS', t: 'Heart rate extremes impact cognition through distinct neurobiological mechanisms, with implications for cardiovascular monitoring in older adults.' },
-    ],
-    keywords: 'biomarkers, bradycardia, cerebrovascular disease, cognitive decline, heart rate',
-  },
-  {
-    color: '#006064',
-    journal: 'eClinicalMedicine',
-    jsub: 'THE LANCET / ELSEVIER',
-    doi: '10.1016/j.eclinm.2024.102725',
-    volume: 'eClinicalMedicine. 2024;74:102725',
-    published: 'August 2024',
-    title: 'Robust and interpretable AI-guided marker for early dementia prediction in real-world clinical settings',
-    authors: 'Liz Yuanxi Lee<sup>1</sup>  |  Delshad Vaghari<sup>1</sup>  |  Michael C. Burkhart<sup>1</sup>  |  Peter Tino<sup>2</sup>  |  Marcella Montagnese<sup>1</sup>  |  Zhuoyu Li<sup>1</sup>  |  Katharina Zühlsdorff<sup>1</sup>  |  Joseph Giorgio<sup>1</sup>  |  Guy Williams<sup>1</sup>  |  Eddie Chong<sup>3</sup>  |  Christopher Chen<sup>3</sup>  |  Benjamin R. Underwood<sup>4</sup>  |  Timothy Rittman<sup>1</sup>  |  Zoe Kourtzi<sup>1</sup>',
-    affiliations: [
-      'Department of Psychology, University of Cambridge, Cambridge, United Kingdom',
-      'School of Computer Science, University of Birmingham, Birmingham, United Kingdom',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Cambridgeshire and Peterborough NHS Foundation Trust, Cambridge, United Kingdom',
-    ],
-    abstract: [
-      { h: '', t: 'This study develops a robust and interpretable AI-guided marker for early dementia prediction validated in real-world clinical settings. Using multimodal data and an ensemble machine learning approach combining Generalized Learning Vector Quantization with majority voting, bagging, and boosting, the authors propose a marker that is both clinically interpretable and robust to the heterogeneity and missing data common in real-world memory clinic populations. The marker demonstrates high predictive accuracy for dementia progression, generalizes across multiple cohorts (research and clinical), and outperforms standard cognitive and neuroimaging assessments alone, supporting its clinical translation potential.' },
-    ],
-    keywords: 'artificial intelligence, dementia prediction, machine learning, real-world data, clinical translation',
-  },
-  {
-    color: '#2e7d32',
-    journal: 'Scientific Reports',
-    jsub: 'NATURE PORTFOLIO',
-    doi: '10.1038/s41598-024-60914-w',
-    volume: 'Sci Rep. 2024;14(1):10755',
-    received: '13 December 2023', accepted: '29 April 2024',
-    published: '10 May 2024',
-    title: 'Unsupervised multimodal modeling of cognitive and brain health trajectories for early dementia prediction',
-    authors: 'Michael C. Burkhart<sup>1</sup>  |  Liz Y. Lee<sup>1</sup>  |  Delshad Vaghari<sup>1</sup>  |  An Qi Toh<sup>2</sup>  |  Eddie Chong<sup>2</sup>  |  Christopher Chen<sup>2</sup>  |  Peter Tino<sup>3</sup>  |  Zoe Kourtzi<sup>1</sup>',
-    affiliations: [
-      'Department of Psychology, University of Cambridge, Cambridge, United Kingdom',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'School of Computer Science, University of Birmingham, Birmingham, United Kingdom',
-    ],
-    abstract: [
-      { h: '', t: 'Predicting the course of neurodegenerative disorders early has potential to greatly improve clinical management and patient outcomes. A key challenge in real-world settings is the lack of labeled data (i.e., clinical diagnosis). In contrast to supervised classification approaches, this work proposes an unsupervised multimodal trajectory modeling (MTM) approach based on a mixture of state space models, which captures changes in longitudinal data (trajectories) and stratifies individuals without requiring clinical diagnosis for training. MTM learns the relationship between expensive/invasive biomarkers (β-amyloid, grey matter density) and readily obtainable cognitive observations. Training on trajectories (vs. baseline data alone) stratifies individuals into clinically meaningful clusters more reliably and is robust to missing data. An individualized cognitive health index predicts progression to Alzheimer\'s disease more precisely than standard clinical assessments. MTM generalizes from research cohort to real-world memory clinic patients, enhancing clinical utility.' },
-    ],
-    keywords: 'unsupervised learning, multimodal trajectories, dementia prediction, cognitive decline, brain health',
-  },
-  {
-    color: '#336699',
-    journal: 'Brain Communications',
-    jsub: 'OXFORD UNIVERSITY PRESS',
-    doi: '10.1093/braincomms/fcad192',
-    volume: 'Brain Commun. 2023;5(4):fcad192',
-    received: '12 January 2023', revised: '30 May 2023', accepted: '18 June 2023',
-    title: 'Longitudinal associations between \u03b2-amyloid and cortical thickness in mild cognitive impairment',
-    authors: 'Elijah Mak<sup>1</sup> &nbsp;|&nbsp; Liwen Zhang<sup>2</sup> &nbsp;|&nbsp; Chin Hong Tan<sup>3</sup> &nbsp;|&nbsp; Anthonin Reilhac<sup>4</sup> &nbsp;|&nbsp; Hee Youn Shim<sup>2</sup> &nbsp;|&nbsp; Marcus Ong Qin Wen<sup>2</sup> &nbsp;|&nbsp; Zi Xuen Wong<sup>2</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>2,5</sup> &nbsp;|&nbsp; Xin Xu<sup>2,5</sup> &nbsp;|&nbsp; Mary Stephenson<sup>6</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>7</sup> &nbsp;|&nbsp; Juan Helen Zhou<sup>2,8</sup> &nbsp;|&nbsp; John T O\'Brien<sup>1</sup> &nbsp;|&nbsp; Christopher Li-Hsian Chen<sup>2,5</sup>',
-    affiliations: [
-      'Department of Psychiatry, University of Cambridge, United Kingdom',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'National University of Singapore',
-      'Bioinformatics Institute, Agency for Science Technology and Research (A*STAR), Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Singapore BioImaging Consortium, A*STAR, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Centre for Sleep and Cognition, National University of Singapore',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'How beta-amyloid accumulation influences regional brain atrophy in Alzheimer\'s disease is not fully understood.' },
-      { h: 'METHODS', t: '45 MCI patients and 12 controls underwent PET imaging and structural MRI over approximately 24 months.' },
-      { h: 'RESULTS', t: 'Regional amyloid in the right banks of the superior temporal sulcus was associated with longitudinal cortical thinning in the right medial orbitofrontal cortex among MCI patients, correlating with memory decline.' },
-      { h: 'CONCLUSIONS', t: 'Findings indicate an increasing influence of amyloid on neurodegeneration across the disease spectrum, supporting amyloid-targeted intervention in the MCI stage.' },
-    ],
-    keywords: '[11C]-PiB PET, cortical thickness, longitudinal cortical thinning, mild cognitive impairment, regional beta-amyloid',
-  },
-  {
-    color: '#006064',
-    journal: 'Journal of Cerebral Blood Flow & Metabolism',
-    jsub: 'SAGE / ISCBFM',
-    doi: '10.1177/0271678X20902187',
-    volume: 'J Cereb Blood Flow Metab. 2021;41(1):105-115',
-    received: '20 June 2019', revised: '18 November 2019', accepted: '5 December 2019',
-    title: 'Cerebral microinfarcts affect brain structural network topology in cognitively impaired patients',
-    authors: 'Liwen Zhang<sup>1</sup> &nbsp;|&nbsp; Geert Jan Biessels<sup>2</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,3,4</sup> &nbsp;|&nbsp; Joanna Su Xian Chong<sup>1,5</sup> &nbsp;|&nbsp; Siwei Liu<sup>6</sup> &nbsp;|&nbsp; Hee Youn Shim<sup>1</sup> &nbsp;|&nbsp; Xin Xu<sup>1,3</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>1,3</sup> &nbsp;|&nbsp; Zi Xuen Wong<sup>1</sup> &nbsp;|&nbsp; Yng Miin Loke<sup>1</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>7</sup> &nbsp;|&nbsp; Tan Boon Yeow<sup>8</sup> &nbsp;|&nbsp; Christopher Li-Hsian Chen<sup>1,3</sup> &nbsp;|&nbsp; Juan Helen Zhou<sup>1,5</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'UMC Utrecht Brain Center, University Medical Center Utrecht, Netherlands',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Centre for Sleep and Cognition, National University of Singapore',
-      'Bioinformatics Institute, Agency for Science Technology and Research (A*STAR), Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      "St. Luke's Hospital, Singapore",
-    ],
-    correspondence: 'Juan Helen Zhou, National University of Singapore. Email: helen.zhou@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Cerebral microinfarcts are associated with cognitive impairment, but their impact on large-scale brain network topology remains unclear.' },
-      { h: 'METHODS', t: 'Brain imaging data from 92 Alzheimer\'s disease patients and 110 individuals with cognitive impairment but no dementia were analyzed.' },
-      { h: 'RESULTS', t: 'Those with cortical-CMIs demonstrated lower efficiency and degree centrality in executive control and dorsal attention networks in CIND and reduced network clustering in AD. Disrupted structural connectivity mediated associations between cortical-CMIs and visuoconstruction difficulties.' },
-      { h: 'CONCLUSIONS', t: 'First in vivo human evidence that cortical-CMIs impair cognition via disrupting structural connectivity, opening pathways for network-targeted interventions.' },
-    ],
-    keywords: 'Alzheimers disease, cognitive impairment, cortical cerebral microinfarcts, structural network topology',
-  },
-  {
-    color: '#e65100',
-    journal: 'Scientific Reports',
-    jsub: 'NATURE PORTFOLIO',
-    doi: '10.1038/s41598-020-63540-4',
-    volume: 'Sci Rep. 2020;10(1):6457',
-    received: '5 November 2019', revised: '10 March 2020', accepted: '27 March 2020',
-    title: 'Distinct BOLD variability changes in the default mode and salience networks in Alzheimer\'s disease spectrum and associations with cognitive decline',
-    authors: 'Liwen Zhang<sup>1</sup> &nbsp;|&nbsp; Xi-Nian Zuo<sup>2</sup> &nbsp;|&nbsp; Kwun Kei Ng<sup>1</sup> &nbsp;|&nbsp; Joanna Su Xian Chong<sup>1,3</sup> &nbsp;|&nbsp; Hee Youn Shim<sup>1</sup> &nbsp;|&nbsp; Marcus Qin Wen Ong<sup>1</sup> &nbsp;|&nbsp; Yng Miin Loke<sup>1</sup> &nbsp;|&nbsp; Boon Linn Choo<sup>1</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>1,3</sup> &nbsp;|&nbsp; Zi Xuen Wong<sup>1</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,3,4</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>5</sup> &nbsp;|&nbsp; Boon Yeow Tan<sup>6</sup> &nbsp;|&nbsp; Christopher Li-Hsian Chen<sup>1,3</sup> &nbsp;|&nbsp; Juan Helen Zhou<sup>1,7</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Beijing Normal University, China',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      "St. Luke's Hospital, Singapore",
-      'Centre for Sleep and Cognition, National University of Singapore',
-    ],
-    correspondence: 'Juan Helen Zhou, National University of Singapore. Email: helen.zhou@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'BOLD signal variability in resting-state fMRI may capture neural dynamics beyond mean connectivity, reflecting brain flexibility across states.' },
-      { h: 'METHODS', t: 'Brain imaging data from 96 individuals with Alzheimer\'s disease, 98 with mild cognitive impairment, and 48 healthy controls were analyzed at different frequency bands.' },
-      { h: 'RESULTS', t: 'Reciprocal patterns were found between default mode and salience networks during the mild impairment stage. Decreased variability in the posterior default mode network correlated with poorer baseline cognition, smaller hippocampus, and predicted faster cognitive decline.' },
-      { h: 'CONCLUSIONS', t: 'BOLD variability is a sensitive and dynamic marker for neural changes across the Alzheimer\'s disease continuum.' },
-    ],
-    keywords: 'BOLD variability, default mode network, salience network, Alzheimers disease, fMRI, cognitive decline',
-  },
-  {
-    color: '#4e342e',
-    journal: 'Human Brain Mapping',
-    jsub: 'WILEY',
-    doi: '10.1002/hbm.24928',
-    volume: 'Hum Brain Mapp. 2020;41(8):2037-2047',
-    received: '15 May 2019', revised: '3 September 2019', accepted: '18 September 2019',
-    title: 'Longitudinal trajectory of Amyloid-related hippocampal subfield atrophy in nondemented elderly',
-    authors: 'Liwen Zhang<sup>1</sup> &nbsp;|&nbsp; Elijah Mak<sup>2</sup> &nbsp;|&nbsp; Anthonin Reilhac<sup>3</sup> &nbsp;|&nbsp; Hee Y Shim<sup>1</sup> &nbsp;|&nbsp; Kwun K Ng<sup>1</sup> &nbsp;|&nbsp; Marcus Q W Ong<sup>1</sup> &nbsp;|&nbsp; Fang Ji<sup>1</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>1,4</sup> &nbsp;|&nbsp; Xin Xu<sup>1,4</sup> &nbsp;|&nbsp; Zi X Wong<sup>1</sup> &nbsp;|&nbsp; Mary C Stephenson<sup>5</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>6</sup> &nbsp;|&nbsp; Boon Y Tan<sup>7</sup> &nbsp;|&nbsp; John T O\'Brien<sup>2</sup> &nbsp;|&nbsp; Juan H Zhou<sup>1,8</sup> &nbsp;|&nbsp; Christopher L H Chen<sup>1,4</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Psychiatry, University of Cambridge, United Kingdom',
-      'Bioinformatics Institute, Agency for Science Technology and Research (A*STAR), Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Singapore BioImaging Consortium, A*STAR, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      "St. Luke's Hospital, Singapore",
-      'Centre for Sleep and Cognition, National University of Singapore',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Hippocampal subfield atrophy may precede clinical dementia and track amyloid pathology, potentially serving as a sensitive biomarker.' },
-      { h: 'METHODS', t: 'Two independent longitudinal datasets with PET imaging and advanced MRI segmentation were analyzed at multiple timepoints.' },
-      { h: 'RESULTS', t: 'Higher amyloid-beta correlated with faster CA1 volume decline in cognitively normal individuals. This pattern expanded across multiple hippocampal subfields in mild cognitive impairment, correlating with memory loss.' },
-      { h: 'CONCLUSIONS', t: 'Hippocampal subfield volumetry is sensitive to amyloid-related neurodegeneration in the preclinical stage and could inform early intervention trials.' },
-    ],
-    keywords: 'hippocampal subfield atrophy, longitudinal atrophy trajectory, nondemented elderly, beta-amyloid',
-  },
-];
-
-const PAPERS_STROKE = [
-  {
-    color: '#d45000',
-    journal: 'Neurology',
-    jsub: 'AMERICAN ACADEMY OF NEUROLOGY',
-    doi: '10.1212/WNL.0000000000214574',
-    volume: 'Neurology. 2026;106(3):e214574',
-    received: '1 August 2025', revised: '5 October 2025', accepted: '20 October 2025',
-    title: 'Development of a Prognostic Model for Poststroke Dementia Using Multiple International Cohorts: A STROKOG Collaboration Study',
-    authors: 'Jessica W Lo<sup>1</sup> &nbsp;|&nbsp; John D Crawford<sup>1</sup> &nbsp;|&nbsp; David W Desmond<sup>2</sup> &nbsp;|&nbsp; Olivier Godefroy<sup>3</sup> &nbsp;|&nbsp; Martine Roussel<sup>3</sup> &nbsp;|&nbsp; R\u00e9gis Bordet<sup>4</sup> &nbsp;|&nbsp; Hee-Joon Bae<sup>5</sup> &nbsp;|&nbsp; Jae-Sung Lim<sup>5</sup> &nbsp;|&nbsp; Christopher P L H Chen<sup>6</sup> &nbsp;|&nbsp; Eddie J Chong<sup>6</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>7</sup> &nbsp;|&nbsp; Henry Brodaty<sup>1</sup> &nbsp;|&nbsp; Perminder S Sachdev<sup>1</sup>',
-    affiliations: [
-      'Centre for Healthy Brain Ageing, University of New South Wales, Sydney, Australia',
-      'Department of Neurology, Columbia University, New York, USA',
-      'University Hospital Amiens, Amiens, France',
-      'University of Lille, Lille, France',
-      'Seoul National University Bundang Hospital, Seoul, South Korea',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'John D Crawford, CHeBA, UNSW Sydney. Email: j.crawford@unsw.edu.au',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'Poststroke dementia is a major consequence of stroke, yet validated prognostic models remain lacking across diverse populations.' },
-      { h: 'METHODS', t: 'Individual participant data from 12 international cohort studies (n=2,663 stroke survivors, mean age 67.0) were pooled and analyzed.' },
-      { h: 'RESULTS', t: 'The model incorporating age, sex, education, history of previous stroke, diabetes, and stroke severity generalized well to recent and European cohorts, though risks were somewhat overestimated in Asian populations.' },
-      { h: 'CONCLUSIONS', t: 'This internationally validated prognostic model enables clinical risk stratification for post-stroke cognitive decline across diverse settings.' },
-    ],
-    keywords: 'poststroke dementia, prognostic model, STROKOG, stroke, risk stratification',
-  },
-  {
-    color: '#d45000',
-    journal: 'Neurology',
-    jsub: 'AMERICAN ACADEMY OF NEUROLOGY',
-    doi: '10.1212/WNL.0000000000207281',
-    volume: 'Neurology. 2023;100(23):e2331-e2341',
-    received: '10 September 2022', revised: '5 January 2023', accepted: '20 January 2023',
-    title: 'Short-term Trajectories of Poststroke Cognitive Function: A STROKOG Collaboration Study',
-    authors: 'Jessica W Lo<sup>1</sup> &nbsp;|&nbsp; John D Crawford<sup>1</sup> &nbsp;|&nbsp; David W Desmond<sup>2</sup> &nbsp;|&nbsp; Hee-Joon Bae<sup>3</sup> &nbsp;|&nbsp; Jae-Sung Lim<sup>3</sup> &nbsp;|&nbsp; Olivier Godefroy<sup>4</sup> &nbsp;|&nbsp; Martine Roussel<sup>4</sup> &nbsp;|&nbsp; Sebastian K\u00f6hler<sup>5</sup> &nbsp;|&nbsp; Julie Staals<sup>5</sup> &nbsp;|&nbsp; Frans Verhey<sup>5</sup> &nbsp;|&nbsp; Christopher Chen<sup>6</sup> &nbsp;|&nbsp; Xin Xu<sup>6</sup> &nbsp;|&nbsp; Eddie J Chong<sup>6</sup> &nbsp;|&nbsp; Nagaendran Kandiah<sup>7</sup> &nbsp;|&nbsp; R\u00e9gis Bordet<sup>8</sup> &nbsp;|&nbsp; Henry Brodaty<sup>1</sup> &nbsp;|&nbsp; Perminder S Sachdev<sup>1</sup>',
-    affiliations: [
-      'Centre for Healthy Brain Ageing, University of New South Wales, Sydney, Australia',
-      'Department of Neurology, Columbia University, New York, USA',
-      'Seoul National University Bundang Hospital, Seoul, South Korea',
-      'University Hospital Amiens, Amiens, France',
-      'Maastricht University, Maastricht, Netherlands',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'National Neuroscience Institute, Singapore',
-      'University of Lille, Lille, France',
-    ],
-    correspondence: 'Jessica W Lo, CHeBA, UNSW Sydney. Email: jessica.lo@unsw.edu.au',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'This study characterised the short-term trajectory of cognitive recovery in the first 12 months following stroke.' },
-      { h: 'METHODS', t: 'Latent class growth analysis on data from nine hospital-based cohorts (n=1,149 participants) identified distinct cognitive trajectory subgroups.' },
-      { h: 'RESULTS', t: 'Three distinct cognitive trajectory groups were identified. Risk factors for poorer outcomes included advanced age, limited education, diabetes, large vessel stroke, and greater stroke severity.' },
-      { h: 'CONCLUSIONS', t: 'Short-term cognitive trajectory patterns help clinicians identify patients at risk of poor long-term outcomes following stroke.' },
-    ],
-    keywords: 'poststroke cognition, cognitive recovery, STROKOG, stroke, trajectory',
-  },
-  {
-    color: '#c62828',
-    journal: 'Stroke',
-    jsub: 'AHA / ASA',
-    doi: '10.1161/STROKEAHA.121.035796',
-    volume: 'Stroke. 2022;53(4):1318-1327',
-    received: '15 May 2021', revised: '8 September 2021', accepted: '22 September 2021',
-    title: 'Long-Term Cognitive Decline After Stroke: An Individual Participant Data Meta-Analysis',
-    authors: 'Jessica W Lo<sup>1</sup> &nbsp;|&nbsp; John D Crawford<sup>1</sup> &nbsp;|&nbsp; David W Desmond<sup>2</sup> &nbsp;|&nbsp; Hee-Joon Bae<sup>3</sup> &nbsp;|&nbsp; Jae-Sung Lim<sup>3</sup> &nbsp;|&nbsp; Olivier Godefroy<sup>4</sup> &nbsp;|&nbsp; Martine Roussel<sup>4</sup> &nbsp;|&nbsp; Yeonwook Kang<sup>5</sup> &nbsp;|&nbsp; Sebastian K\u00f6hler<sup>6</sup> &nbsp;|&nbsp; Christopher Chen<sup>7</sup> &nbsp;|&nbsp; Xin Xu<sup>7</sup> &nbsp;|&nbsp; Eddie J Chong<sup>7</sup> &nbsp;|&nbsp; Nagaendran Kandiah<sup>8</sup> &nbsp;|&nbsp; Henry Brodaty<sup>1</sup> &nbsp;|&nbsp; Perminder S Sachdev<sup>1</sup>',
-    affiliations: [
-      'Centre for Healthy Brain Ageing, University of New South Wales, Sydney, Australia',
-      'Department of Neurology, Columbia University, New York, USA',
-      'Seoul National University Bundang Hospital, Seoul, South Korea',
-      'University Hospital Amiens, Amiens, France',
-      'Hallym University, South Korea',
-      'Maastricht University, Maastricht, Netherlands',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'National Neuroscience Institute, Singapore',
-    ],
-    correspondence: 'Perminder S Sachdev, CHeBA, UNSW Sydney. Email: p.sachdev@unsw.edu.au',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'This IPD meta-analysis synthesised long-term cognitive trajectories from stroke survivors across multiple international cohorts.' },
-      { h: 'METHODS', t: '1,488 patients (mean age 66.3 years) were followed for a median 2.68 years with repeated cognitive assessments.' },
-      { h: 'RESULTS', t: 'After an initial period of improvement through up to 1-year poststroke, decline was seen in global cognition and all domains. Decline was significantly faster in patients with stroke compared with controls. Older age and recurrent stroke accelerated cognitive deterioration.' },
-      { h: 'CONCLUSIONS', t: 'Post-stroke cognitive decline occurs after initial recovery, highlighting the need for long-term cognitive monitoring in stroke survivors.' },
-    ],
-    keywords: 'cognition, cognitive dysfunction, meta-analysis, risk factors, stroke',
-  },
-  {
-    color: '#880e4f',
-    journal: "Journal of Alzheimer's Disease",
-    jsub: 'IOS PRESS',
-    doi: '10.3233/JAD-210619',
-    volume: 'J Alzheimers Dis. 2021;83(2):557-568',
-    received: '20 April 2021', revised: '5 June 2021', accepted: '20 June 2021',
-    title: 'Domain-Specific Cognitive Trajectories Among Patients with Minor Stroke or Transient Ischemic Attack in a 6-Year Prospective Asian Cohort: Serial Patterns and Indicators',
-    authors: 'Xuhao Zhao<sup>1</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>2,3</sup> &nbsp;|&nbsp; Wei Qi<sup>1</sup> &nbsp;|&nbsp; Ting Pang<sup>2</sup> &nbsp;|&nbsp; Xin Xu<sup>2,3</sup> &nbsp;|&nbsp; Christopher Chen<sup>2,3</sup>',
-    affiliations: [
-      'Zhejiang University, Hangzhou, China',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Cognitive trajectories after minor stroke/TIA remain poorly characterised beyond global cognition measures.' },
-      { h: 'METHODS', t: '244 patients were followed for six years with domain-specific neuropsychological assessments at multiple timepoints.' },
-      { h: 'RESULTS', t: 'PSCI prevalence ranged from 34.6–53.7%, with a 21.9% incidence rate. Visual memory showed significant improvement, while other domains remained stable. Short-term cognitive improvement could be an early indicator of long-term cognitive trajectory.' },
-      { h: 'CONCLUSIONS', t: 'Minor stroke/TIA patients show selective cognitive vulnerability, warranting domain-specific monitoring and targeted rehabilitation.' },
-    ],
-    keywords: 'cognitive impairment, cognitive trajectory, domain-specific cognition, minor stroke, transient ischemic attack',
-  },
-  {
-    color: '#1565c0',
-    journal: 'Neurology',
-    jsub: 'AMERICAN ACADEMY OF NEUROLOGY',
-    doi: '10.1212/WNL.0000000000008612',
-    volume: 'Neurology. 2019;93(24):e2257-e2271',
-    received: '5 February 2019', revised: '10 June 2019', accepted: '25 June 2019',
-    title: 'Profile of and risk factors for poststroke cognitive impairment in diverse ethnoregional groups',
-    authors: 'Jessica W Lo<sup>1</sup> &nbsp;|&nbsp; John D Crawford<sup>1</sup> &nbsp;|&nbsp; David W Desmond<sup>2</sup> &nbsp;|&nbsp; Olivier Godefroy<sup>3</sup> &nbsp;|&nbsp; Hanna Jokinen<sup>4</sup> &nbsp;|&nbsp; Simin Mahinrad<sup>5</sup> &nbsp;|&nbsp; Hee-Joon Bae<sup>6</sup> &nbsp;|&nbsp; Jae-Sung Lim<sup>6</sup> &nbsp;|&nbsp; Sebastian K\u00f6hler<sup>7</sup> &nbsp;|&nbsp; Christopher Chen<sup>8</sup> &nbsp;|&nbsp; Xin Xu<sup>8</sup> &nbsp;|&nbsp; Eddie J Chong<sup>8</sup> &nbsp;|&nbsp; Henry Brodaty<sup>1</sup> &nbsp;|&nbsp; Perminder S Sachdev<sup>1</sup>',
-    affiliations: [
-      'Centre for Healthy Brain Ageing, University of New South Wales, Sydney, Australia',
-      'Department of Neurology, Columbia University, New York, USA',
-      'University Hospital Amiens, Amiens, France',
-      'Helsinki University Hospital, Helsinki, Finland',
-      'Leiden University Medical Center, Leiden, Netherlands',
-      'Seoul National University Bundang Hospital, Seoul, South Korea',
-      'Maastricht University, Maastricht, Netherlands',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-    ],
-    correspondence: 'Perminder S Sachdev, CHeBA, UNSW Sydney. Email: p.sachdev@unsw.edu.au',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'This study examined the profile and risk factors for poststroke cognitive impairment across diverse ethnoregional groups.' },
-      { h: 'METHODS', t: 'Individual participant data from international STROKOG cohorts were harmonized and analyzed across ethnoregional groups.' },
-      { h: 'RESULTS', t: 'Cognitive impairment profiles varied by ethnoregional group, with education and stroke severity as universal risk factors across all cohorts.' },
-      { h: 'CONCLUSIONS', t: 'Ethnoregional context shapes post-stroke cognitive outcomes and should inform culturally adapted monitoring and intervention strategies.' },
-    ],
-    keywords: 'poststroke cognitive impairment, ethnoregional, risk factors, STROKOG, vascular dementia',
-  },
-];
-
-const PAPERS_CLINICAL = [
-  {
-    color: '#2e7d32',
-    journal: 'Patient Education and Counseling',
-    jsub: 'ELSEVIER',
-    doi: '10.1016/j.pec.2025.108797',
-    volume: 'Patient Educ Couns. 2025;137:108797',
-    received: '1 January 2025', revised: '15 March 2025', accepted: '1 April 2025',
-    title: 'Adherence to lifestyle intervention activities in the SINgapore GERiatric to reduce cognitive decline and physical frailty (BEACON) study: A one-year preliminary analysis of process evaluation',
-    authors: 'Kwong Hsia Yap<sup>1</sup> &nbsp;|&nbsp; April Ka Sin Phua<sup>1</sup> &nbsp;|&nbsp; Richelle Santiano<sup>1</sup> &nbsp;|&nbsp; Melmar Folloso<sup>1</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>1,2</sup> &nbsp;|&nbsp; Xin Xu<sup>1,2</sup> &nbsp;|&nbsp; Christiani Jeyakumar Henry<sup>3</sup> &nbsp;|&nbsp; Effie Chew<sup>4</sup> &nbsp;|&nbsp; Andrea B Maier<sup>5</sup> &nbsp;|&nbsp; Nagaendran Kandiah<sup>6</sup> &nbsp;|&nbsp; Christopher Philip Li-Hsian Chen<sup>1,2</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Clinical Nutrition Research Centre, Agency for Science Technology and Research (A*STAR), Singapore',
-      'Department of Medicine, Yong Loo Lin School of Medicine, NUS',
-      'Department of Medicine and Aged Care, University of Melbourne, Australia',
-      'National Neuroscience Institute, Singapore',
-    ],
-    correspondence: 'Kwong Hsia Yap, Memory Aging and Cognition Centre, NUS. Email: kwh.yap@nus.edu.sg',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'This process evaluation examined adherence to the multimodal BEACON lifestyle intervention in community-dwelling older Singaporeans.' },
-      { h: 'METHODS', t: 'Latent Class Analysis was used to identify distinct participant subgroups over twelve months of the structured intervention.' },
-      { h: 'RESULTS', t: 'Over 70% of participants achieving moderate to high adherence. Participants demonstrated stronger engagement with vascular and dietary components versus cognitive activities. Female gender and higher education predicted better adherence.' },
-      { h: 'CONCLUSIONS', t: 'Targeted strategies are needed to support subgroups with lower adherence and optimize long-term engagement in multidomain dementia prevention programmes.' },
-    ],
-    keywords: 'adherence, dementia, multidomain interventions, prevention, process evaluation',
-  },
-  {
-    color: '#00695c',
-    journal: 'The Lancet Regional Health \u2013 Western Pacific',
-    jsub: 'THE LANCET',
-    doi: '10.1016/j.lanwpc.2024.101198',
-    volume: 'Lancet Reg Health West Pac. 2024',
-    received: '12 March 2024', revised: '20 July 2024', accepted: '5 August 2024',
-    title: 'Independent and joint associations of cardiometabolic multimorbidity and depression on cognitive function: findings from multi-regional cohorts and generalisation from community to clinic',
-    authors: 'Xuhao Zhao<sup>1</sup> &nbsp;|&nbsp; Xiaolin Xu<sup>1</sup> &nbsp;|&nbsp; Yifan Yan<sup>1</sup> &nbsp;|&nbsp; Darren M Lipnicki<sup>2</sup> &nbsp;|&nbsp; Ting Pang<sup>3</sup> &nbsp;|&nbsp; John D Crawford<sup>2</sup> &nbsp;|&nbsp; Eddie Chong<sup>3</sup> &nbsp;|&nbsp; Christopher Chen<sup>3</sup> &nbsp;|&nbsp; Perminder S Sachdev<sup>2</sup> &nbsp;|&nbsp; Xin Xu<sup>1,3</sup>',
-    affiliations: [
-      'University of Sydney, Sydney, Australia',
-      'Centre for Healthy Brain Ageing, University of New South Wales, Sydney, Australia',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-    ],
-    correspondence: 'Xin Xu, University of Sydney. Email: xin.xu@sydney.edu.au',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Cardiometabolic multimorbidity and depression may synergistically impair cognitive function, but joint effects across diverse cohorts remain understudied.' },
-      { h: 'METHODS', t: '30,382 older adults across 14 international cohorts were examined for independent and joint associations of cardiometabolic multimorbidity and depression with cognitive outcomes.' },
-      { h: 'RESULTS', t: 'Each of CMM and depression was independently associated with cross-sectional and longitudinal cognitive function. Participants experiencing both conditions demonstrated notably reduced cognitive performance and accelerated cognitive decline.' },
-      { h: 'CONCLUSIONS', t: 'Integrated cardiometabolic and mental health management is urgent for global dementia prevention, with synergistic effects underscoring the importance of treating comorbidities together.' },
-    ],
-    keywords: 'cardiometabolic multimorbidity, depression, cognitive function, dementia prevention, comorbidity',
-  },
-  {
-    color: '#37474f',
-    journal: "Journal of Alzheimer's Disease",
-    jsub: 'IOS PRESS',
-    doi: '10.3233/JAD-220520',
-    volume: 'J Alzheimers Dis. 2022;89(4):1323-1330',
-    received: '5 April 2022', revised: '22 June 2022', accepted: '10 July 2022',
-    title: 'Validation of the Informant Quick Dementia Rating System (QDRS) among Older Adults in Singapore',
-    authors: 'Ting Pang<sup>1</sup> &nbsp;|&nbsp; Eddie Jun Yi Chong<sup>1,2</sup> &nbsp;|&nbsp; Zi Xuen Wong<sup>1</sup> &nbsp;|&nbsp; Kimberly Ann Chew<sup>1</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>3</sup> &nbsp;|&nbsp; Christopher Chen<sup>1,2</sup> &nbsp;|&nbsp; Xin Xu<sup>1,2</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Xin Xu, Department of Pharmacology, NUS. Email: summer.xu@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'Brief cognitive screening tools that informants can administer are needed for early dementia detection in clinical and community settings.' },
-      { h: 'OBJECTIVE', t: 'Validity, reliability, and cost-effectiveness of the Quick Dementia Rating System (QDRS) were assessed in 177 Singapore memory clinic participants.' },
-      { h: 'RESULTS', t: 'The tool demonstrated excellent internal consistency (Cronbach alpha = 0.939) and high correlations with comparison measures. With optimal cutoff scores, it achieved 85% overall accuracy and could reduce time to identify MCI subjects by 75.3%.' },
-      { h: 'CONCLUSION', t: 'The QDRS is a reliable and cost-effective cognitive impairment screening tool suitable for informant-administration in diverse clinical settings.' },
-    ],
-    keywords: 'cost-effectiveness, Quick Dementia Rating System, discriminant utility, mild cognitive impairment, staging tool',
-  },
-  {
-    color: '#4527a0',
-    journal: "Journal of Prevention of Alzheimer's Disease",
-    jsub: 'SPRINGER',
-    doi: '10.14283/jpad.2022.5',
-    volume: 'J Prev Alzheimers Dis. 2022;9(1):40-48',
-    received: '8 September 2021', revised: '5 November 2021', accepted: '22 November 2021',
-    title: 'The SINgapore GERiatric Intervention Study to Reduce Cognitive Decline and Physical Frailty (BEACON): Study Design and Protocol',
-    authors: 'Xin Xu<sup>1,2</sup> &nbsp;|&nbsp; Kimberly A Chew<sup>1</sup> &nbsp;|&nbsp; Zi Xuen Wong<sup>1</sup> &nbsp;|&nbsp; April K S Phua<sup>1</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>1,2</sup> &nbsp;|&nbsp; Clement K L Teo<sup>1</sup> &nbsp;|&nbsp; Nandini Sathe<sup>3</sup> &nbsp;|&nbsp; Yi Chun Chooi<sup>3</sup> &nbsp;|&nbsp; Wern Pei Fiona Chia<sup>3</sup> &nbsp;|&nbsp; Christiani Jeyakumar Henry<sup>3</sup> &nbsp;|&nbsp; Effie Chew<sup>4</sup> &nbsp;|&nbsp; Min Wang<sup>4</sup> &nbsp;|&nbsp; Andrea B Maier<sup>5</sup> &nbsp;|&nbsp; Nagaendran Kandiah<sup>6</sup> &nbsp;|&nbsp; Christopher Li-Hsian Chen<sup>1,2</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Clinical Nutrition Research Centre, Agency for Science Technology and Research (A*STAR), Singapore',
-      'Department of Medicine, Yong Loo Lin School of Medicine, NUS',
-      'University of Melbourne, Melbourne, Australia',
-      'National Neuroscience Institute, Singapore',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'BEACON is a multimodal lifestyle intervention trial targeting cognitive decline and physical frailty in older Singaporeans at elevated dementia risk.' },
-      { h: 'METHODS', t: 'Two-year RCT of 1,200 adults aged 60–77 comparing Self-Guided versus Structured Lifestyle Intervention including dietary advice, exercise, cognitive training, and vascular risk factors management.' },
-      { h: 'PRIMARY OUTCOME', t: 'Global cognition via modified Neuropsychological Battery; secondary outcomes include domain-specific cognition, brain imaging, chronic disease progression, biomarkers, and quality of life.' },
-      { h: 'CONCLUSIONS', t: 'BEACON addresses a critical gap in Asian multidomain dementia prevention evidence, informed by the successful FINGER trial design.' },
-    ],
-    keywords: 'randomized controlled trial, aged, cognitive dysfunction, multi-domain lifestyle interventions',
-  },
-  {
-    color: '#1b5e20',
-    journal: 'Age and Ageing',
-    jsub: 'OXFORD UNIVERSITY PRESS',
-    doi: '10.1093/ageing/afaa276',
-    volume: 'Age Ageing. 2021;50(4):1236-1242',
-    received: '20 April 2020', revised: '15 August 2020', accepted: '2 September 2020',
-    title: 'Vision, vision-specific functioning and mobility, and their relationship with clinically assessed cognitive impairment',
-    authors: 'Eva K Fenwick<sup>1</sup> &nbsp;|&nbsp; Alfred T L Gan<sup>1</sup> &nbsp;|&nbsp; Ryan E K Man<sup>1</sup> &nbsp;|&nbsp; Preeti Gupta<sup>1</sup> &nbsp;|&nbsp; Charumathi Sabanayagam<sup>1</sup> &nbsp;|&nbsp; Ching-Yu Cheng<sup>1</sup> &nbsp;|&nbsp; Christopher Li-Hsian Chen<sup>2,3</sup> &nbsp;|&nbsp; Carol Y Cheung<sup>4</sup> &nbsp;|&nbsp; Kah Hie Wong<sup>5</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>5</sup> &nbsp;|&nbsp; Xin Xu<sup>2,3</sup> &nbsp;|&nbsp; Saima Hilal<sup>2,3,6</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>2,3</sup> &nbsp;|&nbsp; Yih-Chung Tham<sup>1</sup> &nbsp;|&nbsp; Tien Y Wong<sup>1</sup> &nbsp;|&nbsp; Ecosse L Lamoureux<sup>1</sup>',
-    affiliations: [
-      'Singapore Eye Research Institute, Singapore National Eye Centre, Singapore',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Chinese University of Hong Kong, Hong Kong SAR',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-    ],
-    correspondence: 'Ecosse L Lamoureux, Singapore Eye Research Institute. Email: ecosse.lamoureux@seri.com.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'The relationship between self-reported visual disability and cognitive impairment in older individuals is unclear.' },
-      { h: 'METHODS', t: '874 adults aged 60+ at higher dementia risk underwent neuropsychological testing and comprehensive vision and mobility assessments.' },
-      { h: 'RESULTS', t: 'Worsening vision-specific functioning and mobility significantly increased odds of mild and moderate cognitive impairment. The odds of mild CIND increased significantly with every standard deviation worsening of visual acuity (OR: 1.62).' },
-      { h: 'CONCLUSIONS', t: 'Interventions to prevent vision loss and improve quality of life may reduce likelihood of age-related cognitive decline in at-risk older adults.' },
-    ],
-    keywords: 'cognitive dysfunction, elderly, mobility, self-reported, vision loss, visual acuity, visual functioning',
-  },
-  {
-    color: '#263238',
-    journal: "Alzheimer's & Dementia: Translational Research & Clinical Interventions",
-    jsub: "WILEY / ALZHEIMER'S ASSOCIATION",
-    doi: '10.1002/trc2.12161',
-    volume: 'Alzheimers Dement (N Y). 2021;7(1):e12161',
-    received: '10 April 2020', revised: '15 July 2020', accepted: '30 July 2020',
-    title: 'NEURoaid II (MLC901) in cognitively Impaired not demenTEd patientS (NEURITES): A pilot double blind, placebo-controlled randomized trial',
-    authors: 'Christopher L H Chen<sup>1,2</sup> &nbsp;|&nbsp; Trong Hung Nguyen<sup>3</sup> &nbsp;|&nbsp; Simeon Marasigan<sup>4</sup> &nbsp;|&nbsp; Chun Fan Lee<sup>5</sup> &nbsp;|&nbsp; Qingshu Lu<sup>5</sup> &nbsp;|&nbsp; Nagaendran Kandiah<sup>6</sup> &nbsp;|&nbsp; Deidre de Silva<sup>7</sup> &nbsp;|&nbsp; Eddie Chong<sup>1,2</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>8</sup>',
-    affiliations: [
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'University of Medicine and Pharmacy at Ho Chi Minh City, Vietnam',
-      'Medical City, Manila, Philippines',
-      'Duke-NUS Medical School, Singapore',
-      'National Neuroscience Institute, Singapore',
-      'National Neuroscience Institute, Singapore General Hospital Campus, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Christopher Chen, Department of Pharmacology, NUS. Email: phccclh@nus.edu.sg',
-    abstract: [
-      { h: 'BACKGROUND', t: 'MLC901 (NeuroAid II) is a traditional Chinese medicine formulation with potential neuroprotective properties proposed for cognitively impaired not demented (CIND) patients.' },
-      { h: 'METHODS', t: 'Multi-centre pilot double-blind placebo-controlled RCT in cognitively impaired not demented patients across Singapore, Vietnam, and the Philippines.' },
-      { h: 'RESULTS', t: 'MLC901 appears to be safe; there was no significant cognitive benefit in the broader CIND population. Exploratory analysis suggested potential benefits in a subgroup with pre-existing executive function impairment.' },
-      { h: 'CONCLUSIONS', t: 'A larger powered trial is warranted to assess efficacy of MLC901 in specific CIND subgroups defined by executive dysfunction at baseline.' },
-    ],
-    keywords: 'MLC901, NeuroAid, CIND, randomized trial, neuroprotection, cognitive impairment',
-  },
-  {
-    color: '#455a64',
-    journal: 'Journal of the American Medical Directors Association',
-    jsub: 'ELSEVIER / AMDA',
-    doi: '10.1016/j.jamda.2020.03.022',
-    volume: 'J Am Med Dir Assoc. 2020;21(6):879-883.e1',
-    received: '5 October 2019', revised: '12 February 2020', accepted: '28 February 2020',
-    title: 'Psychometric Properties of the National Institute of Neurological Disorders and Stroke and Canadian Stroke Network Neuropsychological Battery in an Asian Older Adult Sample',
-    authors: 'Kimberly A Chew<sup>1</sup> &nbsp;|&nbsp; Eddie J Y Chong<sup>1,2</sup> &nbsp;|&nbsp; Christopher L H Chen<sup>1,2</sup> &nbsp;|&nbsp; Xin Xu<sup>1,2</sup>',
-    affiliations: [
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-    ],
-    correspondence: 'Xin Xu, Department of Pharmacology, NUS. Email: summer.xu@nus.edu.sg',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'This study established psychometric properties of the NINDS-CSN neuropsychological battery in cognitively normal older adults in Singapore.' },
-      { h: 'METHODS', t: '105 cognitively normal older adults (age >=50) were assessed at baseline and 3-month follow-up using both 60-minute and 5-minute battery protocols.' },
-      { h: 'RESULTS', t: 'Test-retest reliability ranged from r = 0.36–0.87. The 60-minute protocol showed excellent concurrent validity (r = 0.83) against a locally validated neuropsychological battery.' },
-      { h: 'CONCLUSION', t: 'The NINDS-CSN is reliable and valid for assessing cognitive function in older Asian adults, with applications beyond vascular cognitive impairment.' },
-    ],
-    keywords: 'NINDS-CSN neuropsychological battery, memory clinic, reliability, validity',
-  },
-  {
-    color: '#424242',
-    journal: 'Diagnostics',
-    jsub: 'MDPI',
-    doi: '10.3390/diagnostics5040475',
-    volume: 'Diagnostics. 2015;5(4):475-486',
-    received: '10 August 2015', revised: '15 October 2015', accepted: '2 November 2015',
-    title: 'Beyond Screening: Can the Mini-Mental State Examination be Used as an Exclusion Tool in a Memory Clinic?',
-    authors: 'Xin Xu<sup>1,2</sup> &nbsp;|&nbsp; Eddie Chong<sup>1,2</sup> &nbsp;|&nbsp; Saima Hilal<sup>1,2,3</sup> &nbsp;|&nbsp; Mohammad Kamran Ikram<sup>4</sup> &nbsp;|&nbsp; Narayanaswamy Venketasubramanian<sup>5</sup> &nbsp;|&nbsp; Christopher Chen<sup>1,2</sup>',
-    affiliations: [
-      'Department of Pharmacology, Yong Loo Lin School of Medicine, NUS',
-      'Memory Aging and Cognition Centre, National University Health System, Singapore',
-      'Saw Swee Hock School of Public Health, National University of Singapore',
-      'Duke-NUS Graduate Medical School, Singapore',
-      'Raffles Neuroscience Centre, Raffles Hospital, Singapore',
-    ],
-    correspondence: 'Xin Xu, Department of Pharmacology, NUS. Email: phcxx@nus.edu.sg',
-    abstract: [
-      { h: 'OBJECTIVE', t: 'This study examined whether the MMSE can be used as an exclusion tool rather than only a screening tool in memory clinic settings.' },
-      { h: 'METHODS', t: 'Patients underwent the MMSE followed by standardized neuropsychological assessments leading to consensus diagnostic classification.' },
-      { h: 'RESULTS', t: 'When stratified by education level and using optimal likelihood ratios, a higher percentage of patients were correctly identified with minimal misclassification.' },
-      { h: 'CONCLUSIONS', t: 'The MMSE has utility as an exclusion tool at education-specific cut-points, potentially streamlining memory clinic workflows.' },
-    ],
-    keywords: 'Mini-Mental State Examination, cognitive assessment, dementia, memory clinic, exclusion criteria',
-  },
-];
-
-// ── Folder configs ───────────────────────────────────────────────────────────
-const FOLDER_CONFIGS = [
-  { label: 'Cerebrovascular Disease', papers: PAPERS_CVD, manilaBase: '#8b6914', manilaEdge: '#6e520f' },
-  { label: 'AI & Digital Biomarkers',  papers: PAPERS_AI,  manilaBase: '#3a6e8c', manilaEdge: '#2b5670' },
-  { label: 'Stroke & Cognition',       papers: PAPERS_STROKE, manilaBase: '#6b4f7a', manilaEdge: '#553d63' },
-  { label: 'Clinical Assessment',      papers: PAPERS_CLINICAL, manilaBase: '#3d7a55', manilaEdge: '#2d6040' },
-];
 
 // ── Reader UI functions ──────────────────────────────────────────────────────
 let pubCur = 0;
@@ -3801,6 +3082,145 @@ const pubDotsEl = document.getElementById('pub-nav-dots');
 const pubPrevBtn = document.getElementById('pub-prev-btn');
 const pubNextBtn = document.getElementById('pub-next-btn');
 const pubCounter = document.getElementById('pub-counter');
+
+function buildBMCPaper(p) {
+  const absHTML = (p.abstract || []).map(s =>
+    '<p class="bmc-abs-p"><b>' + s.h + '</b>  ' + s.t + '</p>'
+  ).join('');
+  return '<div class="pub-paper bmc-layout"><div class="pp-scale-inner">' +
+    '<div class="bmc-topbar">' +
+      '<div class="bmc-citation">' +
+        (p.authors.split(',')[0].split('<')[0]) + ' et al. <i>' + p.journal + '</i> ' + p.volume + '<br>' +
+        'https://doi.org/' + p.doi +
+      '</div>' +
+      '<div class="bmc-jname-right">' + p.journal + '</div>' +
+    '</div>' +
+    '<div class="bmc-typebar">' +
+      '<span class="bmc-art-type">' + (p.artType || 'RESEARCH') + '</span>' +
+      '<span class="bmc-oa">Open Access</span>' +
+    '</div>' +
+    '<div class="bmc-body">' +
+      '<h1 class="bmc-title">' + p.title + '</h1>' +
+      '<div class="bmc-authors">' + p.authors + '</div>' +
+      '<div class="bmc-abs-box">' +
+        '<div class="bmc-abs-head">Abstract</div>' +
+        absHTML +
+      '</div>' +
+      '<div class="bmc-footer-main">' +
+        (p.cofirst ? '<div class="bmc-cofirst">\u2020' + p.cofirst + '</div><hr class="bmc-corr-line">' : '') +
+        '<div class="bmc-corr">*Correspondence:<br>' + (p.correspondence || '').replace(/\s*\|\s*/g, '<br>') + '</div>' +
+        '<div class="bmc-fulllist">Full list of author information is available at the end of the article</div>' +
+        '<div class="bmc-logo-row">' +
+          '<div class="bmc-logo">BMC</div>' +
+          '<div class="bmc-copyright">&#169; The Author(s) 2024. <b>Open Access</b> This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License, which permits any non-commercial use, sharing, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons licence, and indicate if you modified the licensed material.</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div></div>';
+}
+
+function buildElsevierPaper(p) {
+  const affsHTML = (p.affiliations || []).map((a, i) =>
+    '<div class="elsevier-aff"><sup>' + String.fromCharCode(97 + i) + '</sup> ' + a + '</div>'
+  ).join('');
+  const hlHTML = (p.highlights || []).map(h => '<li>' + h + '</li>').join('');
+  const kwHTML = (p.keywords || '').split(',').map(k =>
+    '<div class="elsevier-kw-item">' + k.trim() + '</div>'
+  ).join('');
+  const absHTML = (p.abstract || []).map(s =>
+    '<p class="elsevier-abs-p"><i>' + s.h + ':</i> ' + s.t + '</p>'
+  ).join('');
+  return '<div class="pub-paper elsevier-layout"><div class="pp-scale-inner">' +
+    '<div class="elsevier-topline">' + p.volume + '</div>' +
+    '<div class="elsevier-header">' +
+      '<div class="elsevier-logo-block">' +
+        '<div class="elsevier-tree">🌳</div>' +
+        '<div class="elsevier-name">Elsevier</div>' +
+      '</div>' +
+      '<div class="elsevier-center">' +
+        '<div class="elsevier-sdirect">Contents lists available at ScienceDirect</div>' +
+        '<div class="elsevier-jname">' + p.journal + '</div>' +
+        '<div class="elsevier-jhomepage">journal homepage: www.elsevier.com/locate/' + p.journal.toLowerCase() + '</div>' +
+      '</div>' +
+      '<div class="elsevier-cover-block">' +
+        '<div class="elsevier-cover-img">' +
+          '<div class="elsevier-cover-title">' + p.journal.toLowerCase() + '</div>' +
+          '<div class="elsevier-cover-eas">' +
+            '<div class="elsevier-cover-eas-circle">EAS</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="elsevier-body">' +
+      '<h1 class="elsevier-title">' + p.title + '</h1>' +
+      '<div class="elsevier-authors">' + p.authors + '</div>' +
+      '<div class="elsevier-affs">' + affsHTML + '</div>' +
+      '<div class="elsevier-cols">' +
+        '<div class="elsevier-left">' +
+          '<div class="elsevier-sec-lbl">Highlights</div>' +
+          '<ul class="elsevier-highlights">' + hlHTML + '</ul>' +
+          '<div class="elsevier-sec-lbl">Article Info</div>' +
+          '<div class="elsevier-kw-lbl">Keywords:</div>' +
+          kwHTML +
+          '<div class="elsevier-art-info">' +
+            '<div class="elsevier-art-date">Received ' + p.received + '</div>' +
+            (p.revised ? '<div class="elsevier-art-date">Received in revised form ' + p.revised + '</div>' : '') +
+            '<div class="elsevier-art-date">Accepted ' + p.accepted + '</div>' +
+            (p.published ? '<div class="elsevier-art-date">Available online ' + p.published + '</div>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div>' +
+          '<div class="elsevier-sec-lbl">Abstract</div>' +
+          absHTML +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="elsevier-footer">' +
+      '<div class="elsevier-corr">&#8727; Corresponding author. ' + (p.correspondence || '') + '</div>' +
+      '<div class="elsevier-doi">https://doi.org/' + p.doi + '</div>' +
+      '<div class="elsevier-art-date">' +
+        'Received ' + p.received +
+        (p.revised ? '; Received in revised form ' + p.revised : '') +
+        '; Accepted ' + p.accepted +
+      '</div>' +
+      '<div class="elsevier-art-date">0021-9150/&#169; 2025 Elsevier B.V. All rights are reserved.</div>' +
+    '</div>' +
+  '</div></div>';
+}
+
+function buildJAHAPaper(p) {
+  const absHTML = p.abstract.map(s =>
+    '<p class="jaha-abs-p"><b>' + s.h + ':</b> ' + s.t + '</p>'
+  ).join('');
+  const introText = p.introText || '';
+  const dropcapHTML = introText
+    ? '<p class="jaha-dropcap-para"><span class="jaha-dropcap">' + introText[0] + '</span>' + introText.slice(1) + '</p>'
+    : '';
+  return '<div class="pub-paper jaha-layout"><div class="pp-scale-inner">' +
+    '<div class="jaha-topbar">' +
+      '<span class="jaha-journal-link">' + p.journal + '</span>' +
+    '</div>' +
+    '<div class="jaha-body">' +
+      '<div class="jaha-art-type">' + (p.artType || 'ORIGINAL RESEARCH') + '</div>' +
+      '<h1 class="jaha-title">' + p.title + '</h1>' +
+      '<p class="jaha-authors">' + p.authors + '</p>' +
+      '<div class="jaha-abstract">' + absHTML + '</div>' +
+      '<p class="jaha-kw"><b>Key Words:</b> <i>' + p.keywords + '</i></p>' +
+      '<hr class="jaha-divider">' +
+      dropcapHTML +
+      '<div class="jaha-footnotes">' +
+        '<p>*E.S.J. Tan and M.A. Sim contributed equally to this article as co-first authors.</p>' +
+        '<p>&#8224;L.-H. Ling and C. Chen contributed equally to this article as co-senior authors.</p>' +
+        '<p><b>Correspondence to:</b> ' + (p.correspondence || '') + '</p>' +
+        '<p>&#169; 2025 The Author(s). Published on behalf of the American Heart Association, Inc., by Wiley. This is an open access article under the terms of the Creative Commons Attribution-NonCommercial-NoDerivs License.</p>' +
+      '</div>' +
+    '</div>' +
+    '<div class="jaha-footer">' +
+      '<span>' + p.volume + '</span>' +
+      '<span>DOI: ' + p.doi + '</span>' +
+    '</div>' +
+  '</div></div>';
+}
 
 function buildBrainPaper(p) {
   const affsHTML = p.affiliations.map((a, i) =>
@@ -3815,7 +3235,7 @@ function buildBrainPaper(p) {
   const footerLines = (p.footer || '').split('\n').map(l =>
     '<div>' + l + '</div>'
   ).join('');
-  return '<div class="pub-paper brain-layout">' +
+  return '<div class="pub-paper brain-layout"><div class="pp-scale-inner">' +
     '<div class="brain-topbar">' +
       '<span style="color:#2060a0;font-family:Arial,sans-serif;font-size:7.5px">https://doi.org/' + p.doi + '</span>' +
       '<span class="brain-vol-right">' + p.volume + ' &nbsp;|&nbsp; 3924</span>' +
@@ -3836,11 +3256,14 @@ function buildBrainPaper(p) {
       '<div class="brain-affs">' + affsHTML + '</div>' +
       '<div class="brain-footer">' + footerLines + '</div>' +
     '</div>' +
-  '</div>';
+  '</div></div>';
 }
 
 function buildPubPaper(p) {
   if (p.layout === 'brain') return buildBrainPaper(p);
+  if (p.layout === 'jaha') return buildJAHAPaper(p);
+  if (p.layout === 'elsevier') return buildElsevierPaper(p);
+  if (p.layout === 'bmc') return buildBMCPaper(p);
   const affsHTML = p.affiliations.map((a, i) => '<div class="pp-aff"><sup>' + (i+1) + '</sup> ' + a + '</div>').join('');
   const absHTML = p.abstract.map(s => '<p class="pp-abs-p">' + (s.h && s.h !== 'ABSTRACT' ? '<b>' + s.h + ': </b>' : '') + s.t + '</p>').join('');
   const fundingHTML = p.funding ? '<hr class="pp-col-div"><div class="pp-sec-lbl">Funding information</div><div class="pp-corr-txt">' + p.funding + '</div>' : '';
@@ -3853,7 +3276,7 @@ function buildPubPaper(p) {
   const suppHTML = p.supplementary
     ? '<div class="pp-corr-txt" style="margin-top:6px;padding-top:6px;border-top:1px solid #ddd"><b>Supplementary information</b> ' + p.supplementary + '</div>'
     : '';
-  return '<div class="pub-paper">' +
+  return '<div class="pub-paper"><div class="pp-scale-inner">' +
     '<div class="pp-dates">' +
       '<span class="pp-date-seg"><span class="pp-date-label rcv">Received:</span><span class="pp-date-val">&nbsp;' + p.received + '</span></span>' +
       '<span class="pp-date-pipe">|</span>' +
@@ -3879,7 +3302,22 @@ function buildPubPaper(p) {
         '</div></div>' +
       '</div>' +
       '<div class="pp-foot" style="--jc:' + p.color + '"><span>' + p.volume + '</span><span>Page 1 of 12</span></div>' +
-    '</div></div>';
+    '</div></div></div>';
+}
+
+function scalePapersToFit() {
+  document.querySelectorAll('.pp-scale-inner').forEach(inner => {
+    inner.style.transform = 'none';
+    inner.style.width = '100%';
+    const paper = inner.parentElement;
+    const availH = paper.clientHeight;
+    const contentH = inner.scrollHeight;
+    if (contentH > availH) {
+      const scale = availH / contentH;
+      inner.style.width = (100 / scale) + '%';
+      inner.style.transform = 'scale(' + scale + ')';
+    }
+  });
 }
 
 function populateReader(papers) {
@@ -3895,6 +3333,7 @@ function populateReader(papers) {
     pubDotsEl.appendChild(d);
   });
   pubGoTo(0);
+  requestAnimationFrame(() => requestAnimationFrame(scalePapersToFit));
 }
 
 function pubGoTo(i) {
@@ -3910,9 +3349,11 @@ function pubGoTo(i) {
 
 function pubNavigate(dir) { pubGoTo(pubCur + dir); }
 
-pubPrevBtn.onclick = function() { pubNavigate(-1); };
-pubNextBtn.onclick = function() { pubNavigate(1); };
+let pubLastNav = 0;
+pubPrevBtn.onclick = function() { pubLastNav = Date.now(); pubNavigate(-1); };
+pubNextBtn.onclick = function() { pubLastNav = Date.now(); pubNavigate(1); };
 pubReader.addEventListener('dblclick', function(e) {
+  if (Date.now() - pubLastNav < 800) return;
   if (pubPapers[pubCur] && pubPapers[pubCur].doi) {
     window.open('https://doi.org/' + pubPapers[pubCur].doi, '_blank');
   }
@@ -6892,18 +6333,20 @@ window.addEventListener('mousedown', (e) => {
     const intersectsFolders = raycaster.intersectObjects(folderHitboxes, false);
 
     // ── Folder interactions ──────────────────────────────────────────────
-    // Dismiss folder inspect on click outside
+    // Dismiss folder inspect on click outside — go back to fan-out so user can pick another folder
     if (isInspectingFolder && intersectsFolders.length === 0) {
-        // Close folder and reader
-        var iF = folders[inspectedFolderIdx];
-        if (iF) { iF.isOpen = false; iF.flapTarget = 0; iF.flipPhase = 0; iF.paperCycleT = 0; }
-        pubReader.classList.add('hidden');
-        isInspectingFolder = false;
-        isDraggingFolder = false;
-        exitFolderSelectMode(inspectedFolderIdx);
-        inspectedFolderIdx = -1;
-        document.getElementById('subtitle').innerText = defaultSubtitle;
-        return;
+        if (!pubReader.contains(e.target)) {
+            var iF = folders[inspectedFolderIdx];
+            if (iF) { iF.isOpen = false; iF.flapTarget = 0; iF.flipPhase = 0; iF.paperCycleT = 0; }
+            pubReader.classList.add('hidden');
+            isInspectingFolder = false;
+            isDraggingFolder = false;
+            var prevIdx = inspectedFolderIdx;
+            inspectedFolderIdx = -1;
+            cycleFolderToTop(prevIdx);
+            enterFolderSelectMode();
+            return;
+        }
     }
     // Dismiss fan-out selection on click outside
     if (folderSelectMode && !isInspectingFolder && intersectsFolders.length === 0) {
@@ -7202,6 +6645,7 @@ window.addEventListener('mouseup', () => {
 
 // Double-click to open book
 window.addEventListener('dblclick', (e) => {
+    if (pubReader.contains(e.target)) return;
     // ── Folder double-click: open cover and show reader ──
     if (isInspectingFolder && inspectedFolderIdx >= 0) {
         const fMouse = new THREE.Vector2(
